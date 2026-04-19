@@ -1,7 +1,7 @@
 using System;
-using BovineLabs.Core.Assertions;
 using FireAlt.VFXForge.Data;
 using KrasCore;
+using Unity.Assertions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -15,7 +15,7 @@ namespace FireAlt.VFXForge
             internal TrackedEntity SpawnPersistent(ref PersistentVFXEntry entry, Entity entityToTrack,
                 UnsafeArray<byte> arrayData, float trackingDuration)
             {
-                Check.Assume(trackingDuration >= 0f);
+                Assert.IsTrue(trackingDuration >= 0f);
                 var trackedEntity = new TrackedEntity(entityToTrack, -1, 0);
             
                 if (entry.RequestsCount >= entry.Capacity
@@ -57,7 +57,7 @@ namespace FireAlt.VFXForge
             internal unsafe TrackedEntity SpawnPersistentUnsafe(ref PersistentVFXEntry entry, Entity entityToTrack,
                 byte* data, UnsafeArray<byte> arrayData, float trackingDuration)
             {
-                Check.Assume(data != null);
+                Assert.IsTrue(data != null);
 
                 var trackedEntity = SpawnPersistent(ref entry, entityToTrack, arrayData, trackingDuration);
                 if (!trackedEntity.IsValid) return trackedEntity;
@@ -71,9 +71,9 @@ namespace FireAlt.VFXForge
             
             internal void KillPersistent(ref PersistentVFXEntry entry, TrackedEntity resolvedKey)
             {
-                Check.Assume(!resolvedKey.IsDeferred(SyncVFXSystem.SystemVersion));
+                Assert.IsTrue(!resolvedKey.IsDeferred(SyncVFXSystem.SystemVersion));
                 var index = resolvedKey.IndexInData;
-                Check.Assume(index >= 0 && index < entry.Capacity * 2);
+                Assert.IsTrue(index >= 0 && index < entry.Capacity * 2);
                 
                 if (!entry.TrackedEntities.Remove(resolvedKey)) return;
                 
@@ -115,14 +115,14 @@ namespace FireAlt.VFXForge
 
             public ref InstantVFXEntry GetInstant(in VFXKey key)
             {
-                Check.Assume(_instantVFXGraphEntries.ContainsKey(key));
+                Assert.IsTrue(_instantVFXGraphEntries.ContainsKey(key), $"Instant VFX Graph Entries does not contain {key}. The VFX was not yet registered.");
                 ref var entry = ref _instantVFXGraphEntries.GetValueAsRef(key);
                 return ref entry;
             }
             
             public ref PersistentVFXEntry GetPersistent(in VFXKey key)
             {
-                Check.Assume(_persistentVFXGraphEntries.ContainsKey(key));
+                Assert.IsTrue(_persistentVFXGraphEntries.ContainsKey(key), $"Persistent VFX Graph Entries does not contain {key}. The VFX was not yet registered.");
                 ref var entry = ref _persistentVFXGraphEntries.GetValueAsRef(key);
                 return ref entry;
             }
@@ -164,14 +164,14 @@ namespace FireAlt.VFXForge
 
         public ref InstantVFXEntry GetInstant(in VFXKey key)
         {
-            Check.Assume(InstantVFXGraphEntries.ContainsKey(key));
+            Assert.IsTrue(InstantVFXGraphEntries.ContainsKey(key), $"Instant VFX Graph Entries does not contain {key}. The VFX was not yet registered.");
             ref var entry = ref InstantVFXGraphEntries.GetValueAsRef(key);
             return ref entry;
         }
         
         public ref PersistentVFXEntry GetPersistent(in VFXKey key)
         {
-            Check.Assume(PersistentVFXGraphEntries.ContainsKey(key));
+            Assert.IsTrue(PersistentVFXGraphEntries.ContainsKey(key), $"Persistent VFX Graph Entries does not contain {key}. The VFX was not yet registered.");
             ref var entry = ref PersistentVFXGraphEntries.GetValueAsRef(key);
             return ref entry;
         }

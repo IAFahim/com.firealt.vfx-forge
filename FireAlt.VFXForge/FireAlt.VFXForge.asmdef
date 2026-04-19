@@ -15,8 +15,7 @@
         "KrasCore",
         "KrasCore.Editor",
         "Unity.Transforms",
-        "KrasCore.ArtificeToolkit",
-        "KrasCore.HybridECS.Data"
+        "KrasCore.ArtificeToolkit"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],

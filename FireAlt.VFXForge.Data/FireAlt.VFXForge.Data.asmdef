@@ -12,7 +12,6 @@
         "Unity.Mathematics.Extensions",
         "KrasCore",
         "abzorba.artificetoolkit.runtime",
-        "KrasCore.HybridECS.Data",
         "Unity.VisualEffectGraph.Runtime"
     ],
     "optionalUnityReferences": [],

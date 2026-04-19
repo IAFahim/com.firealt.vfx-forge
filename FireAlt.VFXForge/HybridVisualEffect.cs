@@ -10,7 +10,7 @@ namespace FireAlt.VFXForge
 {
     [ExecuteAlways]
     [RequireComponent(typeof(VisualEffect))]
-    [DefaultExecutionOrder(100)] // Needed for Editor World initialization to take place
+    [DefaultExecutionOrder(-100)] // Needed for Editor World initialization to take place
     public partial class HybridVisualEffect : MonoBehaviour
     {
         private static readonly int BoundsProperty = Shader.PropertyToID("Bounds");
@@ -57,6 +57,7 @@ namespace FireAlt.VFXForge
         public void Init()
         {
 #if UNITY_EDITOR
+            DefaultWorldInitialization.DefaultLazyEditModeInitialize();
             _singleton = World.EntityManager.GetSingleton<VFXSingleton>();
 #endif
             if (Application.isPlaying)
@@ -105,9 +106,9 @@ namespace FireAlt.VFXForge
             if (!Application.isPlaying)
             {
                 em.AddComponentObject(_entity, new KrasCore.Editor.HybridEntitySync(this));
-                World.GetExistingSystemManaged<InitializeVFXSystem>().Update();
             }
 #endif
+            World.GetExistingSystemManaged<InitializeVFXSystem>().Update();
         }
 
         private void DeregisterVFX()

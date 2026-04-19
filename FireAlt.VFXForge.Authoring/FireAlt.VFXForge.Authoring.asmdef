@@ -18,8 +18,7 @@
         "abzorba.artificetoolkit.runtime",
         "BovineLabs.Reaction.Authoring",
         "BovineLabs.Quill",
-        "Unity.Transforms",
-        "KrasCore.HybridECS.Data"
+        "Unity.Transforms"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],

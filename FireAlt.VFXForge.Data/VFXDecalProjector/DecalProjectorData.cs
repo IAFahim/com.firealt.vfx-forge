@@ -1,4 +1,4 @@
-using KrasCore.HybridECS.Data;
+using KrasCore.Data;
 using Unity.Entities;
 using Unity.Mathematics;
 
