@@ -1,7 +1,5 @@
 using System;
-using ArtificeToolkit.Attributes;
 using BovineLabs.Core.ObjectManagement;
-using BovineLabs.Core.PropertyDrawers;
 using KrasCore;
 using Unity.Mathematics;
 using UnityEngine;
@@ -36,7 +34,7 @@ namespace FireAlt.VFXForge.Data
         }
         
         public VisualEffectAsset visualEffectAsset;
-        [EnableIf(nameof(IsPersistent), true)]
+        [ShowIf(nameof(IsPersistent))]
         public int capacity = 100;
         public float timeoutDuration = 30f;
         
