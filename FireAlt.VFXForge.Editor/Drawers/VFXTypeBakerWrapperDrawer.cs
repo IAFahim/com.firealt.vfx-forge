@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using FireAlt.VFXForge.Data;
+using KrasCore.Editor;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
@@ -24,8 +25,8 @@ namespace FireAlt.VFXForge.Editor
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
             var root = new VisualElement();
-            var bakerProperty = HybridVFXDrawerUtils.FindRelativeProperty(property, "_baker");
-            var bakerTypeProperty = HybridVFXDrawerUtils.FindRelativeProperty(property, "_selectedBakerTypeName");
+            var bakerProperty = SerializationUtils.FindRelativeProperty(property, "_baker");
+            var bakerTypeProperty = SerializationUtils.FindRelativeProperty(property, "_selectedBakerTypeName");
 
             if (bakerProperty == null || bakerTypeProperty == null)
             {
@@ -162,7 +163,7 @@ namespace FireAlt.VFXForge.Editor
 
         private void RebuildBakerPropertyFieldIfNeeded(VisualElement root, SerializedProperty property)
         {
-            var bakerProperty = HybridVFXDrawerUtils.FindRelativeProperty(property, "_baker");
+            var bakerProperty = SerializationUtils.FindRelativeProperty(property, "_baker");
             if (bakerProperty == null)
             {
                 return;
@@ -216,7 +217,7 @@ namespace FireAlt.VFXForge.Editor
         
         private static Type GetVfxType(SerializedProperty property)
         {
-            var vfxTypeProperty = HybridVFXDrawerUtils.FindRelativeProperty(property, "_vfxDataTypeName");
+            var vfxTypeProperty = SerializationUtils.FindRelativeProperty(property, "_vfxDataTypeName");
             if (vfxTypeProperty == null || string.IsNullOrEmpty(vfxTypeProperty.stringValue))
             {
                 return null;
@@ -227,7 +228,7 @@ namespace FireAlt.VFXForge.Editor
 
         private static object GetBaker(SerializedProperty property)
         {
-            var bakerProperty = HybridVFXDrawerUtils.FindRelativeProperty(property, "_baker");
+            var bakerProperty = SerializationUtils.FindRelativeProperty(property, "_baker");
             return bakerProperty?.managedReferenceValue;
         }
 

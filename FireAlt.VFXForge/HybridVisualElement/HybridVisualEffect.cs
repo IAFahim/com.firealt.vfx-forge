@@ -19,7 +19,7 @@ namespace FireAlt.VFXForge
         [SerializeField, HideInInspector]
         private VisualEffect _visualEffect;
 
-        [SerializeField, InlineObject, OnValueChanged("RefreshDataAndReinit")]
+        [SerializeField, InlineObject(false), OnValueChanged("RefreshDataAndReinit")]
         private VFXDefinition _vfxDefinition;
         
         private Entity _entity;

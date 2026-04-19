@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using BovineLabs.Core.Editor.SearchWindow;
 using KrasCore.Editor.UI;
+using KrasCore.Editor;
 using FireAlt.VFXForge.Data;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -62,7 +63,7 @@ namespace FireAlt.VFXForge.Editor
 
         private static void UpdateBakerInstance(SerializedProperty selectedTypeProperty, string selectedTypeName)
         {
-            var bakerProperty = HybridVFXDrawerUtils.FindSiblingProperty(selectedTypeProperty, "_baker");
+            var bakerProperty = SerializationUtils.FindSiblingProperty(selectedTypeProperty, "_baker");
             if (bakerProperty == null)
             {
                 return;
@@ -99,7 +100,7 @@ namespace FireAlt.VFXForge.Editor
         {
             var type = VFXTypeNameResolver.ResolveType(assemblyQualifiedTypeName);
             var name = type == null ? "None" : FormatTypeName(type);
-            return HybridVFXDrawerUtils.TrimNameToWidth(name, width);
+            return SerializationUtils.TrimNameToWidth(name, width);
         }
 
         private static string FormatTypeName(Type type)
@@ -151,7 +152,7 @@ namespace FireAlt.VFXForge.Editor
 
         private static Type GetVfxType(SerializedProperty property)
         {
-            var vfxTypeProperty = HybridVFXDrawerUtils.FindSiblingProperty(property, "_vfxDataTypeName");
+            var vfxTypeProperty = SerializationUtils.FindSiblingProperty(property, "_vfxDataTypeName");
             if (vfxTypeProperty == null || string.IsNullOrEmpty(vfxTypeProperty.stringValue))
             {
                 return null;

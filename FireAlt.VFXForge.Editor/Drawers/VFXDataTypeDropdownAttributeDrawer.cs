@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using BovineLabs.Core.Editor.SearchWindow;
 using KrasCore.Editor.UI;
+using KrasCore.Editor;
 using FireAlt.VFXForge.Data;
 using UnityEditor;
 using UnityEngine.UIElements;
@@ -44,7 +45,7 @@ namespace FireAlt.VFXForge.Editor
         {
             var type = VFXTypeRegistry.GetType(stableTypeHash);
             var name = type == null ? "None" : type.ToString();
-            return HybridVFXDrawerUtils.TrimNameToWidth(name, width);
+            return SerializationUtils.TrimNameToWidth(name, width);
         }
         
         protected List<SearchView.Item> GenerateItems(VFXDataTypeBakerKind bakerKind)
