@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 namespace FireAlt.VFXForge.Editor
 {
     [CustomPropertyDrawer(typeof(VFXDataTypeDropdownAttribute))]
-    public class VfxDataTypeDropdownAttributeDrawer : PropertyDrawer
+    public class VFXDataTypeDropdownAttributeDrawer : PropertyDrawer
     {
         private static readonly Dictionary<VFXDataTypeBakerKind, List<SearchView.Item>> ItemsByBakerKind = new();
 

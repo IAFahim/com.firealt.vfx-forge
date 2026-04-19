@@ -2,7 +2,6 @@ using System;
 
 namespace FireAlt.VFXForge.Data
 {
-    [Serializable]
     public struct VFXKey : IEquatable<VFXKey>
     {
         public ushort Value;

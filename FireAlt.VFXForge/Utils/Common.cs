@@ -4,7 +4,6 @@ using JetBrains.Annotations;
 using FireAlt.VFXForge.Data;
 using UnityEngine;
 using UnityEngine.VFX;
-using Debug = UnityEngine.Debug;
 
 namespace FireAlt.VFXForge
 {

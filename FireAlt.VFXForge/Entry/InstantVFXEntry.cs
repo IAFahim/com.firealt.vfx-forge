@@ -1,11 +1,11 @@
 using System;
+using BovineLabs.Core.Extensions;
 using FireAlt.VFXForge.Data;
 using KrasCore;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs.LowLevel.Unsafe;
-using UnityEngine;
 
 namespace FireAlt.VFXForge
 {

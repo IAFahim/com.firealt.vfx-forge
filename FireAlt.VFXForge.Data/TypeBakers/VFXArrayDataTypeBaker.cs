@@ -5,22 +5,9 @@ using Unity.Collections;
 
 namespace FireAlt.VFXForge.Data
 {
-    public interface IVFXDataTypeBaker
-    {
-        object BakeBoxed();
-    }
-    
     public interface IVFXArrayDataTypeBaker
     {
         NativeArray<byte> BakeBytes();
-    }
-
-    [Serializable]
-    public abstract class VFXDataTypeBaker<T> : IVFXDataTypeBaker
-        where T : unmanaged
-    {
-        public abstract T Bake();
-        object IVFXDataTypeBaker.BakeBoxed() => Bake();
     }
     
     [Serializable]
@@ -29,15 +16,6 @@ namespace FireAlt.VFXForge.Data
     {
         public abstract NativeArray<T> Bake();
         NativeArray<byte> IVFXArrayDataTypeBaker.BakeBytes() => Bake().AsBytes();
-    }
-    
-    [Serializable]
-    public class DefaultVFXDataTypeBaker<T> : VFXDataTypeBaker<T> 
-        where T : unmanaged
-    {
-        public T Data;
-
-        public override T Bake() => Data;
     }
     
     [Serializable]
