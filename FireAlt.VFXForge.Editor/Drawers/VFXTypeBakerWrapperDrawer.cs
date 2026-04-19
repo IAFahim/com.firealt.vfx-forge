@@ -10,7 +10,7 @@ namespace FireAlt.VFXForge.Editor
 {
     public abstract class VFXTypeBakerWrapperDrawerBase : PropertyDrawer
     {
-        private const float RootFieldIndent = 12f;
+        private const string RootFieldIndentClassName = "hybrid-vfx-editor-baker-root-indent";
         private const string WarningClassName = "vfx-type-baker-wrapper-warning";
         private const string HiddenFieldClassName = "vfx-type-baker-wrapper-hidden-field";
         
@@ -22,10 +22,11 @@ namespace FireAlt.VFXForge.Editor
         private string _onChangedMethod;
 
         protected abstract string BakerBaseTypeName { get; }
-
+        
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
             var root = new VisualElement();
+            root.styleSheets.Add(HybridVisualEffectStyleResources.HybridVisualEffectEditorStyleSheet);
             var bakerProperty = SerializationUtils.FindRelativeProperty(property, "_baker");
             var bakerTypeProperty = SerializationUtils.FindRelativeProperty(property, "_selectedBakerTypeName");
 
@@ -37,7 +38,7 @@ namespace FireAlt.VFXForge.Editor
             _bakerTypePropertyField = new PropertyField(bakerTypeProperty, "Baker Type");
             root.Add(_bakerTypePropertyField);
             _rootPropertyField = new PropertyField(bakerProperty, property.displayName);
-            _rootPropertyField.style.marginLeft = RootFieldIndent;
+            _rootPropertyField.AddToClassList(RootFieldIndentClassName);
             root.Add(_rootPropertyField);
             _lastBakerManagedReferenceType = bakerProperty.managedReferenceFullTypename;
             _onChangedMethod = ResolveOnChangedMethod();
@@ -189,7 +190,7 @@ namespace FireAlt.VFXForge.Editor
             }
 
             _rootPropertyField = new PropertyField(bakerProperty, property.displayName);
-            _rootPropertyField.style.marginLeft = RootFieldIndent;
+            _rootPropertyField.AddToClassList(RootFieldIndentClassName);
             _rootPropertyField.BindProperty(bakerProperty);
             _rootPropertyField.RegisterCallback<GeometryChangedEvent>(_ => root.schedule.Execute(() => RefreshWarnings(root, property)));
             if (insertIndex < 0 || insertIndex > root.childCount)

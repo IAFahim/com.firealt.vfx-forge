@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
+using KrasCore.Editor;
 using UnityEditor;
 using UnityEditor.UIElements;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace FireAlt.VFXForge.Editor
@@ -12,14 +12,8 @@ namespace FireAlt.VFXForge.Editor
     [CustomEditor(typeof(HybridVisualEffect))]
     public class HybridVisualEffectEditor : UnityEditor.Editor
     {
-        private const float BOX_BORDER_WIDTH = 1f;
-        private const float BOX_ACCENT_BORDER_WIDTH = 3f;
         private const int VISIBILITY_REFRESH_INTERVAL_MS = 200;
         private const string UNITY_VFX_OVERLAY_ID = "Scene View/Visual Effect";
-        private static readonly Color ACCENT_ORANGE = new(0.702f, 0.420f, 0.129f, 1f); // #b36b21
-        private static readonly Color ACCENT_ORANGE_TEXT = new(0.941f, 0.702f, 0.431f, 1f); // #f0b36e
-        private static readonly Color HEADER_BG = new(0.165f, 0.165f, 0.165f, 1f);
-        private static readonly Color BODY_BG = new(0.247f, 0.247f, 0.247f, 1f);
 
         private static HybridVisualEffect s_ActiveEffect;
         private static readonly Dictionary<SceneView, bool> HiddenUnityVfxOverlayStates = new();
@@ -30,6 +24,9 @@ namespace FireAlt.VFXForge.Editor
         public override VisualElement CreateInspectorGUI()
         {
             var root = new VisualElement();
+            root.styleSheets.Add(DrawerStyleResources.CommonStyleSheet);
+            root.styleSheets.Add(HybridVisualEffectStyleResources.HybridVisualEffectEditorStyleSheet);
+
             var conditionBindings = new List<ConditionBinding>();
 
             var vfxDefinitionField = CreatePropertyField("_vfxDefinition");
@@ -93,39 +90,14 @@ namespace FireAlt.VFXForge.Editor
         private static VisualElement CreateBoxGroup(string title, VisualElement content)
         {
             var group = new VisualElement();
-            group.style.marginTop = 4f;
-            group.style.marginBottom = 4f;
+            group.AddToClassList("hybrid-vfx-editor-box-group");
 
             var header = new Label(title);
-            header.style.color = ACCENT_ORANGE_TEXT;
-            header.style.backgroundColor = HEADER_BG;
-            header.style.unityFontStyleAndWeight = FontStyle.Bold;
-            header.style.borderTopWidth = BOX_BORDER_WIDTH;
-            header.style.borderBottomWidth = BOX_BORDER_WIDTH;
-            header.style.borderLeftWidth = BOX_ACCENT_BORDER_WIDTH;
-            header.style.borderRightWidth = BOX_BORDER_WIDTH;
-            header.style.borderTopColor = Color.black;
-            header.style.borderBottomColor = Color.black;
-            header.style.borderLeftColor = ACCENT_ORANGE;
-            header.style.borderRightColor = Color.black;
-            header.style.paddingTop = 4f;
-            header.style.paddingBottom = 4f;
-            header.style.paddingLeft = 6f;
-            header.style.paddingRight = 6f;
+            header.AddToClassList("kras-drawer-box-header");
+            header.AddToClassList("kras-drawer-box-title");
 
             var body = new VisualElement();
-            body.style.backgroundColor = BODY_BG;
-            body.style.borderLeftWidth = BOX_BORDER_WIDTH;
-            body.style.borderRightWidth = BOX_BORDER_WIDTH;
-            body.style.borderBottomWidth = BOX_BORDER_WIDTH;
-            body.style.borderLeftColor = Color.black;
-            body.style.borderRightColor = Color.black;
-            body.style.borderBottomColor = Color.black;
-            body.style.paddingTop = 4f;
-            body.style.paddingBottom = 6f;
-            body.style.paddingLeft = 6f;
-            body.style.paddingRight = 6f;
-
+            body.AddToClassList("kras-drawer-box-body");
             body.Add(content);
 
             group.Add(header);

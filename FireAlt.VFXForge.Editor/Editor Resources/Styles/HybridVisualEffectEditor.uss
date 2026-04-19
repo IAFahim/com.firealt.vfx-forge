@@ -1,0 +1,8 @@
+.hybrid-vfx-editor-box-group {
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.hybrid-vfx-editor-baker-root-indent {
+    margin-left: 12px;
+}
