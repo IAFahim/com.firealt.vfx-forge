@@ -1,0 +1,36 @@
+{
+    "name": "FireAlt.VFXForge.Authoring",
+    "rootNamespace": "FireAlt.VFXForge.Authoring",
+    "references": [
+        "BovineLabs.Core",
+        "BovineLabs.Core.Authoring",
+        "BovineLabs.Core.Extensions",
+        "BovineLabs.Core.Extensions.Authoring",
+        "Unity.Burst",
+        "Unity.Collections",
+        "Unity.Entities",
+        "Unity.Entities.Hybrid",
+        "Unity.Mathematics",
+        "Unity.Mathematics.Extensions",
+        "FireAlt.VFXForge.Data",
+        "KrasCore",
+        "KrasCore.Editor",
+        "abzorba.artificetoolkit.runtime",
+        "BovineLabs.Reaction.Authoring",
+        "BovineLabs.Quill",
+        "Unity.Transforms",
+        "KrasCore.HybridECS.Data"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_EDITOR"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

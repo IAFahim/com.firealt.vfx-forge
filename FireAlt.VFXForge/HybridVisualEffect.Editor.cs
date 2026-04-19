@@ -1,0 +1,317 @@
+#if UNITY_EDITOR
+using ArtificeToolkit.Attributes;
+using BovineLabs.Core.Extensions;
+using FireAlt.VFXForge.Data;
+using KrasCore;
+using Unity.Entities;
+using UnityEditor;
+using UnityEngine;
+
+namespace FireAlt.VFXForge
+{
+    public partial class HybridVisualEffect
+    {
+        [BoxGroup("VFX Data Type Baker")]
+        [SerializeField, VFXTypeBakerField(nameof(UploadData))]
+        [EnableIfMethod(nameof(IsDefinitionValid), true)]
+        private VFXDataTypeBakerWrapper _uploadData = new();
+
+        [BoxGroup("VFX Array Data Type Baker")]
+        [SerializeField, VFXTypeBakerField(nameof(UploadData))]
+        [EnableIfMethod(nameof(IsDefinitionValid), true)]
+        private VFXArrayDataTypeBakerWrapper _uploadArrayData = new();
+        
+        [SerializeField] 
+        [EnableIfMethod(nameof(ShowTrackingDuration), true)]
+        private float _trackingDuration;
+        
+        public float focusedBoundsSize = 4f;
+
+        private VFXSingleton _singleton;
+        private TrackedEntity _trackedEntity = TrackedEntity.Null;
+        
+        private bool IsPersistent => _vfxDefinition != null && _vfxDefinition.IsPersistent;
+        
+        internal bool HasEditorVisualEffect() => _visualEffect != null;
+        internal bool IsEditorPaused() => HasEditorVisualEffect() && _visualEffect.pause;
+        internal float GetEditorPlayRate() => HasEditorVisualEffect() ? _visualEffect.playRate : 1f;
+        
+        private void OnEnable()
+        {
+            if (!Application.isPlaying)
+            {
+                Init();
+                if (_entity != Entity.Null && Selection.activeGameObject == gameObject)
+                {
+                    DelayEditorRespawn();
+                }
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (!Application.isPlaying)
+            {
+                Cleanup();
+            }
+        }
+
+        private void DelayEditorRespawn()
+        {
+            Kill();
+            Spawn();
+            
+            EditorApplication.delayCall += () =>
+            {
+                if (gameObject.activeInHierarchy && VisualEffect.aliveParticleCount <= 0)
+                {
+                    DelayEditorRespawn();
+                }
+            };
+        }
+
+        internal void SetEditorPlayRate(float value)
+        {
+            if (!HasEditorVisualEffect())
+            {
+                return;
+            }
+
+            _visualEffect.playRate = value;
+        }
+
+        internal void EditorControlStop()
+        {
+            if (!HasEditorVisualEffect())
+            {
+                return;
+            }
+
+            _visualEffect.Reinit();
+            _visualEffect.pause = true;
+        }
+
+        internal void EditorControlPlayPause()
+        {
+            if (!HasEditorVisualEffect())
+            {
+                return;
+            }
+
+            _visualEffect.pause = !_visualEffect.pause;
+        }
+
+        internal void EditorControlStep()
+        {
+            if (!HasEditorVisualEffect())
+            {
+                return;
+            }
+
+            _visualEffect.pause = true;
+            _visualEffect.AdvanceOneFrame();
+        }
+
+        internal void EditorControlRestart()
+        {
+            if (!HasEditorVisualEffect())
+            {
+                return;
+            }
+
+            _visualEffect.Reinit();
+            _visualEffect.pause = false;
+            Kill();
+            Spawn();
+        }
+
+        internal void EditorPlay()
+        {
+            Spawn();
+        }
+
+        internal void EditorStop()
+        {
+            Kill();
+
+            if (!HasEditorVisualEffect())
+            {
+                return;
+            }
+
+            _visualEffect.Reinit();
+        }
+        
+        private void OnValidate()
+        {
+            ValidateVFXGraph();
+            SetVFXDataBaker();
+
+            if (Selection.activeGameObject == gameObject)
+            {
+                SetFocusedBounds();
+            }
+            if (_vfxDefinition != null)
+            {
+                gameObject.name = _vfxDefinition.name.EndsWith("Definition")
+                    ? _vfxDefinition.name.TrimEnd("Definition") + "VFX"
+                    : _vfxDefinition.name;
+            }
+            if (_trackingDuration <= 0f)
+            {
+                _trackingDuration = 0f;
+            }
+        }
+        
+        private void RefreshDataAndReinit()
+        {
+            SetVFXDataBaker();
+            
+            if (!IsDefinitionValid())
+            {
+                DeregisterVFX();
+                _visualEffect.visualEffectAsset = null;
+                return;
+            }
+            
+            _visualEffect.visualEffectAsset = _vfxDefinition.visualEffectAsset;
+            DeregisterVFX();
+            RegisterVFX();
+            ReinitializeVFX();
+        }
+
+        private void SetVFXDataBaker()
+        {
+            _uploadData ??= new VFXDataTypeBakerWrapper();
+            _uploadArrayData ??= new VFXArrayDataTypeBakerWrapper();
+
+            var isDefinitionValid = IsDefinitionValid();
+            _uploadData.SetBaker(isDefinitionValid ? _vfxDefinition.DataTypeInfo.Type : null);
+            _uploadArrayData.SetBaker(isDefinitionValid ? _vfxDefinition.ArrayDataTypeInfo.Type : null);
+        }
+
+        private unsafe void Spawn()
+        {
+            if (!IsDefinitionValid()) return;
+            
+            if (IsPersistent)
+            {
+                if (IsPersistentAlive()) return;
+                ref var entry = ref _singleton.GetPersistent(_vfxDefinition);
+                
+                var data = _uploadData.TryGetTempDataRaw(out var ptr);
+                var arrayData = _uploadArrayData.TryGetTempBytesDataRaw(out var bytes);
+                if (data)
+                {
+                    _trackedEntity = entry.SpawnUnsafe(_entity, ptr, bytes, _trackingDuration);
+                }
+                else if (arrayData)
+                {
+                    _trackedEntity = entry.SpawnUnsafe(_entity, bytes, _trackingDuration);
+                }
+                else
+                {
+                    _trackedEntity = entry.Spawn(_entity, _trackingDuration);
+                }
+            }
+            else
+            {
+                ref var entry = ref _singleton.GetInstant(_vfxDefinition);
+                
+                var data = _uploadData.TryGetTempDataRaw(out var ptr);
+                var arrayData = _uploadArrayData.TryGetTempBytesDataRaw(out var bytes);
+                if (data)
+                {
+                    entry.SpawnUnsafe(ptr, bytes);
+                }
+                else if (arrayData)
+                {
+                    entry.SpawnUnsafe(bytes);
+                }
+                else
+                {
+                    entry.Spawn();
+                }
+            }
+        }
+
+        private void Kill()
+        {
+            if (!IsDefinitionValid() || !IsPersistentAlive()) return;
+            _singleton.GetPersistent(_vfxDefinition).TryKill(_trackedEntity);
+            _trackedEntity = TrackedEntity.Null;
+        }
+        
+        private unsafe void UploadData()
+        {
+            if (!IsDefinitionValid() || !IsPersistentAlive()) return;
+            ref var entry = ref _singleton.GetPersistent(_vfxDefinition);
+            
+            if (_vfxDefinition.DataGpuSize > 0 && _uploadData.TryGetTempDataRaw(out var ptr))
+            {
+                entry.TrySetUpdateDataUnsafe(_trackedEntity, ptr);
+            }
+            if (_vfxDefinition.ArrayDataGpuSize > 0 && _uploadArrayData.TryGetTempBytesDataRaw(out var bytes))
+            {
+                if (entry.TryGetArrayDataUnsafe(_trackedEntity, out var arrayData) && bytes.Length == arrayData.Length)
+                {
+                    arrayData.CopyFrom(bytes);
+                }
+                else
+                {
+                    Kill();
+                    Spawn();
+                }
+            }
+        }
+
+        private void ReinitializeVFX()
+        {
+            _visualEffect.Reinit();
+            if (IsPersistent)
+            {
+                Kill();
+            }
+            Spawn();
+        }
+
+        private bool IsPersistentAlive() =>
+            IsPersistent
+            && !_trackedEntity.Equals(TrackedEntity.Null)
+            && _singleton.GetPersistent(_vfxDefinition).IsAlive(_trackedEntity);
+        
+        private bool IsDefinitionValid() => !Application.isPlaying && _vfxDefinition != null;
+        private bool ShowTrackingDuration() => IsDefinitionValid() && IsPersistent;
+        
+        private void SetFocusedBounds()
+        {
+            if (_visualEffect.HasVector3(BoundsProperty))
+                _visualEffect.SetVector3(BoundsProperty, focusedBoundsSize * Vector3.one);
+        }
+        
+        internal void OnInspectorOpened()
+        {
+            if (Application.isPlaying || World == null) return;
+            Init(); // Ensure it is initialized
+            VFXDefinition.OnVFXDefinitionChanged += RefreshDataAndReinit;
+            
+            SetFocusedBounds();
+            if (gameObject.activeInHierarchy)
+            {
+                EditorPlay();
+            }
+        }
+
+        internal void OnInspectorClosed()
+        {
+            VFXDefinition.OnVFXDefinitionChanged -= RefreshDataAndReinit;
+            if (Application.isPlaying) return;
+
+            if (gameObject.activeInHierarchy)
+            {
+                EditorStop();
+            }
+        }
+    }
+}
+#endif
