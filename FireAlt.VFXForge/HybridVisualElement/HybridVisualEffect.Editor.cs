@@ -11,22 +11,6 @@ namespace FireAlt.VFXForge
 {
     public partial class HybridVisualEffect
     {
-        [BoxGroup("VFX Data Type Baker")]
-        [SerializeField, VFXTypeBakerField(nameof(UploadData))]
-        [EnableIfMethod(nameof(IsDefinitionValid), true)]
-        private VFXDataTypeBakerWrapper _uploadData = new();
-
-        [BoxGroup("VFX Array Data Type Baker")]
-        [SerializeField, VFXTypeBakerField(nameof(UploadData))]
-        [EnableIfMethod(nameof(IsDefinitionValid), true)]
-        private VFXArrayDataTypeBakerWrapper _uploadArrayData = new();
-        
-        [SerializeField] 
-        [EnableIfMethod(nameof(ShowTrackingDuration), true)]
-        private float _trackingDuration;
-        
-        public float focusedBoundsSize = 4f;
-
         private VFXSingleton _singleton;
         private TrackedEntity _trackedEntity = TrackedEntity.Null;
         

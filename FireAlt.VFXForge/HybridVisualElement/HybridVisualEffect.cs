@@ -5,12 +5,13 @@ using UnityEngine.VFX;
 using Unity.Entities;
 using Unity.Transforms;
 using FireAlt.VFXForge.Data;
+using KrasCore;
 
 namespace FireAlt.VFXForge
 {
     [ExecuteAlways]
     [RequireComponent(typeof(VisualEffect))]
-    [DefaultExecutionOrder(-100)] // Needed for Editor World initialization to take place
+    [DefaultExecutionOrder(-100)] // Needed for Start to be a valid place to use VFXSingleton
     public partial class HybridVisualEffect : MonoBehaviour
     {
         private static readonly int BoundsProperty = Shader.PropertyToID("Bounds");
@@ -19,8 +20,27 @@ namespace FireAlt.VFXForge
         [SerializeField, HideInInspector]
         private VisualEffect _visualEffect;
 
-        [SerializeField, InlineObject(false), OnValueChanged("RefreshDataAndReinit")]
+        [SerializeField, InlineScriptableObject, OnValueChanged("RefreshDataAndReinit")]
         private VFXDefinition _vfxDefinition;
+
+#if UNITY_EDITOR
+        [BoxGroup("VFX Data Type Baker")]
+        [SerializeField, VFXTypeBakerField(nameof(UploadData))]
+        [EnableIfMethod(nameof(IsDefinitionValid), true)]
+        private VFXDataTypeBakerWrapper _uploadData = new();
+
+        [BoxGroup("VFX Array Data Type Baker")]
+        [SerializeField, VFXTypeBakerField(nameof(UploadData))]
+        [EnableIfMethod(nameof(IsDefinitionValid), true)]
+        private VFXArrayDataTypeBakerWrapper _uploadArrayData = new();
+        
+        [SerializeField] 
+        [EnableIfMethod(nameof(ShowTrackingDuration), true)]
+        private float _trackingDuration;
+        
+        [SerializeField]
+        private float focusedBoundsSize = 4f;
+#endif
         
         private Entity _entity;
         
@@ -127,7 +147,7 @@ namespace FireAlt.VFXForge
                 }
                 catch
                 {
-                    // May fail during domain reload
+                    // May fail during domain reload where we don't care
                 }
 
                 _trackedEntity = TrackedEntity.Null;

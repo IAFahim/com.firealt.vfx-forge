@@ -1,6 +1,7 @@
 using System;
 using ArtificeToolkit.Attributes;
 using BovineLabs.Core.ObjectManagement;
+using BovineLabs.Core.PropertyDrawers;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.VFX;
@@ -10,7 +11,7 @@ namespace FireAlt.VFXForge.Data
     [AutoRef("VFXSettings", "vfxDefinitions", nameof(VFXDefinition), "VFX")]
     public class VFXDefinition : ScriptableObject, IUID, ICloneable
     {
-        [SerializeField, ReadOnly]
+        [SerializeField, InspectorReadOnly]
         private ushort key;
         
         int IUID.ID
