@@ -24,18 +24,13 @@ namespace FireAlt.VFXForge
         private VFXDefinition _vfxDefinition;
 
 #if UNITY_EDITOR
-        [BoxGroup("VFX Data Type Baker")]
         [SerializeField, VFXTypeBakerField(nameof(UploadData))]
-        [EnableIfMethod(nameof(IsDefinitionValid), true)]
         private VFXDataTypeBakerWrapper _uploadData = new();
 
-        [BoxGroup("VFX Array Data Type Baker")]
         [SerializeField, VFXTypeBakerField(nameof(UploadData))]
-        [EnableIfMethod(nameof(IsDefinitionValid), true)]
         private VFXArrayDataTypeBakerWrapper _uploadArrayData = new();
         
         [SerializeField] 
-        [EnableIfMethod(nameof(ShowTrackingDuration), true)]
         private float _trackingDuration;
         
         [SerializeField]

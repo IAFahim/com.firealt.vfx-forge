@@ -13,7 +13,9 @@
         "Unity.Mathematics.Extensions",
         "Unity.PerformanceTesting",
         "FireAlt.VFXForge",
-        "FireAlt.VFXForge.Data"
+        "FireAlt.VFXForge.Data",
+        "KrasCore",
+        "Unity.Transforms"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

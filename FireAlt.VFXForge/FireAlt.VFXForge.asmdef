@@ -14,8 +14,7 @@
         "abzorba.artificetoolkit.runtime",
         "KrasCore",
         "KrasCore.Editor",
-        "Unity.Transforms",
-        "KrasCore.ArtificeToolkit"
+        "Unity.Transforms"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],

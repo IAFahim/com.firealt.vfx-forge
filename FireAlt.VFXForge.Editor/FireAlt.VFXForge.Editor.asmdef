@@ -16,8 +16,7 @@
         "FireAlt.VFXForge.Authoring",
         "FireAlt.VFXForge.Data",
         "KrasCore",
-        "KrasCore.Editor",
-        "abzorba.artificetoolkit.editor"
+        "KrasCore.Editor"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [
