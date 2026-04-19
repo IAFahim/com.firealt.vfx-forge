@@ -2,6 +2,7 @@ using System;
 using ArtificeToolkit.Attributes;
 using BovineLabs.Core.ObjectManagement;
 using BovineLabs.Core.PropertyDrawers;
+using KrasCore;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.VFX;
@@ -39,7 +40,7 @@ namespace FireAlt.VFXForge.Data
         public int capacity = 100;
         public float timeoutDuration = 30f;
         
-        [EnumToggle]
+        [EnumToggleButtons]
         public VFXType vfxType;
         [VFXDataTypeDropdown(VFXDataTypeBakerKind.Data)]
         public ulong vfxDataType;
