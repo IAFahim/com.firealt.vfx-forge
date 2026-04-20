@@ -21,20 +21,6 @@ namespace FireAlt.VFXForge
 
         [SerializeField, InlineScriptableObject]
         private VFXDefinition _vfxDefinition;
-
-#if UNITY_EDITOR
-        [SerializeField, VFXTypeBakerField(nameof(UploadData))]
-        private VFXDataTypeBakerWrapper _uploadData = new();
-
-        [SerializeField, VFXTypeBakerField(nameof(UploadData))]
-        private VFXArrayDataTypeBakerWrapper _uploadArrayData = new();
-        
-        [SerializeField] 
-        private float _trackingDuration;
-        
-        [SerializeField]
-        private float focusedBoundsSize = 4f;
-#endif
         
         private Entity _entity;
         

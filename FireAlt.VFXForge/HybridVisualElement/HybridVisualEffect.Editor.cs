@@ -9,6 +9,24 @@ namespace FireAlt.VFXForge
 {
     public partial class HybridVisualEffect
     {
+        internal const string VFX_DEFINITION_PROPERTY_NAME = nameof(_vfxDefinition);
+        internal const string UPLOAD_DATA_PROPERTY_NAME = nameof(_uploadData);
+        internal const string UPLOAD_ARRAY_DATA_PROPERTY_NAME = nameof(_uploadArrayData);
+        internal const string TRACKING_DURATION_PROPERTY_NAME = nameof(_trackingDuration);
+        internal const string FOCUSED_BOUNDS_SIZE_PROPERTY_NAME = nameof(focusedBoundsSize);
+
+        [SerializeField, VFXTypeBakerField(nameof(UploadData))]
+        private VFXDataTypeBakerWrapper _uploadData = new();
+
+        [SerializeField, VFXTypeBakerField(nameof(UploadData))]
+        private VFXArrayDataTypeBakerWrapper _uploadArrayData = new();
+        
+        [SerializeField] 
+        private float _trackingDuration;
+        
+        [SerializeField]
+        private float focusedBoundsSize = 4f;
+        
         private VFXSingleton _singleton;
         private TrackedEntity _trackedEntity = TrackedEntity.Null;
         
@@ -262,8 +280,8 @@ namespace FireAlt.VFXForge
             && !_trackedEntity.Equals(TrackedEntity.Null)
             && _singleton.GetPersistent(_vfxDefinition).IsAlive(_trackedEntity);
         
-        private bool IsDefinitionValid() => !Application.isPlaying && _vfxDefinition != null;
-        private bool ShowTrackingDuration() => IsDefinitionValid() && IsPersistent;
+        internal bool IsDefinitionValid() => !Application.isPlaying && _vfxDefinition != null;
+        internal bool ShowTrackingDuration() => IsDefinitionValid() && IsPersistent;
         
         private void SetFocusedBounds()
         {
