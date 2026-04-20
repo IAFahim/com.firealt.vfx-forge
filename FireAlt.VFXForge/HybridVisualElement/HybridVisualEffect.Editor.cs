@@ -1,8 +1,6 @@
 #if UNITY_EDITOR
-using ArtificeToolkit.Attributes;
 using BovineLabs.Core.Extensions;
 using FireAlt.VFXForge.Data;
-using KrasCore;
 using Unity.Entities;
 using UnityEditor;
 using UnityEngine;
@@ -147,7 +145,7 @@ namespace FireAlt.VFXForge
             }
         }
         
-        private void RefreshDataAndReinit()
+        internal void RefreshDataAndReinit()
         {
             SetVFXDataBaker();
             

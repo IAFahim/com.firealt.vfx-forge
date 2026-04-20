@@ -1,4 +1,3 @@
-using ArtificeToolkit.Attributes;
 using BovineLabs.Core.Extensions;
 using UnityEngine;
 using UnityEngine.VFX;
@@ -20,7 +19,7 @@ namespace FireAlt.VFXForge
         [SerializeField, HideInInspector]
         private VisualEffect _visualEffect;
 
-        [SerializeField, InlineScriptableObject, OnValueChanged("RefreshDataAndReinit")]
+        [SerializeField, InlineScriptableObject]
         private VFXDefinition _vfxDefinition;
 
 #if UNITY_EDITOR

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using ArtificeToolkit.Attributes;
 using BovineLabs.Core.Settings;
 using FireAlt.VFXForge.Data;
+using KrasCore;
 using UnityEngine;
 
 namespace FireAlt.VFXForge.Authoring
@@ -11,7 +11,7 @@ namespace FireAlt.VFXForge.Authoring
     {
         public override bool IncludeInBuild => false;
 
-        [SerializeField, ReadOnly]
+        [SerializeField, InspectorReadOnly]
         private List<VFXDefinition> vfxDefinitions = new();
 
         public VFXDefinition defaultDecalVFX;

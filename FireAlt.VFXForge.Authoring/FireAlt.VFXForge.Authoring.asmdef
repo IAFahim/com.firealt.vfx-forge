@@ -15,7 +15,6 @@
         "FireAlt.VFXForge.Data",
         "KrasCore",
         "KrasCore.Editor",
-        "abzorba.artificetoolkit.runtime",
         "BovineLabs.Reaction.Authoring",
         "BovineLabs.Quill",
         "Unity.Transforms"

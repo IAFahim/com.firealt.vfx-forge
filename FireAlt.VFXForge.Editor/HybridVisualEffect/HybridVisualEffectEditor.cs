@@ -14,6 +14,7 @@ namespace FireAlt.VFXForge.Editor
     {
         private const int VISIBILITY_REFRESH_INTERVAL_MS = 200;
         private const string UNITY_VFX_OVERLAY_ID = "Scene View/Visual Effect";
+        private const string VFX_DEFINITION_PROPERTY_NAME = "_vfxDefinition";
 
         private static HybridVisualEffect s_ActiveEffect;
         private static readonly Dictionary<SceneView, bool> HiddenUnityVfxOverlayStates = new();
@@ -28,8 +29,9 @@ namespace FireAlt.VFXForge.Editor
             root.styleSheets.Add(HybridVisualEffectStyleResources.HybridVisualEffectEditorStyleSheet);
 
             var conditionBindings = new List<ConditionBinding>();
+            var vfxDefinitionProperty = serializedObject.FindProperty(VFX_DEFINITION_PROPERTY_NAME);
 
-            var vfxDefinitionField = CreatePropertyField("_vfxDefinition");
+            var vfxDefinitionField = CreatePropertyField(VFX_DEFINITION_PROPERTY_NAME);
             if (vfxDefinitionField != null)
             {
                 root.Add(vfxDefinitionField);
@@ -64,6 +66,11 @@ namespace FireAlt.VFXForge.Editor
                 root.Add(focusedBoundsField);
             }
 
+            if (vfxDefinitionProperty != null)
+            {
+                root.TrackPropertyValue(vfxDefinitionProperty, _ => RefreshDataAndReinitTargets());
+            }
+
             void RefreshVisibility()
             {
                 for (var i = 0; i < conditionBindings.Count; i++)
@@ -79,6 +86,23 @@ namespace FireAlt.VFXForge.Editor
             root.schedule.Execute(RefreshVisibility).Every(VISIBILITY_REFRESH_INTERVAL_MS);
             RefreshVisibility();
             return root;
+        }
+
+        private void RefreshDataAndReinitTargets()
+        {
+            var targets = serializedObject.targetObjects;
+            if (targets == null || targets.Length == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < targets.Length; i++)
+            {
+                if (targets[i] is HybridVisualEffect effect)
+                {
+                    effect.RefreshDataAndReinit();
+                }
+            }
         }
 
         private PropertyField CreatePropertyField(string propertyName)
