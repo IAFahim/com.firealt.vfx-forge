@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using KrasCore.Editor;
+using Unity.Collections;
 using UnityEditor;
 using UnityEditor.UIElements;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace FireAlt.VFXForge.Editor
@@ -14,10 +17,10 @@ namespace FireAlt.VFXForge.Editor
         private const string UNITY_VFX_OVERLAY_ID = "Scene View/Visual Effect";
 
         private static readonly Dictionary<SceneView, bool> HiddenUnityVfxOverlayStates = new();
-        private static HybridVisualEffect _activeEffect;
+        private static List<HybridVisualEffect> _activeEffects = new();
         private HybridVisualEffect _targetEffect;
 
-        internal static HybridVisualEffect ActiveEffect => _activeEffect;
+        internal static HybridVisualEffect ActiveEffect => _activeEffects.Count > 0 ? _activeEffects[0] : null;
         
         public override VisualElement CreateInspectorGUI()
         {
@@ -163,12 +166,57 @@ namespace FireAlt.VFXForge.Editor
             public Func<HybridVisualEffect, bool> IsVisiblePredicate { get; }
         }
 
+        static HybridVisualEffectEditor()
+        {
+            Selection.selectionChanged += ChangeSelection;
+        }
+
+        private static void ChangeSelection()
+        {
+            var selected = Selection.gameObjects;
+            for (var i = 0; i < _activeEffects.Count; i++)
+            {
+                var active = _activeEffects[i];
+                var contains = false;
+                foreach (var go in selected)
+                {
+                    if (go == active.gameObject)
+                    {
+                        contains = true;
+                        break;
+                    }
+                }
+                
+                if (!contains)
+                {
+                    active.OnInspectorClosed();
+                    _activeEffects.RemoveAtSwapBack(i);
+                    Triggered.Remove(active.gameObject);
+                    i--;
+                }
+            }
+            
+            foreach (var gameObject in selected)
+            {
+                if (!Triggered.Contains(gameObject) && gameObject.TryGetComponent(out HybridVisualEffect effect))
+                {
+                    effect.Playttt();
+                    _activeEffects.Add(effect);
+                    Triggered.Add(gameObject);
+                }
+            }
+        }
+
+        private static readonly HashSet<GameObject> Triggered = new();
+        private static HybridVisualEffect _activeOpen;
+        
         private void OnEnable()
         {
             _targetEffect = (HybridVisualEffect)target;
-            _activeEffect = _targetEffect;
+            _activeOpen = _targetEffect;
+            
             _targetEffect.OnInspectorOpened();
-
+            
             SceneView.duringSceneGui += HideUnityVfxOverlay;
             foreach (var sceneView in SceneView.sceneViews)
             {
@@ -178,16 +226,11 @@ namespace FireAlt.VFXForge.Editor
 
         private void OnDisable()
         {
-            if (_targetEffect != null)
+            if (_activeOpen == _targetEffect)
             {
-                _targetEffect.OnInspectorClosed();
+                _activeOpen = null;
             }
-
-            if (_activeEffect == _targetEffect)
-            {
-                _activeEffect = null;
-            }
-
+            
             SceneView.duringSceneGui -= HideUnityVfxOverlay;
             RestoreUnityVfxOverlayInOpenViews();
         }

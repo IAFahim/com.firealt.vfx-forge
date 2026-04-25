@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace FireAlt.VFXForge
 {
+    [InitializeOnLoad]
     public partial class HybridVisualEffect
     {
         internal const string VFX_DEFINITION_PROPERTY_NAME = nameof(_vfxDefinition);
@@ -295,6 +296,17 @@ namespace FireAlt.VFXForge
             Init(); // Ensure it is initialized
             VFXDefinition.OnVFXDefinitionChanged += RefreshDataAndReinit;
             
+            // SetFocusedBounds();
+            // if (gameObject.activeInHierarchy)
+            // {
+            //     EditorPlay();
+            // }
+        }
+
+        
+
+        internal void Playttt()
+        {
             SetFocusedBounds();
             if (gameObject.activeInHierarchy)
             {
@@ -311,6 +323,7 @@ namespace FireAlt.VFXForge
             {
                 EditorStop();
             }
+            
         }
     }
 }

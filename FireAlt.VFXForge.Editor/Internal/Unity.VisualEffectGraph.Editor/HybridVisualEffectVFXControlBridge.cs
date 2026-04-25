@@ -9,7 +9,9 @@ namespace UnityEditor.VFX.UI
     [InitializeOnLoad]
     internal static class HybridVisualEffectVFXControlBridge
     {
+        private const string ADVANCED_VISUAL_EFFECT_EDITOR_TYPE_NAME = "UnityEditor.VFX.AdvancedVisualEffectEditor";
         private const string HybridVisualEffectTypeName = "KrasCore.HybridECS.HybridVisualEffect, KrasCore.HybridECS";
+        private const string ON_HIERARCHY_SELECTION_CHANGED_METHOD_NAME = "OnHierarchySelectionChanged";
         private static readonly object PatchMarker = new();
         private static readonly FieldInfo DebugUIField = typeof(VFXComponentBoard).GetField("m_DebugUI", BindingFlags.Instance | BindingFlags.NonPublic);
 
@@ -24,12 +26,20 @@ namespace UnityEditor.VFX.UI
         static HybridVisualEffectVFXControlBridge()
         {
             EditorApplication.update += Update;
-            Selection.selectionChanged += Update;
+            Selection.selectionChanged += OnSelectionChanged;
             EditorApplication.delayCall += Update;
+        }
+
+        private static void OnSelectionChanged()
+        {
+            PatchUnsafeUnitySelectionHandler();
+            AttachSelectedVisualEffectToOpenWindows();
+            Update();
         }
 
         private static void Update()
         {
+            PatchUnsafeUnitySelectionHandler();
             AttachSelectedHybridToMatchingWindows();
 
             foreach (var window in VFXViewWindow.GetAllWindows())
@@ -103,7 +113,57 @@ namespace UnityEditor.VFX.UI
             }
         }
 
-        private static VisualEffect GetSelectedHybridVisualEffect()
+        private static void AttachSelectedVisualEffectToOpenWindows()
+        {
+            var visualEffect = GetSelectedVisualEffect();
+            if (visualEffect == null)
+            {
+                return;
+            }
+
+            foreach (var window in VFXViewWindow.GetAllWindows())
+            {
+                try
+                {
+                    window.AttachTo(visualEffect);
+                }
+                catch (MissingComponentException)
+                {
+                    return;
+                }
+            }
+        }
+
+        private static void PatchUnsafeUnitySelectionHandler()
+        {
+            var callbacks = Selection.selectionChanged;
+            if (callbacks == null)
+            {
+                return;
+            }
+
+            foreach (var callback in callbacks.GetInvocationList())
+            {
+                if (callback is not Action action)
+                {
+                    continue;
+                }
+
+                if (!string.Equals(action.Method.Name, ON_HIERARCHY_SELECTION_CHANGED_METHOD_NAME, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (!string.Equals(action.Method.DeclaringType?.FullName, ADVANCED_VISUAL_EFFECT_EDITOR_TYPE_NAME, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                Selection.selectionChanged -= action;
+            }
+        }
+
+        private static VisualEffect GetSelectedVisualEffect()
         {
             var selectedGameObject = Selection.activeGameObject;
             if (selectedGameObject == null)
@@ -111,9 +171,23 @@ namespace UnityEditor.VFX.UI
                 return null;
             }
 
-            return GetHybridComponent(selectedGameObject.GetComponent<VisualEffect>()) != null
-                ? selectedGameObject.GetComponent<VisualEffect>()
-                : null;
+            if (!selectedGameObject.TryGetComponent(out VisualEffect visualEffect) || visualEffect == null)
+            {
+                return null;
+            }
+
+            return visualEffect;
+        }
+
+        private static VisualEffect GetSelectedHybridVisualEffect()
+        {
+            var visualEffect = GetSelectedVisualEffect();
+            if (visualEffect == null)
+            {
+                return null;
+            }
+
+            return GetHybridComponent(visualEffect) != null ? visualEffect : null;
         }
 
         private static void OnStop(VFXComponentBoard board)
