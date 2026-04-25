@@ -20,8 +20,8 @@ namespace FireAlt.VFXForge.Editor
         static HybridVisualEffectInspectionTracker()
         {
             Selection.selectionChanged += RequestRebuild;
-            AssemblyReloadEvents.beforeAssemblyReload += RestoreUnityVfxOverlayState;
-            EditorApplication.quitting += RestoreUnityVfxOverlayState;
+            AssemblyReloadEvents.beforeAssemblyReload += RestoreUnityVfxOverlayStateVoid;
+            EditorApplication.quitting += RestoreUnityVfxOverlayStateVoid;
             EditorApplication.delayCall += RequestRebuild;
         }
 
@@ -53,6 +53,8 @@ namespace FireAlt.VFXForge.Editor
 
         internal static void RequestRebuild()
         {
+            UpdateUnityVfxOverlayVisibility(HasImmediateInspectedEffects());
+
             if (_isRebuildQueued)
             {
                 return;
@@ -146,32 +148,62 @@ namespace FireAlt.VFXForge.Editor
             }
         }
 
+        private static bool HasImmediateInspectedEffects()
+        {
+            var selectedGameObjects = Selection.gameObjects;
+            for (var i = 0; i < selectedGameObjects.Length; i++)
+            {
+                if (selectedGameObjects[i] != null && selectedGameObjects[i].TryGetComponent<HybridVisualEffect>(out _))
+                {
+                    return true;
+                }
+            }
+
+            for (var i = 0; i < RegisteredEditors.Count; i++)
+            {
+                var editor = RegisteredEditors[i];
+                if (editor != null && editor.HasInspectedEffect())
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private static void UpdateUnityVfxOverlayVisibility(bool shouldHide)
         {
+            var didChange = false;
             if (shouldHide)
             {
                 if (!_isUnityVfxOverlayHidden)
                 {
                     _isUnityVfxOverlayHidden = true;
-                    SceneView.duringSceneGui += HideUnityVfxOverlay;
+                    SceneView.duringSceneGui += OnSceneGui;
+                    didChange = true;
                 }
 
                 foreach (var sceneView in SceneView.sceneViews.OfType<SceneView>())
                 {
-                    HideUnityVfxOverlay(sceneView);
+                    didChange |= HideUnityVfxOverlay(sceneView);
                 }
-
-                return;
+            }
+            else
+            {
+                didChange = RestoreUnityVfxOverlayState();
             }
 
-            RestoreUnityVfxOverlayState();
+            if (didChange)
+            {
+                SceneView.RepaintAll();
+            }
         }
 
-        private static void HideUnityVfxOverlay(SceneView sceneView)
+        private static bool HideUnityVfxOverlay(SceneView sceneView)
         {
             if (sceneView == null || !sceneView.TryGetOverlay(UNITY_VFX_OVERLAY_ID, out var overlay))
             {
-                return;
+                return false;
             }
 
             if (!HiddenUnityVfxOverlayStates.ContainsKey(sceneView))
@@ -182,31 +214,53 @@ namespace FireAlt.VFXForge.Editor
             if (overlay.displayed)
             {
                 overlay.displayed = false;
+                return true;
             }
+
+            return false;
         }
 
-        private static void RestoreUnityVfxOverlayInOpenViews()
+        private static bool RestoreUnityVfxOverlayInOpenViews()
         {
+            var didChange = false;
             foreach (var pair in HiddenUnityVfxOverlayStates)
             {
                 if (pair.Key != null && pair.Key.TryGetOverlay(UNITY_VFX_OVERLAY_ID, out var overlay) && overlay != null)
                 {
+                    if (overlay.displayed != pair.Value)
+                    {
+                        didChange = true;
+                    }
+
                     overlay.displayed = pair.Value;
                 }
             }
 
             HiddenUnityVfxOverlayStates.Clear();
+            return didChange;
         }
 
-        private static void RestoreUnityVfxOverlayState()
+        private static void RestoreUnityVfxOverlayStateVoid()
         {
+            RestoreUnityVfxOverlayState();
+        }
+        
+        private static bool RestoreUnityVfxOverlayState()
+        {
+            var didChange = false;
             if (_isUnityVfxOverlayHidden)
             {
-                SceneView.duringSceneGui -= HideUnityVfxOverlay;
+                SceneView.duringSceneGui -= OnSceneGui;
                 _isUnityVfxOverlayHidden = false;
+                didChange = true;
             }
 
-            RestoreUnityVfxOverlayInOpenViews();
+            return RestoreUnityVfxOverlayInOpenViews() || didChange;
+        }
+
+        private static void OnSceneGui(SceneView sceneView)
+        {
+            HideUnityVfxOverlay(sceneView);
         }
     }
 }

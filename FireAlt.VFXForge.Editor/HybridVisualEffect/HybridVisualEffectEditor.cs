@@ -183,5 +183,24 @@ namespace FireAlt.VFXForge.Editor
                 }
             }
         }
+
+        internal bool HasInspectedEffect()
+        {
+            var inspectedTargets = targets;
+            if (inspectedTargets == null || inspectedTargets.Length == 0)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < inspectedTargets.Length; i++)
+            {
+                if (inspectedTargets[i] is HybridVisualEffect)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 }
