@@ -30,10 +30,11 @@ namespace FireAlt.VFXForge
         
         private VFXSingleton _singleton;
         private TrackedEntity _trackedEntity = TrackedEntity.Null;
+        private bool _isEditorSelectionActive;
         
         private bool IsPersistent => _vfxDefinition != null && _vfxDefinition.IsPersistent;
         
-        internal bool HasEditorVisualEffect() => _visualEffect != null;
+        internal bool HasEditorVisualEffect() => VisualEffect != null;
         internal bool IsEditorPaused() => HasEditorVisualEffect() && _visualEffect.pause;
         internal float GetEditorPlayRate() => HasEditorVisualEffect() ? _visualEffect.playRate : 1f;
         
@@ -61,10 +62,11 @@ namespace FireAlt.VFXForge
         {
             Kill();
             Spawn();
-            
+             
             EditorApplication.delayCall += () =>
             {
-                if (gameObject.activeInHierarchy && VisualEffect.aliveParticleCount <= 0)
+                var visualEffect = VisualEffect;
+                if (gameObject.activeInHierarchy && visualEffect != null && visualEffect.aliveParticleCount <= 0)
                 {
                     DelayEditorRespawn();
                 }
@@ -167,7 +169,12 @@ namespace FireAlt.VFXForge
         internal void RefreshDataAndReinit()
         {
             SetVFXDataBaker();
-            
+
+            if (!HasEditorVisualEffect())
+            {
+                return;
+            }
+             
             if (!IsDefinitionValid())
             {
                 DeregisterVFX();
@@ -268,6 +275,11 @@ namespace FireAlt.VFXForge
 
         private void ReinitializeVFX()
         {
+            if (!HasEditorVisualEffect())
+            {
+                return;
+            }
+
             _visualEffect.Reinit();
             if (IsPersistent)
             {
@@ -286,45 +298,61 @@ namespace FireAlt.VFXForge
         
         private void SetFocusedBounds()
         {
-            if (_visualEffect.HasVector3(BoundsProperty))
-                _visualEffect.SetVector3(BoundsProperty, focusedBoundsSize * Vector3.one);
-        }
-        
-        internal void OnInspectorOpened()
-        {
-            if (Application.isPlaying || World == null) return;
-            Init(); // Ensure it is initialized
-            VFXDefinition.OnVFXDefinitionChanged += RefreshDataAndReinit;
-            
-            // SetFocusedBounds();
-            // if (gameObject.activeInHierarchy)
-            // {
-            //     EditorPlay();
-            // }
-        }
-
-        
-
-        internal void Playttt()
-        {
-            SetFocusedBounds();
-            if (gameObject.activeInHierarchy)
+            if (HasEditorVisualEffect() && _visualEffect.HasVector3(BoundsProperty))
             {
-                EditorPlay();
+                _visualEffect.SetVector3(BoundsProperty, focusedBoundsSize * Vector3.one);
             }
         }
-
-        internal void OnInspectorClosed()
+        
+        internal void SetEditorSelectionActive(bool isSelected)
         {
-            VFXDefinition.OnVFXDefinitionChanged -= RefreshDataAndReinit;
-            if (Application.isPlaying) return;
+            if (Application.isPlaying)
+            {
+                return;
+            }
 
+            if (isSelected)
+            {
+                if (_isEditorSelectionActive)
+                {
+                    return;
+                }
+
+                Init();
+                if (World == null || !HasEditorVisualEffect())
+                {
+                    return;
+                }
+
+                _isEditorSelectionActive = true;
+                VFXDefinition.OnVFXDefinitionChanged -= RefreshDataAndReinit;
+                VFXDefinition.OnVFXDefinitionChanged += RefreshDataAndReinit;
+
+                SetFocusedBounds();
+                if (gameObject.activeInHierarchy)
+                {
+                    EditorPlay();
+                }
+
+                return;
+            }
+
+            if (!_isEditorSelectionActive)
+            {
+                return;
+            }
+
+            _isEditorSelectionActive = false;
+            VFXDefinition.OnVFXDefinitionChanged -= RefreshDataAndReinit;
             if (gameObject.activeInHierarchy)
             {
                 EditorStop();
             }
-            
         }
+
+        internal void OnInspectorOpened() => SetEditorSelectionActive(true);
+
+        internal void OnInspectorClosed() => SetEditorSelectionActive(false);
     }
 }
 #endif

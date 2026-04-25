@@ -29,7 +29,14 @@ namespace FireAlt.VFXForge
             get => _vfxDefinition;
             set => _vfxDefinition = value;
         }
-        public VisualEffect VisualEffect => _visualEffect;
+        public VisualEffect VisualEffect
+        {
+            get
+            {
+                EnsureVisualEffectReference();
+                return _visualEffect;
+            }
+        }
 
         private static World World => World.DefaultGameObjectInjectionWorld;
         
@@ -77,9 +84,22 @@ namespace FireAlt.VFXForge
             DeregisterVFX();
         }
 
+        private bool EnsureVisualEffectReference()
+        {
+            if (_visualEffect == null)
+            {
+                _visualEffect = GetComponent<VisualEffect>();
+            }
+
+            return _visualEffect != null;
+        }
+
         private void ValidateVFXGraph()
         {
-            if (_visualEffect == null) _visualEffect = GetComponent<VisualEffect>();
+            if (!EnsureVisualEffectReference())
+            {
+                return;
+            }
 
             if (_vfxDefinition != null)
             {
@@ -116,7 +136,10 @@ namespace FireAlt.VFXForge
             if (_entity == Entity.Null || World == null) return;
             World.EntityManager.DestroyEntity(_entity);
             _entity = Entity.Null;
-            _visualEffect.Reinit();
+            if (EnsureVisualEffectReference())
+            {
+                _visualEffect.Reinit();
+            }
             
 #if UNITY_EDITOR
             if (!Application.isPlaying)

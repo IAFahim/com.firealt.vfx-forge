@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using KrasCore.Editor;
-using Unity.Collections;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -17,8 +16,8 @@ namespace FireAlt.VFXForge.Editor
         private const string UNITY_VFX_OVERLAY_ID = "Scene View/Visual Effect";
 
         private static readonly Dictionary<SceneView, bool> HiddenUnityVfxOverlayStates = new();
+        private static bool _isUnityVfxOverlayHidden;
         private static List<HybridVisualEffect> _activeEffects = new();
-        private HybridVisualEffect _targetEffect;
 
         internal static HybridVisualEffect ActiveEffect => _activeEffects.Count > 0 ? _activeEffects[0] : null;
         
@@ -169,70 +168,54 @@ namespace FireAlt.VFXForge.Editor
         static HybridVisualEffectEditor()
         {
             Selection.selectionChanged += ChangeSelection;
+            AssemblyReloadEvents.beforeAssemblyReload += RestoreUnityVfxOverlayState;
+            EditorApplication.quitting += RestoreUnityVfxOverlayState;
+            EditorApplication.delayCall += ChangeSelection;
         }
 
         private static void ChangeSelection()
         {
-            var selected = Selection.gameObjects;
-            for (var i = 0; i < _activeEffects.Count; i++)
+            var selectedEffects = new List<HybridVisualEffect>(Selection.gameObjects.Length);
+            var selectedEffectSet = new HashSet<HybridVisualEffect>();
+            foreach (var gameObject in Selection.gameObjects)
             {
-                var active = _activeEffects[i];
-                var contains = false;
-                foreach (var go in selected)
+                if (gameObject.TryGetComponent(out HybridVisualEffect effect)
+                    && selectedEffectSet.Add(effect))
                 {
-                    if (go == active.gameObject)
-                    {
-                        contains = true;
-                        break;
-                    }
-                }
-                
-                if (!contains)
-                {
-                    active.OnInspectorClosed();
-                    _activeEffects.RemoveAtSwapBack(i);
-                    Triggered.Remove(active.gameObject);
-                    i--;
+                    selectedEffects.Add(effect);
                 }
             }
-            
-            foreach (var gameObject in selected)
+
+            if (_activeEffects.Count == selectedEffects.Count && _activeEffects.SequenceEqual(selectedEffects))
             {
-                if (!Triggered.Contains(gameObject) && gameObject.TryGetComponent(out HybridVisualEffect effect))
+                UpdateUnityVfxOverlayVisibility(_activeEffects.Count > 0);
+                return;
+            }
+
+            var previousEffects = new HashSet<HybridVisualEffect>(_activeEffects);
+            foreach (var activeEffect in _activeEffects)
+            {
+                if (activeEffect == null || !selectedEffectSet.Contains(activeEffect))
                 {
-                    effect.Playttt();
-                    _activeEffects.Add(effect);
-                    Triggered.Add(gameObject);
+                    activeEffect?.OnInspectorClosed();
                 }
             }
+
+            foreach (var selectedEffect in selectedEffects)
+            {
+                if (!previousEffects.Contains(selectedEffect))
+                {
+                    selectedEffect.OnInspectorOpened();
+                }
+            }
+
+            _activeEffects = selectedEffects;
+            UpdateUnityVfxOverlayVisibility(_activeEffects.Count > 0);
         }
 
-        private static readonly HashSet<GameObject> Triggered = new();
-        private static HybridVisualEffect _activeOpen;
-        
         private void OnEnable()
         {
-            _targetEffect = (HybridVisualEffect)target;
-            _activeOpen = _targetEffect;
-            
-            _targetEffect.OnInspectorOpened();
-            
-            SceneView.duringSceneGui += HideUnityVfxOverlay;
-            foreach (var sceneView in SceneView.sceneViews)
-            {
-                HideUnityVfxOverlay((SceneView)sceneView);
-            }
-        }
-
-        private void OnDisable()
-        {
-            if (_activeOpen == _targetEffect)
-            {
-                _activeOpen = null;
-            }
-            
-            SceneView.duringSceneGui -= HideUnityVfxOverlay;
-            RestoreUnityVfxOverlayInOpenViews();
+            ChangeSelection();
         }
 
         private static void HideUnityVfxOverlay(SceneView sceneView)
@@ -253,6 +236,27 @@ namespace FireAlt.VFXForge.Editor
             }
         }
 
+        private static void UpdateUnityVfxOverlayVisibility(bool shouldHide)
+        {
+            if (shouldHide)
+            {
+                if (!_isUnityVfxOverlayHidden)
+                {
+                    _isUnityVfxOverlayHidden = true;
+                    SceneView.duringSceneGui += HideUnityVfxOverlay;
+                }
+
+                foreach (var sceneView in SceneView.sceneViews.OfType<SceneView>())
+                {
+                    HideUnityVfxOverlay(sceneView);
+                }
+
+                return;
+            }
+
+            RestoreUnityVfxOverlayState();
+        }
+
         private static void RestoreUnityVfxOverlayInOpenViews()
         {
             foreach (var pair in HiddenUnityVfxOverlayStates)
@@ -264,6 +268,17 @@ namespace FireAlt.VFXForge.Editor
             }
 
             HiddenUnityVfxOverlayStates.Clear();
+        }
+
+        private static void RestoreUnityVfxOverlayState()
+        {
+            if (_isUnityVfxOverlayHidden)
+            {
+                SceneView.duringSceneGui -= HideUnityVfxOverlay;
+                _isUnityVfxOverlayHidden = false;
+            }
+
+            RestoreUnityVfxOverlayInOpenViews();
         }
     }
 }

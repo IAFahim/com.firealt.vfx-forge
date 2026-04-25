@@ -10,7 +10,8 @@ namespace UnityEditor.VFX.UI
     internal static class HybridVisualEffectVFXControlBridge
     {
         private const string ADVANCED_VISUAL_EFFECT_EDITOR_TYPE_NAME = "UnityEditor.VFX.AdvancedVisualEffectEditor";
-        private const string HybridVisualEffectTypeName = "KrasCore.HybridECS.HybridVisualEffect, KrasCore.HybridECS";
+        private const string HYBRID_VISUAL_EFFECT_FULL_NAME = "FireAlt.VFXForge.HybridVisualEffect";
+        private const string HybridVisualEffectTypeName = HYBRID_VISUAL_EFFECT_FULL_NAME + ", FireAlt.VFXForge";
         private const string ON_HIERARCHY_SELECTION_CHANGED_METHOD_NAME = "OnHierarchySelectionChanged";
         private static readonly object PatchMarker = new();
         private static readonly FieldInfo DebugUIField = typeof(VFXComponentBoard).GetField("m_DebugUI", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -33,7 +34,12 @@ namespace UnityEditor.VFX.UI
         private static void OnSelectionChanged()
         {
             PatchUnsafeUnitySelectionHandler();
-            AttachSelectedVisualEffectToOpenWindows();
+
+            if (GetSelectedHybridVisualEffect() == null)
+            {
+                AttachSelectedVisualEffectToOpenWindows();
+            }
+
             Update();
         }
 
@@ -90,7 +96,7 @@ namespace UnityEditor.VFX.UI
         private static void AttachSelectedHybridToMatchingWindows()
         {
             var visualEffect = GetSelectedHybridVisualEffect();
-            if (visualEffect == null || visualEffect.visualEffectAsset == null)
+            if (!TryGetVisualEffectAsset(visualEffect, out var visualEffectAsset))
             {
                 return;
             }
@@ -98,7 +104,7 @@ namespace UnityEditor.VFX.UI
             foreach (var window in VFXViewWindow.GetAllWindows())
             {
                 var graphView = window?.graphView;
-                if (graphView?.controller?.graph?.visualEffectResource?.asset != visualEffect.visualEffectAsset)
+                if (graphView?.controller?.graph?.visualEffectResource?.asset != visualEffectAsset)
                 {
                     continue;
                 }
@@ -116,20 +122,26 @@ namespace UnityEditor.VFX.UI
         private static void AttachSelectedVisualEffectToOpenWindows()
         {
             var visualEffect = GetSelectedVisualEffect();
-            if (visualEffect == null)
+            if (!TryGetVisualEffectAsset(visualEffect, out var visualEffectAsset))
             {
                 return;
             }
 
             foreach (var window in VFXViewWindow.GetAllWindows())
             {
+                var graphView = window?.graphView;
+                if (graphView != null && graphView.controller?.graph?.visualEffectResource?.asset != visualEffectAsset)
+                {
+                    continue;
+                }
+
                 try
                 {
                     window.AttachTo(visualEffect);
                 }
                 catch (MissingComponentException)
                 {
-                    return;
+                    continue;
                 }
             }
         }
@@ -328,7 +340,7 @@ namespace UnityEditor.VFX.UI
                 {
                     foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
                     {
-                        s_HybridVisualEffectType = assembly.GetType("KrasCore.HybridECS.HybridVisualEffect");
+                        s_HybridVisualEffectType = assembly.GetType(HYBRID_VISUAL_EFFECT_FULL_NAME);
                         if (s_HybridVisualEffectType != null)
                         {
                             break;
@@ -344,6 +356,26 @@ namespace UnityEditor.VFX.UI
         {
             var hybridType = GetHybridVisualEffectType();
             return hybridType?.GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        }
+
+        private static bool TryGetVisualEffectAsset(VisualEffect visualEffect, out VisualEffectAsset visualEffectAsset)
+        {
+            visualEffectAsset = null;
+            if (visualEffect == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                visualEffectAsset = visualEffect.visualEffectAsset;
+            }
+            catch (MissingComponentException)
+            {
+                return false;
+            }
+
+            return visualEffectAsset != null;
         }
 
         private static void NotifyDebug(VFXComponentBoard board, VFXUIDebug.Events debugEvent)
