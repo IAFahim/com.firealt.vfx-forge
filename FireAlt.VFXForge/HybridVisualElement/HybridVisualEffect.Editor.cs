@@ -30,7 +30,7 @@ namespace FireAlt.VFXForge
         
         private VFXSingleton _singleton;
         private TrackedEntity _trackedEntity = TrackedEntity.Null;
-        private bool _isEditorSelectionActive;
+        private bool _isEditorInspectionActive;
         
         private bool IsPersistent => _vfxDefinition != null && _vfxDefinition.IsPersistent;
         
@@ -43,7 +43,7 @@ namespace FireAlt.VFXForge
             if (!Application.isPlaying)
             {
                 Init();
-                if (_entity != Entity.Null && Selection.activeGameObject == gameObject)
+                if (_entity != Entity.Null && _isEditorInspectionActive)
                 {
                     DelayEditorRespawn();
                 }
@@ -150,7 +150,7 @@ namespace FireAlt.VFXForge
             ValidateVFXGraph();
             SetVFXDataBaker();
 
-            if (Selection.activeGameObject == gameObject)
+            if (_isEditorInspectionActive)
             {
                 SetFocusedBounds();
             }
@@ -304,16 +304,16 @@ namespace FireAlt.VFXForge
             }
         }
         
-        internal void SetEditorSelectionActive(bool isSelected)
+        internal void SetEditorInspectionActive(bool isInspected)
         {
             if (Application.isPlaying)
             {
                 return;
             }
 
-            if (isSelected)
+            if (isInspected)
             {
-                if (_isEditorSelectionActive)
+                if (_isEditorInspectionActive)
                 {
                     return;
                 }
@@ -324,7 +324,7 @@ namespace FireAlt.VFXForge
                     return;
                 }
 
-                _isEditorSelectionActive = true;
+                _isEditorInspectionActive = true;
                 VFXDefinition.OnVFXDefinitionChanged -= RefreshDataAndReinit;
                 VFXDefinition.OnVFXDefinitionChanged += RefreshDataAndReinit;
 
@@ -337,12 +337,12 @@ namespace FireAlt.VFXForge
                 return;
             }
 
-            if (!_isEditorSelectionActive)
+            if (!_isEditorInspectionActive)
             {
                 return;
             }
 
-            _isEditorSelectionActive = false;
+            _isEditorInspectionActive = false;
             VFXDefinition.OnVFXDefinitionChanged -= RefreshDataAndReinit;
             if (gameObject.activeInHierarchy)
             {
@@ -350,9 +350,9 @@ namespace FireAlt.VFXForge
             }
         }
 
-        internal void OnInspectorOpened() => SetEditorSelectionActive(true);
+        internal void OnInspectorOpened() => SetEditorInspectionActive(true);
 
-        internal void OnInspectorClosed() => SetEditorSelectionActive(false);
+        internal void OnInspectorClosed() => SetEditorInspectionActive(false);
     }
 }
 #endif

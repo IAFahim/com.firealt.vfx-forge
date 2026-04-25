@@ -12,17 +12,22 @@ namespace UnityEditor.VFX.UI
         private const string ADVANCED_VISUAL_EFFECT_EDITOR_TYPE_NAME = "UnityEditor.VFX.AdvancedVisualEffectEditor";
         private const string HYBRID_VISUAL_EFFECT_FULL_NAME = "FireAlt.VFXForge.HybridVisualEffect";
         private const string HybridVisualEffectTypeName = HYBRID_VISUAL_EFFECT_FULL_NAME + ", FireAlt.VFXForge";
+        private const string INSPECTION_TRACKER_FULL_NAME = "FireAlt.VFXForge.Editor.HybridVisualEffectInspectionTracker";
+        private const string InspectionTrackerTypeName = INSPECTION_TRACKER_FULL_NAME + ", FireAlt.VFXForge.Editor";
         private const string ON_HIERARCHY_SELECTION_CHANGED_METHOD_NAME = "OnHierarchySelectionChanged";
         private static readonly object PatchMarker = new();
         private static readonly FieldInfo DebugUIField = typeof(VFXComponentBoard).GetField("m_DebugUI", BindingFlags.Instance | BindingFlags.NonPublic);
 
         private static Type s_HybridVisualEffectType;
+        private static Type s_InspectionTrackerType;
         private static MethodInfo s_EditorControlStopMethod;
         private static MethodInfo s_EditorControlPlayPauseMethod;
         private static MethodInfo s_EditorControlStepMethod;
         private static MethodInfo s_EditorControlRestartMethod;
         private static MethodInfo s_EditorPlayMethod;
         private static MethodInfo s_EditorStopMethod;
+        private static PropertyInfo s_HybridVisualEffectProperty;
+        private static PropertyInfo s_PrimaryEffectProperty;
 
         static HybridVisualEffectVFXControlBridge()
         {
@@ -35,7 +40,7 @@ namespace UnityEditor.VFX.UI
         {
             PatchUnsafeUnitySelectionHandler();
 
-            if (GetSelectedHybridVisualEffect() == null)
+            if (GetInspectedHybridVisualEffect() == null)
             {
                 AttachSelectedVisualEffectToOpenWindows();
             }
@@ -46,7 +51,7 @@ namespace UnityEditor.VFX.UI
         private static void Update()
         {
             PatchUnsafeUnitySelectionHandler();
-            AttachSelectedHybridToMatchingWindows();
+            AttachInspectedHybridToMatchingWindows();
 
             foreach (var window in VFXViewWindow.GetAllWindows())
             {
@@ -93,9 +98,9 @@ namespace UnityEditor.VFX.UI
             button.userData = PatchMarker;
         }
 
-        private static void AttachSelectedHybridToMatchingWindows()
+        private static void AttachInspectedHybridToMatchingWindows()
         {
-            var visualEffect = GetSelectedHybridVisualEffect();
+            var visualEffect = GetInspectedHybridVisualEffect();
             if (!TryGetVisualEffectAsset(visualEffect, out var visualEffectAsset))
             {
                 return;
@@ -191,14 +196,15 @@ namespace UnityEditor.VFX.UI
             return visualEffect;
         }
 
-        private static VisualEffect GetSelectedHybridVisualEffect()
+        private static VisualEffect GetInspectedHybridVisualEffect()
         {
-            var visualEffect = GetSelectedVisualEffect();
-            if (visualEffect == null)
+            var effect = GetPrimaryInspectedEffect();
+            if (effect == null)
             {
                 return null;
             }
 
+            var visualEffect = GetHybridVisualEffectProperty()?.GetValue(effect) as VisualEffect;
             return GetHybridComponent(visualEffect) != null ? visualEffect : null;
         }
 
@@ -356,6 +362,55 @@ namespace UnityEditor.VFX.UI
         {
             var hybridType = GetHybridVisualEffectType();
             return hybridType?.GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        }
+
+        private static object GetPrimaryInspectedEffect()
+        {
+            var property = GetPrimaryEffectProperty();
+            return property?.GetValue(null);
+        }
+
+        private static PropertyInfo GetPrimaryEffectProperty()
+        {
+            if (s_PrimaryEffectProperty == null)
+            {
+                var trackerType = GetInspectionTrackerType();
+                s_PrimaryEffectProperty = trackerType?.GetProperty("PrimaryEffect", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            }
+
+            return s_PrimaryEffectProperty;
+        }
+
+        private static PropertyInfo GetHybridVisualEffectProperty()
+        {
+            if (s_HybridVisualEffectProperty == null)
+            {
+                var hybridType = GetHybridVisualEffectType();
+                s_HybridVisualEffectProperty = hybridType?.GetProperty("VisualEffect", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            }
+
+            return s_HybridVisualEffectProperty;
+        }
+
+        private static Type GetInspectionTrackerType()
+        {
+            if (s_InspectionTrackerType == null)
+            {
+                s_InspectionTrackerType = Type.GetType(InspectionTrackerTypeName);
+                if (s_InspectionTrackerType == null)
+                {
+                    foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                    {
+                        s_InspectionTrackerType = assembly.GetType(INSPECTION_TRACKER_FULL_NAME);
+                        if (s_InspectionTrackerType != null)
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return s_InspectionTrackerType;
         }
 
         private static bool TryGetVisualEffectAsset(VisualEffect visualEffect, out VisualEffectAsset visualEffectAsset)
