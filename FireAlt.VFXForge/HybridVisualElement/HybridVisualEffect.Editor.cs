@@ -344,7 +344,7 @@ namespace FireAlt.VFXForge
 
             _isEditorInspectionActive = false;
             VFXDefinition.OnVFXDefinitionChanged -= RefreshDataAndReinit;
-            if (gameObject.activeInHierarchy)
+            if (this != null && gameObject.activeInHierarchy)
             {
                 EditorStop();
             }

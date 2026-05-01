@@ -6,7 +6,7 @@ VisualEffectResource:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Sample Spawn Index Buffer (Single)
+  m_Name: '[VFX Forge] Sample Spawn Index Buffer (Single)'
   m_Graph: {fileID: 114350483966674976}
   m_Infos:
     m_RendererSettings:
@@ -29,7 +29,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7d4c867f6b72b714dbb5fd1780afe208, type: 3}
-  m_Name: Sample Spawn Index Buffer (Single)
+  m_Name: '[VFX Forge] Sample Spawn Index Buffer (Single)'
   m_EditorClassIdentifier: 
   m_UIIgnoredErrors: []
   m_Parent: {fileID: 0}
@@ -100,9 +100,9 @@ MonoBehaviour:
   uiBounds:
     serializedVersion: 2
     x: -1125
-    y: 1400
-    width: 973
-    height: 389
+    y: 1401
+    width: 972
+    height: 387
 --- !u!114 &114350483966674978
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -125,7 +125,7 @@ MonoBehaviour:
   - {fileID: 114350483966674979}
   - {fileID: 114350483966674980}
   m_OutputSlots:
-  - {fileID: 114350483966675030}
+  - {fileID: 114350483966675034}
   m_Type:
     m_SerializableType: FireAlt.VFXForge.Data.VFXSpawnIndex, FireAlt.VFXForge.Data,
       Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
@@ -381,7 +381,7 @@ MonoBehaviour:
   m_Nodes:
   - m_Id: 0
     linkedSlots:
-    - outputSlot: {fileID: 114350483966675031}
+    - outputSlot: {fileID: 114350483966675035}
       inputSlot: {fileID: 114350483966675000}
     position: {x: -305.33334, y: 1616.6666}
     expandedSlots: []
@@ -421,7 +421,7 @@ MonoBehaviour:
         PublicKeyToken=b77a5c561934e089
   m_Direction: 0
   m_LinkedSlots:
-  - {fileID: 114350483966675031}
+  - {fileID: 114350483966675035}
 --- !u!114 &114350483966675004
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -640,7 +640,7 @@ MonoBehaviour:
   m_Direction: 1
   m_LinkedSlots:
   - {fileID: 114350483966675019}
---- !u!114 &114350483966675030
+--- !u!114 &114350483966675034
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -655,12 +655,12 @@ MonoBehaviour:
   m_UIIgnoredErrors: []
   m_Parent: {fileID: 0}
   m_Children:
-  - {fileID: 114350483966675031}
-  - {fileID: 114350483966675032}
+  - {fileID: 114350483966675035}
+  - {fileID: 114350483966675036}
   m_UIPosition: {x: 0, y: 0}
   m_UICollapsed: 0
   m_UISuperCollapsed: 0
-  m_MasterSlot: {fileID: 114350483966675030}
+  m_MasterSlot: {fileID: 114350483966675034}
   m_MasterData:
     m_Owner: {fileID: 114350483966674978}
     m_Value:
@@ -676,7 +676,7 @@ MonoBehaviour:
         Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
   m_Direction: 1
   m_LinkedSlots: []
---- !u!114 &114350483966675031
+--- !u!114 &114350483966675035
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -689,12 +689,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.VisualEffectGraph.Editor::UnityEditor.VFX.VFXSlotUint
   m_UIIgnoredErrors: []
-  m_Parent: {fileID: 114350483966675030}
+  m_Parent: {fileID: 114350483966675034}
   m_Children: []
   m_UIPosition: {x: 0, y: 0}
   m_UICollapsed: 1
   m_UISuperCollapsed: 0
-  m_MasterSlot: {fileID: 114350483966675030}
+  m_MasterSlot: {fileID: 114350483966675034}
   m_MasterData:
     m_Owner: {fileID: 0}
     m_Value:
@@ -710,7 +710,7 @@ MonoBehaviour:
   m_Direction: 1
   m_LinkedSlots:
   - {fileID: 114350483966675000}
---- !u!114 &114350483966675032
+--- !u!114 &114350483966675036
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -723,12 +723,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.VisualEffectGraph.Editor::UnityEditor.VFX.VFXSlotUint
   m_UIIgnoredErrors: []
-  m_Parent: {fileID: 114350483966675030}
+  m_Parent: {fileID: 114350483966675034}
   m_Children: []
   m_UIPosition: {x: 0, y: 0}
   m_UICollapsed: 1
   m_UISuperCollapsed: 0
-  m_MasterSlot: {fileID: 114350483966675030}
+  m_MasterSlot: {fileID: 114350483966675034}
   m_MasterData:
     m_Owner: {fileID: 0}
     m_Value:

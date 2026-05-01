@@ -1,11 +1,10 @@
 using BovineLabs.Core.Authoring.EntityCommands;
 using BovineLabs.Core.EntityCommands;
 using BovineLabs.Core.PropertyDrawers;
-using BovineLabs.Quill;
 using FireAlt.VFXForge.Data;
+using KrasCore;
 using KrasCore.Data;
 using KrasCore.Editor;
-using KrasCore.Quill;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -16,7 +15,7 @@ using UnityEngine.Serialization;
 namespace FireAlt.VFXForge.Authoring
 {
     [ExecuteAlways]
-    public class VFXDecalProjector : MonoBehaviourDraw
+    public class VFXDecalProjector : MonoBehaviour
     {
         [Header("References")]
         public VFXDefinition VFXDecalDefinition;
@@ -96,11 +95,12 @@ namespace FireAlt.VFXForge.Authoring
             }
         }
 
-        public override void DrawSelected()
+        private void OnDrawGizmosSelected()
         {
             var globalCenter = (float3)transform.position + transform.rotation * _decalPivot * (float3)transform.lossyScale;
             var globalSize = _decalSize * transform.lossyScale;
-            GlobalDraw.Cuboid(globalCenter, transform.rotation, globalSize, Color.white);
+            Gizmos.color = Color.white;
+            GizmosEx.DrawWireCuboid(globalCenter, transform.rotation, globalSize);
         }
         
         private void BakeComponents(bool resetDecal)

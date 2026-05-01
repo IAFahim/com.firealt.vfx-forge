@@ -1,3 +1,4 @@
+#if TODO
 using BovineLabs.Core.Authoring.LifeCycle;
 using BovineLabs.Reaction.Authoring.Core;
 using FireAlt.VFXForge.Data;
@@ -24,3 +25,4 @@ namespace FireAlt.VFXForge.Authoring
         }
     }
 }
+#endif

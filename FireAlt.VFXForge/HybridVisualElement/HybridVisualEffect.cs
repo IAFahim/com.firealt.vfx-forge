@@ -86,6 +86,7 @@ namespace FireAlt.VFXForge
 
         private bool EnsureVisualEffectReference()
         {
+            if (this == null) return false;
             if (_visualEffect == null)
             {
                 _visualEffect = GetComponent<VisualEffect>();

@@ -1,12 +1,12 @@
 using System;
-using BovineLabs.Core.Groups;
 using FireAlt.VFXForge.Data;
+using KrasCore;
 using Unity.Entities;
 
 namespace FireAlt.VFXForge
 {
     [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
-    [UpdateInGroup(typeof(BeforeSceneSystemGroup), OrderFirst = true)]
+    [UpdateInGroup(typeof(CleanupSystemGroup))]
     public partial class CleanupVFXSystem : SystemBase
     {
         protected override void OnUpdate()
