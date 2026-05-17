@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 5e2f2639e41c46d479ff4248293864db
+VisualEffectImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  template:
+    name: InstantVFX (Array Children)
+    category: VFX Forge
+    description: 
+    icon: {instanceID: 0}
+    thumbnail: {instanceID: 0}
+  useAsTemplate: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
