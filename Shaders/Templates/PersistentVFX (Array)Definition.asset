@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 223a850fe04c4518a29fd69d1a9edf7b, type: 3}
+  m_Name: PersistentVFX (Array)Definition
+  m_EditorClassIdentifier: 
+  key: 5
+  visualEffectAsset: {fileID: 8926484042661614526, guid: d138d476b380aff4fb4a7f126eea9fb8,
+    type: 3}
+  capacity: 396
+  timeoutDuration: 30
+  vfxType: 1
+  vfxDataType: 12987701961278855918
+  vfxArrayDataType: 15058542081110517031
