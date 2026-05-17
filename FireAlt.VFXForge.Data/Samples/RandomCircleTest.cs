@@ -9,6 +9,7 @@ namespace FireAlt.VFXForge.Data
     [Serializable]
     public class RandomCircleTest : VFXArrayDataTypeBaker<Vector3>
     {
+        [Min(0)]
         public int count;
         public float radius;
         public uint seed = 0;

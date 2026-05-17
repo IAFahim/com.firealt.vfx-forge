@@ -28,8 +28,8 @@ namespace FireAlt.VFXForge
         internal UnsafeThreadToListMapper<byte> DataBuffer;
         
         internal UnsafeThreadToListMapper<byte> ArrayDataBuffer;
+        internal UnsafeThreadToListMapper<VFXArraySpawnIndex> ArraySpawnIndexBuffer;
         internal UnsafeThreadToListMapper<VFXArrayPtr> ArrayPtrBuffer;
-        internal UnsafeThreadToListMapper<VFXSpawnIndex> SpawnIndexBuffer;
         
         public int RequestsCount
         {
@@ -143,25 +143,22 @@ namespace FireAlt.VFXForge
         
         private unsafe void SpawnArray(NativeArray<byte> arrayData)
         {
-            ref var arrayPtrs = ref GetThreadList(ArrayPtrBuffer);
             ref var arrayDataBuffer = ref GetThreadList(ArrayDataBuffer);
-            ref var spawnIndexBuffer = ref GetThreadList(SpawnIndexBuffer);
+            ref var arrayPtrBuffer = ref GetThreadList(ArrayPtrBuffer);
+            ref var arraySpawnIndexBuffer = ref GetThreadList(ArraySpawnIndexBuffer);
 
-            var arrayLength = (uint)(arrayData.Length / ArrayDataSizeInBytes);
-            var indexInData = (uint)arrayPtrs.Length;
+            var indexInData = (uint)arrayPtrBuffer.Length;
+            var arrayStartIndex = arrayDataBuffer.Length / ArrayDataSizeInBytes;
+            var arrayLength = arrayData.Length / ArrayDataSizeInBytes;
             
-            arrayPtrs.Add(new VFXArrayPtr
-            {
-                StartIndex = (uint)(arrayDataBuffer.Length / ArrayDataSizeInBytes), Count = arrayLength
-            });
             arrayDataBuffer.AddRange(arrayData.GetUnsafePtr(), arrayData.Length);
-            
-            for (uint i = 0; i < arrayLength; i++)
+            arrayPtrBuffer.Add(new VFXArrayPtr(arrayStartIndex, arrayLength));
+            for (uint indexInArray = 0; indexInArray < arrayLength; indexInArray++)
             {
-                spawnIndexBuffer.Add(new VFXSpawnIndex(indexInData, i));
+                arraySpawnIndexBuffer.Add(new VFXArraySpawnIndex(indexInData, indexInArray));
             }
             
-            PendingRequestsCount.GetUnsafeThreadData(JobsUtility.ThreadIndex).ArrayRequestsCount += (int)arrayLength;
+            PendingRequestsCount.GetUnsafeThreadData(JobsUtility.ThreadIndex).ArrayRequestsCount += arrayLength;
         }
 
         private ref UnsafeList<T> GetThreadList<T>(UnsafeThreadToListMapper<T> mapper) 
@@ -176,7 +173,7 @@ namespace FireAlt.VFXForge
             if (DataBuffer.IsCreated) DataBuffer.Dispose();
             if (ArrayDataBuffer.IsCreated) ArrayDataBuffer.Dispose();
             if (ArrayPtrBuffer.IsCreated) ArrayPtrBuffer.Dispose();
-            if (SpawnIndexBuffer.IsCreated) SpawnIndexBuffer.Dispose();
+            if (ArraySpawnIndexBuffer.IsCreated) ArraySpawnIndexBuffer.Dispose();
         }
     }
 }

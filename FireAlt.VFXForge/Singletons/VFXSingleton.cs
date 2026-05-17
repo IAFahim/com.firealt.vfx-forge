@@ -35,21 +35,19 @@ namespace FireAlt.VFXForge
                 entry.TrackedEntities.Add(trackedEntity);
                 entry.AliveMask.Set(index);
                 
-                if (arrayData.IsCreated)
+                entry.SpawnIndexBuffer.Add(new VFXSpawnIndex((uint)index));
+                if (arrayData.IsCreated && arrayData.Length > 0)
                 {
                     var arrayLength = arrayData.Length / entry.ArrayDataSizeInBytes;
                     entry.ArrayPtrBuffer[trackedEntity.IndexInData] = entry.ArrayDataMemoryBuffer.Allocate(arrayData);
                     
                     for (int i = 0; i < arrayLength; i++)
                     {
-                        entry.SpawnIndexBuffer.Add(new VFXSpawnIndex((uint)index, (uint)i));
+                        entry.ArraySpawnIndexBuffer.Add(new VFXArraySpawnIndex((uint)index, (uint)i));
                     }
                     entry.ArrayRequestsCount += arrayLength;
                 }
-                else
-                {
-                    entry.SpawnIndexBuffer.Add(new VFXSpawnIndex((uint)index, 0));
-                }
+                
                 entry.RequestsCount++;
                 return trackedEntity;
             }
@@ -84,7 +82,7 @@ namespace FireAlt.VFXForge
                 if (entry.ArrayDataMemoryBuffer.IsCreated)
                 {
                     MemoryPtr ptr = entry.ArrayPtrBuffer[index];
-                    if (ptr.IsValid)
+                    if (ptr.IsValid && entry.ArrayDataMemoryBuffer.Contains(ptr))
                     {
                         entry.ArrayDataMemoryBuffer.Free(entry.ArrayPtrBuffer[index]);
                     }

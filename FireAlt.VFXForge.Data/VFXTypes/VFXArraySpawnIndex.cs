@@ -3,18 +3,20 @@ using UnityEngine.VFX;
 namespace FireAlt.VFXForge.Data
 {
     [VFXType(VFXTypeAttribute.Usage.GraphicsBuffer)]
-    public struct VFXSpawnIndex
+    public struct VFXArraySpawnIndex
     {
         public uint IndexInData;
-
-        public VFXSpawnIndex(uint indexInData)
+        public uint IndexInArray;
+        
+        public VFXArraySpawnIndex(uint indexInData, uint indexInArray)
         {
             IndexInData = indexInData;
+            IndexInArray = indexInArray;
         }
         
         public override string ToString()
         {
-            return $"[IndexInData: {IndexInData}]";
+            return $"[IndexInData: {IndexInData}, IndexInArray: {IndexInArray}]";
         }
     }
 }

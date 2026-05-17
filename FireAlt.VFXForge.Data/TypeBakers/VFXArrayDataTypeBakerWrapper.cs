@@ -22,7 +22,7 @@ namespace FireAlt.VFXForge.Data
             if (Baker != null)
             {
                 byteArray = Baker.BakeBytes();
-                if (byteArray.Length > 0)
+                if (byteArray.IsCreated)
                 {
                     return true;
                 }

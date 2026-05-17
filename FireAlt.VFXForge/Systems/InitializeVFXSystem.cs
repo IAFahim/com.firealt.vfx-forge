@@ -70,7 +70,7 @@ namespace FireAlt.VFXForge
                 {
                     entry.ArrayDataBuffer = new UnsafeThreadToListMapper<byte>(256, Allocator.Persistent);
                     entry.ArrayPtrBuffer = new UnsafeThreadToListMapper<VFXArrayPtr>(64, Allocator.Persistent);
-                    entry.SpawnIndexBuffer = new UnsafeThreadToListMapper<VFXSpawnIndex>(64, Allocator.Persistent);
+                    entry.ArraySpawnIndexBuffer = new UnsafeThreadToListMapper<VFXArraySpawnIndex>(64, Allocator.Persistent);
                 }
                 
                 vfxSingleton.InstantVFXGraphEntries.Add(key, entry);
@@ -95,7 +95,6 @@ namespace FireAlt.VFXForge
                 var entry = new PersistentVFXEntry(hybridVisualEffect)
                 {
                     Capacity = definition.capacity,
-                    SpawnIndexBuffer = new UnsafeList<VFXSpawnIndex>(definition.capacity, Allocator.Persistent),
                     TransformBuffer = new UnsafeArray<VFXTransform>(doubleCapacity, Allocator.Persistent),
                     AliveMask = new UnsafeBitMaskRange(doubleCapacity, Allocator.Persistent),
                     TrackedEntities = new UnsafeHashSet<TrackedEntity>(doubleCapacity, Allocator.Persistent),
@@ -108,11 +107,13 @@ namespace FireAlt.VFXForge
                 
                 if (entry.DataSizeInBytes > 0)
                 {
+                    entry.SpawnIndexBuffer = new UnsafeList<VFXSpawnIndex>(doubleCapacity, Allocator.Persistent);
                     entry.DataBuffer = new UnsafeArray<byte>(doubleCapacity * definition.DataGpuSize, Allocator.Persistent);
                     entry.DeferredDataBuffer = new UnsafeArray<byte>(definition.capacity * definition.DataGpuSize, Allocator.Persistent);
                 }
                 if (entry.ArrayDataSizeInBytes > 0)
                 {
+                    entry.ArraySpawnIndexBuffer = new UnsafeList<VFXArraySpawnIndex>(definition.capacity, Allocator.Persistent);
                     entry.ArrayDataMemoryBuffer = new UnsafeHeapMemory(definition.ArrayDataGpuSize, doubleCapacity, Allocator.Persistent);
                     entry.ArrayPtrBuffer = new UnsafeArray<VFXArrayPtr>(doubleCapacity, Allocator.Persistent);
                     entry.DeferredArrayDataBuffer = new UnsafeArray<UnsafeArray<byte>>(definition.capacity, Allocator.Persistent);

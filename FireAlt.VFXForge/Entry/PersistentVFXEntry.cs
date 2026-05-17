@@ -26,6 +26,7 @@ namespace FireAlt.VFXForge
         internal UnsafeThreadToListMapper<byte> SpawnDataBuffer;
         
         internal UnsafeList<VFXSpawnIndex> SpawnIndexBuffer;
+        internal UnsafeList<VFXArraySpawnIndex> ArraySpawnIndexBuffer;
         internal UnsafeArray<VFXTransform> TransformBuffer;
         internal UnsafeBitMaskRange AliveMask;
         internal UnsafeArray<byte> DataBuffer;
@@ -52,6 +53,7 @@ namespace FireAlt.VFXForge
         public void ResetRequestsCount()
         {
             SpawnIndexBuffer.Clear();
+            ArraySpawnIndexBuffer.Clear();
             RequestsCount = 0;
             ArrayRequestsCount = 0;
         }
@@ -201,7 +203,7 @@ namespace FireAlt.VFXForge
                 {
                     array = isDeferred 
                         ? DeferredArrayDataBuffer[index] 
-                        : ArrayDataMemoryBuffer.ArrayAtUnsafe(memPtr);
+                        : ArrayDataMemoryBuffer.Contains(memPtr) ? ArrayDataMemoryBuffer.ArrayAtUnsafe(memPtr) : default;
                     return true;
                 }
             }
@@ -358,6 +360,7 @@ namespace FireAlt.VFXForge
             if (DataBuffer.IsCreated) DataBuffer.Dispose();
             if (ArrayDataMemoryBuffer.IsCreated) ArrayDataMemoryBuffer.Dispose();
             if (ArrayPtrBuffer.IsCreated) ArrayPtrBuffer.Dispose();
+            if (ArraySpawnIndexBuffer.IsCreated) ArraySpawnIndexBuffer.Dispose();
 
             // Deferred
             DeferredTransformBuffer.Dispose();

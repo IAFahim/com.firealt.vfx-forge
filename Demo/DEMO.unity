@@ -251,7 +251,7 @@ VisualEffect:
       m_Array: []
     m_Vector3f:
       m_Array:
-      - m_Value: {x: 4, y: 4, z: 4}
+      - m_Value: {x: 1000000, y: 1000000, z: 1000000}
         m_Name: Bounds
         m_Overridden: 1
     m_Vector4f:
@@ -348,7 +348,7 @@ MonoBehaviour:
     - rid: 1772247117544030455
       type: {class: RandomCircleTest, ns: FireAlt.VFXForge.Data, asm: FireAlt.VFXForge.Data}
       data:
-        count: 400
+        count: 317
         radius: 7.4
         seed: 0
 --- !u!73398921 &293563831
@@ -460,7 +460,7 @@ Transform:
   m_GameObject: {fileID: 293563829}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -8.1, y: 20.2, z: -35.03}
+  m_LocalPosition: {x: 2.37, y: 0, z: 1.62}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1018,7 +1018,7 @@ VisualEffect:
       m_Array: []
     m_Vector3f:
       m_Array:
-      - m_Value: {x: 4, y: 4, z: 4}
+      - m_Value: {x: 1000000, y: 1000000, z: 1000000}
         m_Name: Bounds
         m_Overridden: 1
     m_Vector4f:
@@ -1268,7 +1268,7 @@ VisualEffect:
       m_Array: []
     m_Vector3f:
       m_Array:
-      - m_Value: {x: 4, y: 4, z: 4}
+      - m_Value: {x: 1000000, y: 1000000, z: 1000000}
         m_Name: Bounds
         m_Overridden: 1
     m_Vector4f:

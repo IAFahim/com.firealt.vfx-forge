@@ -15,9 +15,10 @@ namespace FireAlt.VFXForge
         private static readonly ProfilerMarker ArrayDataMarker = new("Set ArrayDataBuffer");
         private static readonly ProfilerMarker ArrayPtrMarker = new("Set ArrayPtrBuffer");
         
-        private GraphicsBuffer _spawnIndexBuffer;
+        private readonly GraphicsBuffer _spawnIndexBuffer;
         private readonly GraphicsBuffer _transformBuffer;
         
+        private GraphicsBuffer _arraySpawnIndexBuffer;
         private readonly GraphicsBuffer _dataBuffer;
         private readonly GraphicsBuffer _arrayPtrBuffer;
         private GraphicsBuffer _arrayDataBuffer;
@@ -25,15 +26,16 @@ namespace FireAlt.VFXForge
         public PersistentVFXGraphicsBuffers(VisualEffect target, int dataGpuSize, int arrayDataGpuSize, int doubleCapacity) 
             : base(target, dataGpuSize, arrayDataGpuSize)
         {
-            CreateGraphicsBuffer(ref _spawnIndexBuffer, VFXProperties.SpawnIndexBuffer, doubleCapacity / 2, UnsafeUtility.SizeOf<VFXSpawnIndex>());
             CreateGraphicsBuffer(ref _transformBuffer, VFXProperties.TransformBuffer, doubleCapacity, UnsafeUtility.SizeOf<VFXTransform>());
             
             if (dataGpuSize != 0)
             {
+                CreateGraphicsBuffer(ref _spawnIndexBuffer, VFXProperties.SpawnIndexBuffer, doubleCapacity, UnsafeUtility.SizeOf<VFXSpawnIndex>());
                 CreateGraphicsBuffer(ref _dataBuffer, VFXProperties.DataBuffer, doubleCapacity, dataGpuSize);
             }
             if (arrayDataGpuSize != 0)
             {
+                CreateGraphicsBuffer(ref _arraySpawnIndexBuffer, VFXProperties.ArraySpawnIndexBuffer, doubleCapacity / 2, UnsafeUtility.SizeOf<VFXArraySpawnIndex>());
                 CreateGraphicsBuffer(ref _arrayPtrBuffer, VFXProperties.ArrayPtrBuffer, doubleCapacity, UnsafeUtility.SizeOf<VFXArrayPtr>());
                 ResizeArrayDataBuffer(4096);
             }
@@ -41,17 +43,24 @@ namespace FireAlt.VFXForge
 
         protected override void CheckHasSharedBuffers()
         {
-            CheckHasBuffer(VFXProperties.SpawnIndexBuffer);
             CheckHasBuffer(VFXProperties.TransformBuffer);
         }
         
         protected override void CheckHasDataBuffers()
         {
+            if (ArrayDataGpuSize == 0)
+            {
+                CheckHasBuffer(VFXProperties.SpawnIndexBuffer);
+            }
             CheckHasBuffer(VFXProperties.DataBuffer);
         }
 
         protected override void CheckHasArrayDataBuffers()
         {
+            if (DataGpuSize == 0)
+            {
+                CheckHasBuffer(VFXProperties.ArraySpawnIndexBuffer);
+            }
             CheckHasBuffer(VFXProperties.ArrayDataBuffer);
             CheckHasBuffer(VFXProperties.ArrayPtrBuffer);
         }
@@ -66,10 +75,18 @@ namespace FireAlt.VFXForge
             SetBuffer(_dataBuffer, data.AsNativeArray(), uploadRange.Expand(DataGpuSize), DataMarker);
         }
         
-        public void SetIndexBuffer(UnsafeList<VFXSpawnIndex> data)
+        public void SetIndexBuffers(UnsafeList<VFXSpawnIndex> spawnIndices, UnsafeList<VFXArraySpawnIndex> arraySpawnIndices)
         {
-            ResizeBuffer<VFXSpawnIndex>(Target, ref _spawnIndexBuffer, VFXProperties.SpawnIndexBuffer, data.Length);
-            SetBuffer(_spawnIndexBuffer, data.AsNativeArray(), new UploadRange(0, data.Length), SpawnIndexMarker);
+            if (spawnIndices.IsCreated)
+            {
+                SetBuffer(_spawnIndexBuffer, spawnIndices.AsNativeArray(), new UploadRange(0, spawnIndices.Length), SpawnIndexMarker);
+            }
+
+            if (arraySpawnIndices.IsCreated)
+            {
+                ResizeBuffer<VFXArraySpawnIndex>(Target, ref _arraySpawnIndexBuffer, VFXProperties.ArraySpawnIndexBuffer, arraySpawnIndices.Length);
+                SetBuffer(_arraySpawnIndexBuffer, arraySpawnIndices.AsNativeArray(), new UploadRange(0, arraySpawnIndices.Length), SpawnIndexMarker);
+            }
         }
         
         public void SetArrayDataBuffer(in UnsafeHeapMemory data, UnsafeArray<VFXArrayPtr> arrayPtrs, 
@@ -90,9 +107,12 @@ namespace FireAlt.VFXForge
         
         public override void Dispose()
         {
-            _spawnIndexBuffer.Dispose();
             _transformBuffer.Dispose();
+            
+            _spawnIndexBuffer?.Dispose();
             _dataBuffer?.Dispose();
+            
+            _arraySpawnIndexBuffer?.Dispose();
             _arrayDataBuffer?.Dispose();
             _arrayPtrBuffer?.Dispose();
         }

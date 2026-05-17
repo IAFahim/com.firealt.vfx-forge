@@ -129,10 +129,10 @@ namespace FireAlt.VFXForge
                 }
                 if (entry.ArrayDataSizeInBytes > 0)
                 {
-                    graphicsBuffers.SetArrayDataBuffer(entry.ArrayDataBuffer.List, entry.ArrayPtrBuffer.List, entry.SpawnIndexBuffer.List);
+                    graphicsBuffers.SetArrayDataBuffer(entry.ArrayDataBuffer.List, entry.ArrayPtrBuffer.List, entry.ArraySpawnIndexBuffer.List);
                     entry.ArrayDataBuffer.Clear();
                     entry.ArrayPtrBuffer.Clear();
-                    entry.SpawnIndexBuffer.Clear();
+                    entry.ArraySpawnIndexBuffer.Clear();
                 }
                 
                 entry.ResetRequestsCount();
@@ -172,7 +172,7 @@ namespace FireAlt.VFXForge
                 }
 
                 if (entry.RequestsCount == 0 && entry.ArrayRequestsCount == 0) continue;
-                graphicsBuffers.SetIndexBuffer(entry.SpawnIndexBuffer);
+                graphicsBuffers.SetIndexBuffers(entry.SpawnIndexBuffer, entry.ArraySpawnIndexBuffer);
                 entry.ResetRequestsCount();
             }
             Profiler.EndSample();
@@ -320,7 +320,7 @@ namespace FireAlt.VFXForge
                 if (entry.ArrayDataSizeInBytes > 0)
                 {
                     entry.ArrayDataBuffer.CopyParallelToList();
-                    entry.SpawnIndexBuffer.CopyParallelToList();
+                    entry.ArraySpawnIndexBuffer.CopyParallelToList();
                     
                     var arrayPtrBuffer = entry.ArrayPtrBuffer.ThreadList;
                     uint offset = 0;
