@@ -34,8 +34,11 @@ namespace FireAlt.VFXForge
                 entry.TransformBuffer[index] = transform;
                 entry.TrackedEntities.Add(trackedEntity);
                 entry.AliveMask.Set(index);
-                
-                entry.SpawnIndexBuffer.Add(new VFXSpawnIndex((uint)index));
+
+                if (entry.SpawnIndexBuffer.IsCreated)
+                {
+                    entry.SpawnIndexBuffer.Add(new VFXSpawnIndex((uint)index));
+                }
                 if (arrayData.IsCreated && arrayData.Length > 0)
                 {
                     var arrayLength = arrayData.Length / entry.ArrayDataSizeInBytes;

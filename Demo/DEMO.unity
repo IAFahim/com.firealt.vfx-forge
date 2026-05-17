@@ -251,7 +251,7 @@ VisualEffect:
       m_Array: []
     m_Vector3f:
       m_Array:
-      - m_Value: {x: 1000000, y: 1000000, z: 1000000}
+      - m_Value: {x: 4, y: 4, z: 4}
         m_Name: Bounds
         m_Overridden: 1
     m_Vector4f:
@@ -1018,7 +1018,7 @@ VisualEffect:
       m_Array: []
     m_Vector3f:
       m_Array:
-      - m_Value: {x: 1000000, y: 1000000, z: 1000000}
+      - m_Value: {x: 4, y: 4, z: 4}
         m_Name: Bounds
         m_Overridden: 1
     m_Vector4f:
@@ -1268,7 +1268,7 @@ VisualEffect:
       m_Array: []
     m_Vector3f:
       m_Array:
-      - m_Value: {x: 1000000, y: 1000000, z: 1000000}
+      - m_Value: {x: 4, y: 4, z: 4}
         m_Name: Bounds
         m_Overridden: 1
     m_Vector4f:
@@ -1339,7 +1339,7 @@ Transform:
   m_GameObject: {fileID: 1379240812}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 4.22, y: 1.288, z: -8.58}
+  m_LocalPosition: {x: 2.28, y: 1.288, z: -13.72}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

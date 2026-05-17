@@ -262,7 +262,7 @@ MonoBehaviour:
   - {fileID: 5371698745253816930, guid: f80e72e9f26589e44adf105433744f77, type: 3}
   - {fileID: 5371698745253816930, guid: 70e8a883e5358ea4588956d3c5af0f95, type: 3}
   - {fileID: 5371698748595113096, guid: 23c7e89218cc8af4b935642262716352, type: 3}
-  - {fileID: 5371698745253816930, guid: e7f617d9d9f0f0647bc255da55e497a5, type: 3}
+  - {fileID: 0}
   m_CategoryPath: 
 --- !u!2058629511 &8926484042661614527
 VisualEffectResource:
@@ -6220,8 +6220,8 @@ MonoBehaviour:
   m_UICollapsed: 0
   m_UISuperCollapsed: 0
   m_InputSlots:
-  - {fileID: 8926484042661617119}
   - {fileID: 8926484042661617157}
+  - {fileID: 8926484042661617119}
   - {fileID: 8926484042661617120}
   m_OutputSlots: []
   m_Disabled: 0

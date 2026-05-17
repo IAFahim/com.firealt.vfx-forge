@@ -56,7 +56,7 @@ MonoBehaviour:
   - {fileID: 12}
   - {fileID: 13}
   m_ParameterInfo:
-  - name: ArrayPtrBuffer
+  - name: ArraySpawnIndexBuffer
     path: 
     tooltip: 
     space: -1
@@ -71,7 +71,7 @@ MonoBehaviour:
     max: Infinity
     enumValues: []
     descendantCount: 0
-  - name: ArraySpawnIndexBuffer
+  - name: ArrayPtrBuffer
     path: 
     tooltip: 
     space: -1
@@ -741,7 +741,7 @@ MonoBehaviour:
   - {fileID: 36}
   m_ExposedName: ArrayPtrBuffer
   m_Exposed: 1
-  m_Order: 0
+  m_Order: 1
   m_Category: 
   m_Min:
     m_Type:
@@ -822,7 +822,7 @@ MonoBehaviour:
   - {fileID: 38}
   m_ExposedName: ArraySpawnIndexBuffer
   m_Exposed: 1
-  m_Order: 1
+  m_Order: 0
   m_Category: 
   m_Min:
     m_Type:

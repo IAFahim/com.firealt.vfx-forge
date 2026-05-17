@@ -14,7 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   groupInfos: []
   stickyNoteInfos: []
-  categories: []
+  categories:
+  - name: Internal
+    collapsed: 0
   uiBounds:
     serializedVersion: 2
     x: 375
@@ -53,6 +55,21 @@ MonoBehaviour:
   m_UIInfos: {fileID: 114340500867371532}
   m_CustomAttributes: []
   m_ParameterInfo:
+  - name: Internal
+    path: 
+    tooltip: 
+    space: -1
+    spaceable: 0
+    sheetType: 
+    realType: 
+    defaultValue:
+      m_Type:
+        m_SerializableType: 
+      m_SerializableObject: 
+    min: -Infinity
+    max: Infinity
+    enumValues: []
+    descendantCount: 0
   - name: SpawnArrayRequestsCount
     path: SpawnArrayRequestsCount
     tooltip: 
@@ -135,7 +152,7 @@ MonoBehaviour:
   m_ResourceVersion: 1
   m_SubgraphDependencies:
   - {fileID: 5371698748595113096, guid: 23c7e89218cc8af4b935642262716352, type: 3}
-  - {fileID: 5371698745253816930, guid: e7f617d9d9f0f0647bc255da55e497a5, type: 3}
+  - {fileID: 0}
   m_CategoryPath: 
 --- !u!2058629511 &8926484042661614527
 VisualEffectResource:
@@ -336,7 +353,7 @@ MonoBehaviour:
   m_ExposedName: SpawnArrayRequestsCount
   m_Exposed: 1
   m_Order: 0
-  m_Category: 
+  m_Category: Internal
   m_Min:
     m_Type:
       m_SerializableType: 
@@ -841,7 +858,7 @@ MonoBehaviour:
   m_ExposedName: Bounds
   m_Exposed: 1
   m_Order: 1
-  m_Category: 
+  m_Category: Internal
   m_Min:
     m_Type:
       m_SerializableType: 
@@ -1331,7 +1348,7 @@ MonoBehaviour:
   m_ExposedName: ArrayDataBuffer
   m_Exposed: 1
   m_Order: 2
-  m_Category: 
+  m_Category: Internal
   m_Min:
     m_Type:
       m_SerializableType: 
@@ -1412,7 +1429,7 @@ MonoBehaviour:
   m_ExposedName: ArrayPtrBuffer
   m_Exposed: 1
   m_Order: 3
-  m_Category: 
+  m_Category: Internal
   m_Min:
     m_Type:
       m_SerializableType: 
@@ -2165,7 +2182,7 @@ MonoBehaviour:
   m_ExposedName: ArraySpawnIndexBuffer
   m_Exposed: 1
   m_Order: 4
-  m_Category: 
+  m_Category: Internal
   m_Min:
     m_Type:
       m_SerializableType: 
@@ -2570,8 +2587,8 @@ MonoBehaviour:
   m_UICollapsed: 0
   m_UISuperCollapsed: 0
   m_InputSlots:
-  - {fileID: 8926484042661615422}
   - {fileID: 8926484042661615428}
+  - {fileID: 8926484042661615422}
   - {fileID: 8926484042661615423}
   m_OutputSlots: []
   m_Disabled: 0
