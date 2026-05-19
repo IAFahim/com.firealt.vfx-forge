@@ -329,16 +329,13 @@ namespace FireAlt.VFXForge
                     {
                         var pointers = arrayPtrBuffer.GetUnsafeList(thread);
                         uint count = 0;
-
-                        if (offset != 0)
+                        
+                        for (int i = 0; i < pointers.Length; i++)
                         {
-                            for (int i = 0; i < pointers.Length; i++)
-                            {
-                                ref var pointer = ref pointers.ElementAt(i);
-                                
-                                pointer.StartIndex += offset;
-                                count += pointer.Count;
-                            }
+                            ref var pointer = ref pointers.ElementAt(i);
+                            
+                            pointer.StartIndex += offset;
+                            count += pointer.Count;
                         }
                         offset += count;
                     }
