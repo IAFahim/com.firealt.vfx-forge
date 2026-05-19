@@ -321,50 +321,41 @@ namespace FireAlt.VFXForge
                 {
                     entry.ArrayDataBuffer.CopyParallelToList();
                     
-                    RemapArraySpawnIndices(ref entry);
-                    RemapArrayPtrs(ref entry);
+                    RemapIndices(ref entry);
 
-                    entry.ArraySpawnIndexBuffer.CopyParallelToList();
                     entry.ArrayPtrBuffer.CopyParallelToList();
+                    entry.ArraySpawnIndexBuffer.CopyParallelToList();
                 }
             }
-
-            private static void RemapArraySpawnIndices(ref InstantVFXEntry entry)
-            {
-                var arraySpawnIndexBuffer = entry.ArraySpawnIndexBuffer.ThreadList;
-                uint offset = 0;
-                    
-                for (int thread = 0; thread < JobsUtility.ThreadIndexCount; thread++)
-                {
-                    var indices = arraySpawnIndexBuffer.GetUnsafeList(thread);
-                        
-                    for (int i = 0; i < indices.Length; i++)
-                    {
-                        ref var indexData = ref indices.ElementAt(i);
-                        indexData.IndexInData += offset;
-                    }
-                    offset += (uint)indices.Length;
-                }
-            }
-
-            private static void RemapArrayPtrs(ref InstantVFXEntry entry)
+            
+            private static void RemapIndices(ref InstantVFXEntry entry)
             {
                 var arrayPtrBuffer = entry.ArrayPtrBuffer.ThreadList;
-                uint offset = 0;
+                var arraySpawnIndexBuffer = entry.ArraySpawnIndexBuffer.ThreadList;
+                uint indexInDataOffset = 0;
+                uint ptrOffset = 0;
                     
                 for (int thread = 0; thread < JobsUtility.ThreadIndexCount; thread++)
                 {
                     var pointers = arrayPtrBuffer.GetUnsafeList(thread);
-                    uint count = 0;
-                        
+                    var indices = arraySpawnIndexBuffer.GetUnsafeList(thread);
+                    uint elementCount = 0;
+                    
                     for (int i = 0; i < pointers.Length; i++)
                     {
                         ref var pointer = ref pointers.ElementAt(i);
                             
-                        pointer.StartIndex += offset;
-                        count += pointer.Count;
+                        pointer.StartIndex += ptrOffset;
+                        elementCount += pointer.Count;
                     }
-                    offset += count;
+                    for (int i = 0; i < indices.Length; i++)
+                    {
+                        ref var indexData = ref indices.ElementAt(i);
+                        indexData.IndexInData += indexInDataOffset;
+                    }
+
+                    ptrOffset += elementCount;
+                    indexInDataOffset += (uint)pointers.Length;
                 }
             }
         }
