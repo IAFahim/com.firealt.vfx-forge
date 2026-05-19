@@ -1,5 +1,7 @@
 using System;
+using System.Diagnostics;
 using FireAlt.VFXForge.Data;
+using JetBrains.Annotations;
 using KrasCore;
 using Unity.Assertions;
 using Unity.Collections;
@@ -116,14 +118,14 @@ namespace FireAlt.VFXForge
 
             public ref InstantVFXEntry GetInstant(in VFXKey key)
             {
-                Assert.IsTrue(_instantVFXGraphEntries.ContainsKey(key), $"Instant VFX Graph Entries does not contain {key}. The VFX was not yet registered.");
+                CheckContainsInstant(_instantVFXGraphEntries, key);
                 ref var entry = ref _instantVFXGraphEntries.GetValueAsRef(key);
                 return ref entry;
             }
             
             public ref PersistentVFXEntry GetPersistent(in VFXKey key)
             {
-                Assert.IsTrue(_persistentVFXGraphEntries.ContainsKey(key), $"Persistent VFX Graph Entries does not contain {key}. The VFX was not yet registered.");
+                CheckContainsPersistent(_persistentVFXGraphEntries, key);
                 ref var entry = ref _persistentVFXGraphEntries.GetValueAsRef(key);
                 return ref entry;
             }
@@ -165,14 +167,14 @@ namespace FireAlt.VFXForge
 
         public ref InstantVFXEntry GetInstant(in VFXKey key)
         {
-            Assert.IsTrue(InstantVFXGraphEntries.ContainsKey(key), $"Instant VFX Graph Entries does not contain {key}. The VFX was not yet registered.");
+            CheckContainsInstant(InstantVFXGraphEntries, key);
             ref var entry = ref InstantVFXGraphEntries.GetValueAsRef(key);
             return ref entry;
         }
         
         public ref PersistentVFXEntry GetPersistent(in VFXKey key)
         {
-            Assert.IsTrue(PersistentVFXGraphEntries.ContainsKey(key), $"Persistent VFX Graph Entries does not contain {key}. The VFX was not yet registered.");
+            CheckContainsPersistent(PersistentVFXGraphEntries, key);
             ref var entry = ref PersistentVFXGraphEntries.GetValueAsRef(key);
             return ref entry;
         }
@@ -197,6 +199,28 @@ namespace FireAlt.VFXForge
                 pair.Value.Dispose();
             }
             PersistentVFXGraphEntries.Dispose();
+        }
+        
+        [AssertionMethod]
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        [Conditional("UNITY_DOTS_DEBUG")]
+        private static void CheckContainsInstant(NativeHashMap<VFXKey, InstantVFXEntry> hashMap, VFXKey key)
+        {
+            if (!hashMap.ContainsKey(key))
+            {
+                throw new ArgumentException($"Instant VFX Graph Entries does not contain {key}. The VFX was not yet registered.");
+            }
+        }
+
+        [AssertionMethod]
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        [Conditional("UNITY_DOTS_DEBUG")]
+        private static void CheckContainsPersistent(NativeHashMap<VFXKey, PersistentVFXEntry> hashMap, VFXKey key)
+        {
+            if (!hashMap.ContainsKey(key))
+            {
+                throw new ArgumentException($"Persistent VFX Graph Entries does not contain {key}. The VFX was not yet registered.");
+            }
         }
     }
 }

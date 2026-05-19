@@ -6,7 +6,7 @@ VisualEffectResource:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: '[VFX Forge] Initialize Persistent Particle (With Array Data)'
+  m_Name: '[VFX Forge] Initialize Persistent Particle (With Array)'
   m_Graph: {fileID: 2}
   m_Infos:
     m_RendererSettings:
@@ -29,7 +29,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7d4c867f6b72b714dbb5fd1780afe208, type: 3}
-  m_Name: '[VFX Forge] Initialize Persistent Particle (With Array Data)'
+  m_Name: '[VFX Forge] Initialize Persistent Particle (With Array)'
   m_EditorClassIdentifier: 
   m_UIIgnoredErrors: []
   m_Parent: {fileID: 0}
@@ -54,7 +54,7 @@ MonoBehaviour:
   - {fileID: 11}
   - {fileID: 12}
   m_ParameterInfo:
-  - name: SpawnIndexBuffer
+  - name: ArrayPtrBuffer
     path: 
     tooltip: 
     space: -1
@@ -69,7 +69,7 @@ MonoBehaviour:
     max: Infinity
     enumValues: []
     descendantCount: 0
-  - name: ArrayPtrBuffer
+  - name: SpawnIndexBuffer
     path: 
     tooltip: 
     space: -1
@@ -590,7 +590,7 @@ MonoBehaviour:
   - {fileID: 36}
   m_ExposedName: ArrayPtrBuffer
   m_Exposed: 1
-  m_Order: 1
+  m_Order: 0
   m_Category: 
   m_Min:
     m_Type:
@@ -671,7 +671,7 @@ MonoBehaviour:
   - {fileID: 38}
   m_ExposedName: SpawnIndexBuffer
   m_Exposed: 1
-  m_Order: 0
+  m_Order: 1
   m_Category: 
   m_Min:
     m_Type:

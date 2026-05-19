@@ -6982,8 +6982,8 @@ MonoBehaviour:
   m_UICollapsed: 0
   m_UISuperCollapsed: 0
   m_InputSlots:
-  - {fileID: 8926484042661617161}
   - {fileID: 8926484042661617162}
+  - {fileID: 8926484042661617161}
   - {fileID: 8926484042661617163}
   m_OutputSlots: []
   m_Disabled: 0
