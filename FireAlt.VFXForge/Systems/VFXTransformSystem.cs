@@ -10,7 +10,7 @@ using Unity.Transforms;
 namespace FireAlt.VFXForge
 {
     [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
-    [UpdateInGroup(typeof(UpdateVFXSystemGroup), OrderFirst = true)]
+    [UpdateInGroup(typeof(UpdateVFXSystemGroup))]
     public partial struct VFXTransformSystem : ISystem
     {
         [BurstCompile]

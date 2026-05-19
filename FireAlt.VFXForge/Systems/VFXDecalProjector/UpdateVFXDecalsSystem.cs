@@ -9,7 +9,7 @@ using UnityEngine;
 namespace FireAlt.VFXForge
 {
     [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
-    [UpdateInGroup(typeof(UpdateVFXSystemGroup))]
+    [UpdateInGroup(typeof(BeforeVFXTransformSystemGroup))]
     [BurstCompile]
     public partial struct UpdateVFXDecalsSystem : ISystem
     {
