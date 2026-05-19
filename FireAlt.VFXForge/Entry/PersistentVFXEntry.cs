@@ -76,7 +76,7 @@ namespace FireAlt.VFXForge
             var nextIndex = Interlocked.Increment(ref NextIndex);
             
             var trackedEntity = new TrackedEntity(entityToTrack, -1, 0);
-            if (nextIndex >= Capacity) 
+            if (nextIndex > Capacity) 
                 return trackedEntity;
             
             trackedEntity.IndexInData = nextIndex - 1;
@@ -198,12 +198,16 @@ namespace FireAlt.VFXForge
         {
             if (TryResolveDataIndex(trackedEntity, out var index, out var isDeferred))
             {
-                MemoryPtr memPtr = ArrayPtrBuffer[index];
-                if (memPtr.IsValid)
+                if (isDeferred)
                 {
-                    array = isDeferred 
-                        ? DeferredArrayDataBuffer[index] 
-                        : ArrayDataMemoryBuffer.Contains(memPtr) ? ArrayDataMemoryBuffer.ArrayAtUnsafe(memPtr) : default;
+                    array = DeferredArrayDataBuffer[index];
+                    return true;
+                }
+
+                MemoryPtr memPtr = ArrayPtrBuffer[index];
+                if (memPtr.IsValid && ArrayDataMemoryBuffer.Contains(memPtr))
+                {
+                    array = ArrayDataMemoryBuffer.ArrayAtUnsafe(memPtr);
                     return true;
                 }
             }
