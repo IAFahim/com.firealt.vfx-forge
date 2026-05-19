@@ -1,17 +1,16 @@
 {
     "name": "FireAlt.VFXForge.Data",
-    "rootNamespace": "",
+    "rootNamespace": "FireAlt.VFXForge.Data",
     "references": [
         "BovineLabs.Core",
-        "BovineLabs.Core.Extensions",
         "Unity.Burst",
         "Unity.Collections",
         "Unity.Entities",
         "Unity.Entities.Hybrid",
         "Unity.Mathematics",
         "Unity.Mathematics.Extensions",
-        "KrasCore",
-        "Unity.VisualEffectGraph.Runtime"
+        "Unity.VisualEffectGraph.Runtime",
+        "KrasCore"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],

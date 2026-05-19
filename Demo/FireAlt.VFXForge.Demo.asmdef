@@ -2,8 +2,6 @@
     "name": "FireAlt.VFXForge.Demo",
     "rootNamespace": "FireAlt.VFXForge.Demo",
     "references": [
-        "BovineLabs.Core",
-        "BovineLabs.Core.Extensions",
         "Unity.Burst",
         "Unity.Collections",
         "Unity.Entities",
@@ -12,9 +10,9 @@
         "Unity.Mathematics.Extensions",
         "FireAlt.VFXForge.Data",
         "FireAlt.VFXForge",
-        "KrasCore",
+        "Unity.Transforms",
         "Unity.VisualEffectGraph.Runtime",
-        "Unity.Transforms"
+        "KrasCore"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

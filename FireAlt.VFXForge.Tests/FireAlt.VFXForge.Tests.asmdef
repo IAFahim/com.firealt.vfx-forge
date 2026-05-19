@@ -3,7 +3,6 @@
     "rootNamespace": "FireAlt.VFXForge.Tests",
     "references": [
         "BovineLabs.Core",
-        "BovineLabs.Core.Extensions",
         "BovineLabs.Testing",
         "Unity.Burst",
         "Unity.Collections",
@@ -12,10 +11,10 @@
         "Unity.Mathematics",
         "Unity.Mathematics.Extensions",
         "Unity.PerformanceTesting",
+        "Unity.Transforms",
         "FireAlt.VFXForge",
         "FireAlt.VFXForge.Data",
-        "KrasCore",
-        "Unity.Transforms"
+        "KrasCore"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

@@ -4,20 +4,16 @@
     "references": [
         "BovineLabs.Core",
         "BovineLabs.Core.Authoring",
-        "BovineLabs.Core.Extensions",
-        "BovineLabs.Core.Extensions.Authoring",
         "Unity.Burst",
         "Unity.Collections",
         "Unity.Entities",
         "Unity.Entities.Hybrid",
         "Unity.Mathematics",
         "Unity.Mathematics.Extensions",
+        "Unity.Transforms",
         "FireAlt.VFXForge.Data",
         "KrasCore",
-        "KrasCore.Editor",
-        "BovineLabs.Reaction.Authoring",
-        "BovineLabs.Quill",
-        "Unity.Transforms"
+        "KrasCore.Editor"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],

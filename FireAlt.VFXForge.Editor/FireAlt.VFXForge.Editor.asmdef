@@ -4,8 +4,6 @@
     "references": [
         "BovineLabs.Core",
         "BovineLabs.Core.Editor",
-        "BovineLabs.Core.Extensions",
-        "BovineLabs.Core.Extensions.Editor",
         "Unity.Burst",
         "Unity.Collections",
         "Unity.Entities",
