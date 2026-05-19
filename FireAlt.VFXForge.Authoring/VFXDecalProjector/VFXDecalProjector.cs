@@ -129,6 +129,8 @@ namespace FireAlt.VFXForge.Authoring
         private static void SetupDecalProjector<T>(ref T commands, VFXDecalProjector authoring, Entity entity, bool resetDecal)
             where T : IEntityCommands
         {
+            if (authoring.VFXDecalDefinition == null || authoring.Sprite == null) return;
+            
             commands.AddComponent(entity, new DecalProjectorData
             {
                 SpriteProperties = new SpriteProperties(authoring._sprite),
