@@ -320,27 +320,51 @@ namespace FireAlt.VFXForge
                 if (entry.ArrayDataSizeInBytes > 0)
                 {
                     entry.ArrayDataBuffer.CopyParallelToList();
+                    
+                    RemapArraySpawnIndices(ref entry);
+                    RemapArrayPtrs(ref entry);
+
                     entry.ArraySpawnIndexBuffer.CopyParallelToList();
-                    
-                    var arrayPtrBuffer = entry.ArrayPtrBuffer.ThreadList;
-                    uint offset = 0;
-                    
-                    for (int thread = 0; thread < JobsUtility.ThreadIndexCount; thread++)
-                    {
-                        var pointers = arrayPtrBuffer.GetUnsafeList(thread);
-                        uint count = 0;
-                        
-                        for (int i = 0; i < pointers.Length; i++)
-                        {
-                            ref var pointer = ref pointers.ElementAt(i);
-                            
-                            pointer.StartIndex += offset;
-                            count += pointer.Count;
-                        }
-                        offset += count;
-                    }
-                    
                     entry.ArrayPtrBuffer.CopyParallelToList();
+                }
+            }
+
+            private static void RemapArraySpawnIndices(ref InstantVFXEntry entry)
+            {
+                var arraySpawnIndexBuffer = entry.ArraySpawnIndexBuffer.ThreadList;
+                uint offset = 0;
+                    
+                for (int thread = 0; thread < JobsUtility.ThreadIndexCount; thread++)
+                {
+                    var indices = arraySpawnIndexBuffer.GetUnsafeList(thread);
+                        
+                    for (int i = 0; i < indices.Length; i++)
+                    {
+                        ref var indexData = ref indices.ElementAt(i);
+                        indexData.IndexInData += offset;
+                    }
+                    offset += (uint)indices.Length;
+                }
+            }
+
+            private static void RemapArrayPtrs(ref InstantVFXEntry entry)
+            {
+                var arrayPtrBuffer = entry.ArrayPtrBuffer.ThreadList;
+                uint offset = 0;
+                    
+                for (int thread = 0; thread < JobsUtility.ThreadIndexCount; thread++)
+                {
+                    var pointers = arrayPtrBuffer.GetUnsafeList(thread);
+                    uint count = 0;
+                        
+                    for (int i = 0; i < pointers.Length; i++)
+                    {
+                        ref var pointer = ref pointers.ElementAt(i);
+                            
+                        pointer.StartIndex += offset;
+                        count += pointer.Count;
+                    }
+                    offset += count;
                 }
             }
         }
