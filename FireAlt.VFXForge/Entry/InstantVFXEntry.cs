@@ -1,7 +1,7 @@
 using System;
-using BovineLabs.Core.Extensions;
 using FireAlt.VFXForge.Data;
 using KrasCore;
+using Unity.Assertions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -112,6 +112,7 @@ namespace FireAlt.VFXForge
         
         public unsafe void SpawnUnsafe(byte* spawnData, NativeArray<byte> arrayData = default)
         {
+            Assert.IsTrue(spawnData != null);
             SpawnBase();
             if (arrayData.IsCreated)
             {
