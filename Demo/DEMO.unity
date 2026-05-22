@@ -174,10 +174,18 @@ MonoBehaviour:
         ns: FireAlt.VFXForge.Data, asm: FireAlt.VFXForge.Data}
       data:
         Data:
-        - {x: -1, y: 0, z: 0}
-        - {x: 1, y: 0, z: 0}
-        - {x: 0, y: 1, z: 0}
-        - {x: 0, y: -1, z: 0}
+        - {x: 1, y: 1, z: 1}
+        - {x: 2, y: 2, z: 2}
+        - {x: 3, y: 3, z: 3}
+        - {x: -1, y: -1, z: -1}
+        - {x: -2, y: -2, z: -2}
+        - {x: -3, y: -3, z: -3}
+        - {x: -1, y: -1, z: 1}
+        - {x: -2, y: -2, z: 2}
+        - {x: -3, y: -3, z: 3}
+        - {x: 1, y: 1, z: -1}
+        - {x: 2, y: 2, z: -2}
+        - {x: 3, y: 3, z: -3}
     - rid: 1017954837549285501
       type: {class: 'DefaultVFXDataTypeBaker`1[[System.Single, mscorlib]]', ns: FireAlt.VFXForge.Data,
         asm: FireAlt.VFXForge.Data}
