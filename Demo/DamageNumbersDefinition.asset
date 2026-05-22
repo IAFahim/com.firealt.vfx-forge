@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 223a850fe04c4518a29fd69d1a9edf7b, type: 3}
   m_Name: DamageNumbersDefinition
   m_EditorClassIdentifier: KrasCore.HybridECS.Data::KrasCore.HybridECS.Data.VFXDefinition
-  key: 12
+  key: 17
   visualEffectAsset: {fileID: 8926484042661614526, guid: 2eb74def9167e9c45be70a748b115b5e,
     type: 3}
   capacity: 100
