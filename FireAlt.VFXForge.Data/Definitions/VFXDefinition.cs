@@ -7,7 +7,6 @@ using UnityEngine.VFX;
 
 namespace FireAlt.VFXForge.Data
 {
-    [AutoRef("VFXSettings", "vfxDefinitions", nameof(VFXDefinition), "VFX")]
     public class VFXDefinition : ScriptableObject, IUID, ICloneable
     {
         [SerializeField, InspectorReadOnly]
