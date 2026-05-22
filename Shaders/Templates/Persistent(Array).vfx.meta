@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: a4070698718452f42acd07c243e0cde8
+guid: cd7a414dab415d244b645d063ab5e476
 VisualEffectImporter:
   externalObjects: {}
   serializedVersion: 2
   template:
-    name: InstantVFX (Single)
+    name: Persistent (Single + Array)
     category: VFX Forge
     description: 
     icon: {instanceID: 0}

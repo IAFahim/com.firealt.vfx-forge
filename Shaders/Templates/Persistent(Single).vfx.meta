@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 3a367bb8934ebf74480a477a780c387f
+VisualEffectImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  template:
+    name: Persistent (Single)
+    category: VFX Forge
+    description: 
+    icon: {instanceID: 0}
+    thumbnail: {instanceID: 0}
+  useAsTemplate: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 223a850fe04c4518a29fd69d1a9edf7b, type: 3}
-  m_Name: InstantVFX (Array Children)Definition
-  m_EditorClassIdentifier: FireAlt.VFXForge.Data::FireAlt.VFXForge.Data.VFXDefinition
-  key: 15
-  visualEffectAsset: {fileID: 8926484042661614526, guid: 5e2f2639e41c46d479ff4248293864db,
+  m_Name: Persistent (Single+Array)Definition
+  m_EditorClassIdentifier: 
+  key: 5
+  visualEffectAsset: {fileID: 8926484042661614526, guid: d138d476b380aff4fb4a7f126eea9fb8,
     type: 3}
-  capacity: 100
+  capacity: 396
   timeoutDuration: 30
-  vfxType: 0
+  vfxType: 1
   vfxDataType: 12987701961278855918
   vfxArrayDataType: 15058542081110517031

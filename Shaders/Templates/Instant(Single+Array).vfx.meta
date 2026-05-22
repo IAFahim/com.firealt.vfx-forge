@@ -1,14 +1,15 @@
 fileFormatVersion: 2
-guid: d138d476b380aff4fb4a7f126eea9fb8
+guid: 5e2f2639e41c46d479ff4248293864db
 VisualEffectImporter:
   externalObjects: {}
-  serializedVersion: 1
+  serializedVersion: 2
   template:
-    name: 
-    category: 
+    name: Instant (Single + Array)
+    category: VFX Forge
     description: 
     icon: {instanceID: 0}
     thumbnail: {instanceID: 0}
+  useAsTemplate: 1
   userData: 
   assetBundleName: 
   assetBundleVariant: 
