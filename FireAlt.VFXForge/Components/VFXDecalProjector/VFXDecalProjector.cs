@@ -14,7 +14,7 @@ namespace FireAlt.VFXForge
 {
     [ExecuteAlways]
     [DefaultExecutionOrder(-100)] // Needed for Start to be a valid place to use World
-    public class VFXDecalProjector : MonoBehaviour
+    public partial class VFXDecalProjector : MonoBehaviour
     {
         [Header("References")]
         public VFXDefinition VFXDecalDefinition;
@@ -50,14 +50,6 @@ namespace FireAlt.VFXForge
             }
         }
 
-#if UNITY_EDITOR
-        private void Reset()
-        {
-            VFXDecalDefinition = Authoring.VFXSettings.DefaultDecalVFX;
-            Sprite = null;
-        }
-#endif
-
         private void SetSprite(Sprite sprite)
         {
             _sprite = sprite;
@@ -85,19 +77,11 @@ namespace FireAlt.VFXForge
             }
         }
 
-        private void OnEnable()
-        {
-            if (!Application.isPlaying)
-            {
-                Init();
-            }
-        }
-        
         private void OnDestroy()
         {
-            if (World != null)
+            if (Application.isPlaying)
             {
-                World.EntityManager.DestroyEntity(_entity);
+                Cleanup();
             }
         }
         
@@ -106,24 +90,24 @@ namespace FireAlt.VFXForge
 #if UNITY_EDITOR
             DefaultWorldInitialization.DefaultLazyEditModeInitialize();
 #endif
-            
             if (World != null && _entity == Entity.Null)
             {
-                Debug.Log("Bale");
                 _entity = World.EntityManager.CreateEntity(typeof(LocalToWorld));
                 World.EntityManager.AddComponentObject(_entity, new HybridEntitySync(this));
                 BakeComponents(true);
             }
         }
 
-        private void OnDrawGizmosSelected()
+        private void Cleanup()
         {
-            var globalCenter = (float3)transform.position + transform.rotation * _decalPivot * (float3)transform.lossyScale;
-            var globalSize = _decalSize * transform.lossyScale;
-            Gizmos.color = Color.white;
-            GizmosEx.DrawWireCuboid(globalCenter, transform.rotation, globalSize);
+            if (World != null)
+            {
+                World.EntityManager.DestroyEntity(_entity);
+            }
+            _entity = Entity.Null;
         }
         
+
         private void BakeComponents(bool resetDecal)
         {
             if (World != null && World.EntityManager.HasComponent<HybridEntitySync>(_entity))
@@ -162,18 +146,5 @@ namespace FireAlt.VFXForge
                 commands.AddComponent<DecalProjectorVFX>(entity);
             }
         }
-        
-#if UNITY_EDITOR
-        private class HybridDecalProjectorBaker : Baker<VFXDecalProjector>
-        {
-            public override void Bake(VFXDecalProjector authoring)
-            {
-                var entity = GetEntity(TransformUsageFlags.Renderable);
-
-                var commands = new BovineLabs.Core.Authoring.EntityCommands.BakerCommands(this, entity);
-                SetupDecalProjector(ref commands, authoring, entity, true);
-            }
-        }
-#endif
     }
 }
