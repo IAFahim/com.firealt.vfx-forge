@@ -1,4 +1,3 @@
-using BovineLabs.Core.PropertyDrawers;
 using FireAlt.VFXForge.Data;
 using KrasCore;
 using KrasCore.Data;
@@ -28,7 +27,7 @@ namespace FireAlt.VFXForge
         [Range(0f, 1f)] public float opacity = 1f;
         public float drawDistance = 1000f;
         [Range(0f, 1f)] public float startFade = 0.9f;
-        [MinMax(0f, 180f)] public Vector2 angleFade;
+        [MinMaxRange(0f, 180f)] public float2 angleFade;
         [Range(0f, 1f)] public float normalBlend;
         
         private float3 _decalSize;
