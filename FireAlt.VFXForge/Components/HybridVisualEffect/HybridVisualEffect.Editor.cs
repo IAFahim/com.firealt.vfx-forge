@@ -1,5 +1,4 @@
 #if UNITY_EDITOR
-using BovineLabs.Core.Extensions;
 using FireAlt.VFXForge.Data;
 using Unity.Entities;
 using UnityEditor;
@@ -156,7 +155,7 @@ namespace FireAlt.VFXForge
             if (_vfxDefinition != null)
             {
                 gameObject.name = _vfxDefinition.name.EndsWith("Definition")
-                    ? _vfxDefinition.name.TrimEnd("Definition") + "VFX"
+                    ? _vfxDefinition.name[..^"Definition".Length] + "VFX"
                     : _vfxDefinition.name;
             }
             if (_trackingDuration <= 0f)

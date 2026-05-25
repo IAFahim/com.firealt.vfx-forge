@@ -185,7 +185,7 @@ namespace FireAlt.VFXForge
             const int vfxCapacity = 32;
             
             state.EntityManager.CreateSingleton(new VFXSingleton(vfxCapacity));
-            var entity = state.EntityManager.GetOrCreateSingletonEntity<VFXGraphicsBuffersSingleton>();
+            var entity = state.EntityManager.CreateEntity(typeof(VFXGraphicsBuffersSingleton));
             state.EntityManager.AddComponentObject(entity, new VFXGraphicsBuffersSingleton
             {
                 InstantVFXGraphEntries = new Dictionary<VFXKey, InstantVFXGraphicsBuffers>(vfxCapacity),

@@ -1,4 +1,3 @@
-using BovineLabs.Core.Extensions;
 using UnityEngine;
 using UnityEngine.VFX;
 using Unity.Entities;
@@ -78,7 +77,7 @@ namespace FireAlt.VFXForge
         {
 #if UNITY_EDITOR
             DefaultWorldInitialization.DefaultLazyEditModeInitialize();
-            _singleton = World.EntityManager.GetSingleton<VFXSingleton>();
+            _singleton = GlobalVFXSingleton.Get();
 #endif
             if (Application.isPlaying)
             {

@@ -3,7 +3,6 @@
     "rootNamespace": "FireAlt.VFXForge",
     "references": [
         "BovineLabs.Core",
-        "BovineLabs.Core.Authoring",
         "Unity.Burst",
         "Unity.Collections",
         "Unity.Entities",
