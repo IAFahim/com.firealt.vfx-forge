@@ -1,8 +1,6 @@
-using BovineLabs.Testing;
-using FireAlt.VFXForge.Data;
+using KrasCore.Testing;
 using NUnit.Framework;
 using Unity.Entities;
-using UnityEngine.TestTools;
 
 namespace FireAlt.VFXForge.Tests
 {

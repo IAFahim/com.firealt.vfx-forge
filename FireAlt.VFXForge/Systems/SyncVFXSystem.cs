@@ -19,7 +19,7 @@ namespace FireAlt.VFXForge
     [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
     [UpdateInGroup(typeof(PresentationSystemGroup), OrderLast = true)]
     [BurstCompile]
-    public partial struct SyncVFXSystem : ISystem, IUpdateWhilePaused
+    public partial struct SyncVFXSystem : ISystem
     {
         private struct VFXStateChange
         {

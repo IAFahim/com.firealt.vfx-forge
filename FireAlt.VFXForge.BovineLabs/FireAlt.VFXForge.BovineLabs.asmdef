@@ -1,25 +1,20 @@
 {
-    "name": "FireAlt.VFXForge.Tests",
-    "rootNamespace": "FireAlt.VFXForge.Tests",
+    "name": "FireAlt.VFXForge.BovineLabs",
+    "rootNamespace": "FireAlt.VFXForge.BovineLabs",
     "references": [
+        "BovineLabs.Core",
+        "BovineLabs.Core.Extensions",
         "Unity.Burst",
         "Unity.Collections",
         "Unity.Entities",
         "Unity.Entities.Hybrid",
         "Unity.Mathematics",
         "Unity.Mathematics.Extensions",
-        "Unity.PerformanceTesting",
         "Unity.Transforms",
-        "FireAlt.VFXForge",
-        "FireAlt.VFXForge.Data",
-        "KrasCore"
+        "FireAlt.VFXForge"
     ],
-    "optionalUnityReferences": [
-        "TestAssemblies"
-    ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
     "overrideReferences": false,
