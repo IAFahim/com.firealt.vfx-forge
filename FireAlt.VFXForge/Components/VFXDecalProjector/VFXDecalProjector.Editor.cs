@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using KrasCore;
+using KrasCore.EntityCommands;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
@@ -14,6 +15,13 @@ namespace FireAlt.VFXForge
             Sprite = null;
         }
 
+        private void OnValidate()
+        {
+            drawDistance = math.max(drawDistance, 0f);
+            projectionDepth = math.max(projectionDepth, 0f);
+            Sprite = _sprite;
+        }
+        
         private void OnEnable()
         {
             if (!Application.isPlaying)
@@ -44,8 +52,8 @@ namespace FireAlt.VFXForge
             {
                 var entity = GetEntity(TransformUsageFlags.Renderable);
 
-                var commands = new BovineLabs.Core.Authoring.EntityCommands.BakerCommands(this, entity);
-                SetupDecalProjector(ref commands, authoring, entity, true);
+                var commands = new BakerCommands(this, entity);
+                SetupDecalProjector(ref commands, authoring, true);
             }
         }
     }

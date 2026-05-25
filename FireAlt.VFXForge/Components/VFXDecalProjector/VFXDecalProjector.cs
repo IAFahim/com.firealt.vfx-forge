@@ -1,8 +1,8 @@
-using BovineLabs.Core.EntityCommands;
 using BovineLabs.Core.PropertyDrawers;
 using FireAlt.VFXForge.Data;
 using KrasCore;
 using KrasCore.Data;
+using KrasCore.EntityCommands;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -49,6 +49,7 @@ namespace FireAlt.VFXForge
                 BakeComponents(_curSprite != _oldSprite || value == null);
             }
         }
+        public Entity Entity => _entity;
 
         private void SetSprite(Sprite sprite)
         {
@@ -60,13 +61,6 @@ namespace FireAlt.VFXForge
             
             var spritePivot = spriteProps.rectScale * (0.5f - spriteProps.normalizedPivot);
             _decalPivot = new float3(spritePivot.x, spritePivot.y, projectionDepth * projectionDepthPivot);
-        }
-        
-        private void OnValidate()
-        {
-            drawDistance = math.max(drawDistance, 0f);
-            projectionDepth = math.max(projectionDepth, 0f);
-            Sprite = _sprite;
         }
         
         private void Start()
@@ -106,44 +100,44 @@ namespace FireAlt.VFXForge
             }
             _entity = Entity.Null;
         }
-        
 
         private void BakeComponents(bool resetDecal)
         {
             if (World != null && World.EntityManager.HasComponent<HybridEntitySync>(_entity))
             {
                 var ecb = new EntityCommandBuffer(Allocator.Temp);
-                var commands = new CommandBufferCommands(ecb, _entity);
+                var commands = new EntityCommandBufferCommands(ecb, _entity);
 
-                SetupDecalProjector(ref commands, this, _entity, resetDecal);
+                SetupDecalProjector(ref commands, this, resetDecal);
                 ecb.Playback(World.EntityManager);
             }
         }
         
-        private static void SetupDecalProjector<T>(ref T commands, VFXDecalProjector authoring, Entity entity, bool resetDecal)
+        private static void SetupDecalProjector<T>(ref T commands, VFXDecalProjector authoring, bool resetDecal)
             where T : IEntityCommands
         {
             if (authoring.VFXDecalDefinition == null) return;
             
-            commands.AddComponent(entity, new DecalProjectorData
+            commands.AddComponent(new DecalProjectorData
             {
                 SpriteProperties = new SpriteProperties(authoring._sprite),
                 NormalBlend = authoring.normalBlend,
-                AngleFade =  authoring.angleFade,
+                AngleFade = authoring.angleFade,
                 StartFade = authoring.startFade,
                 DrawDistance = authoring.drawDistance,
                 Opacity = authoring.opacity,
-                ProjectionDepth =  authoring.projectionDepth,
+                ProjectionDepth = authoring.projectionDepth,
                 ProjectionDepthPivot = authoring.projectionDepthPivot,
             });
             
             if (resetDecal)
             {
-                var lookup = new DecalLookup(authoring.VFXDecalDefinition, authoring._sprite);
-                commands.AddComponent(entity, new RuntimeDecalLookup { Value = lookup });
-                commands.SetComponentEnabled<RuntimeDecalLookup>(entity, true);
-                
-                commands.AddComponent<DecalProjectorVFX>(entity);
+                commands.AddComponent(new RuntimeDecalLookup
+                {
+                    Value = new DecalLookup(authoring.VFXDecalDefinition, authoring._sprite)
+                });
+                commands.SetComponentEnabled<RuntimeDecalLookup>(true);
+                commands.AddComponent<DecalProjectorVFX>();
             }
         }
     }
