@@ -3,6 +3,7 @@
     "rootNamespace": "FireAlt.VFXForge",
     "references": [
         "BovineLabs.Core",
+        "BovineLabs.Core.Authoring",
         "Unity.Burst",
         "Unity.Collections",
         "Unity.Entities",
@@ -11,8 +12,8 @@
         "Unity.Mathematics.Extensions",
         "Unity.Transforms",
         "FireAlt.VFXForge.Data",
-        "KrasCore",
-        "KrasCore.Editor"
+        "FireAlt.VFXForge.Authoring",
+        "KrasCore"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],

@@ -8,7 +8,10 @@ namespace FireAlt.VFXForge
         {
             if (!data.TrackedEntity.Equals(TrackedEntity.Null))
             {
-                singleton.GetPersistent(data.Key).TryKill(data.TrackedEntity);
+                if (singleton.ContainsPersistent(data.Key))
+                {
+                    singleton.GetPersistent(data.Key).TryKill(data.TrackedEntity);
+                }
                 data.TrackedEntity = TrackedEntity.Null;
             }
         }

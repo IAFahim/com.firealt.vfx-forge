@@ -10,7 +10,7 @@ namespace FireAlt.VFXForge
 {
     [ExecuteAlways]
     [RequireComponent(typeof(VisualEffect))]
-    [DefaultExecutionOrder(-100)] // Needed for Start to be a valid place to use VFXSingleton
+    [DefaultExecutionOrder(-100)] // Needed for Start to be a valid place to use World
     public partial class HybridVisualEffect : MonoBehaviour
     {
         private static readonly int BoundsProperty = Shader.PropertyToID("Bounds");
@@ -27,8 +27,21 @@ namespace FireAlt.VFXForge
         public VFXDefinition VFXDefinition
         {
             get => _vfxDefinition;
-            set => _vfxDefinition = value;
+            set
+            {
+                if (_vfxDefinition == value)
+                {
+                    return;
+                }
+
+                _vfxDefinition = value;
+                ValidateVFXGraph();
+                OnVFXDefinitionChanged();
+            }
         }
+
+        partial void OnVFXDefinitionChanged();
+
         public VisualEffect VisualEffect
         {
             get
@@ -123,12 +136,12 @@ namespace FireAlt.VFXForge
             em.AddComponentData(_entity, new HybridVisualEffectData { HybridVisualEffect = this });
             em.SetComponentEnabled<HybridVisualEffectData>(_entity, true);
             
-#if UNITY_EDITOR
+            // Only needed for editor time to show the preview effect
             if (!Application.isPlaying)
             {
-                em.AddComponentObject(_entity, new KrasCore.Editor.HybridEntitySync(this));
+                em.AddComponentObject(_entity, new HybridEntitySync(this));
             }
-#endif
+
             World.GetExistingSystemManaged<InitializeVFXSystem>().Update();
         }
 

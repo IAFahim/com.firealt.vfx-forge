@@ -129,6 +129,16 @@ namespace FireAlt.VFXForge
                 ref var entry = ref _persistentVFXGraphEntries.GetValueAsRef(key);
                 return ref entry;
             }
+            
+            public bool ContainsInstant(in VFXKey key)
+            {
+                return _instantVFXGraphEntries.ContainsKey(key);
+            }
+
+            public bool ContainsPersistent(in VFXKey key)
+            {
+                return _persistentVFXGraphEntries.ContainsKey(key);
+            }
         }
         
         internal NativeHashMap<VFXKey, bool> IsPersistent;

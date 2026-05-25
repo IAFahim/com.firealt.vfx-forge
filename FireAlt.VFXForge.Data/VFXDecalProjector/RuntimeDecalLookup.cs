@@ -22,7 +22,7 @@ namespace FireAlt.VFXForge.Data
         {
             Definition = definition;
             Sprite = sprite;
-            _spriteTexture = sprite.texture;
+            _spriteTexture = sprite != null ? sprite.texture : null;
         }
         
         public bool Equals(DecalLookup other)

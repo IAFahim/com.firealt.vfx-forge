@@ -1,13 +1,68 @@
-using BovineLabs.Core.Settings;
 using FireAlt.VFXForge.Data;
+using UnityEditor;
 
 namespace FireAlt.VFXForge.Authoring
 {
-    [SettingsGroup("HybridECS")]
-    public class VFXSettings : SettingsSingleton<VFXSettings>
+    public class VFXSettings : SettingsProvider
     {
-        public override bool IncludeInBuild => false;
+        private const string PREFERENCES_PATH = "Preferences/FireAlt/VFX Forge";
+        private const string DEFAULT_DECAL_VFX_GUID_KEY = "FireAlt.VFXForge.DefaultDecalVFXGuid";
 
-        public VFXDefinition defaultDecalVFX;
+        private VFXSettings(string path, SettingsScope scopes, string[] keywords = null)
+            : base(path, scopes, keywords)
+        {
+        }
+
+        public static VFXDefinition DefaultDecalVFX
+        {
+            get
+            {
+                var guid = EditorPrefs.GetString(DEFAULT_DECAL_VFX_GUID_KEY, string.Empty);
+                if (string.IsNullOrEmpty(guid))
+                {
+                    return null;
+                }
+
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                return string.IsNullOrEmpty(path) ? null : AssetDatabase.LoadAssetAtPath<VFXDefinition>(path);
+            }
+
+            set
+            {
+                if (value == null)
+                {
+                    EditorPrefs.DeleteKey(DEFAULT_DECAL_VFX_GUID_KEY);
+                    return;
+                }
+
+                var path = AssetDatabase.GetAssetPath(value);
+                var guid = AssetDatabase.AssetPathToGUID(path);
+                EditorPrefs.SetString(DEFAULT_DECAL_VFX_GUID_KEY, guid);
+            }
+        }
+
+        public override void OnGUI(string searchContext)
+        {
+            base.OnGUI(searchContext);
+
+            EditorGUI.BeginChangeCheck();
+            var defaultDecalVFX = (VFXDefinition)EditorGUILayout.ObjectField("Default Decal VFX", DefaultDecalVFX, typeof(VFXDefinition), false);
+            if (EditorGUI.EndChangeCheck())
+            {
+                DefaultDecalVFX = defaultDecalVFX;
+            }
+        }
+
+        [SettingsProvider]
+        public static SettingsProvider Create()
+        {
+            return new VFXSettings(PREFERENCES_PATH, SettingsScope.User, new[] { "VFX", "Forge", "Decal", "Default" });
+        }
+
+        [MenuItem("FireAlt/VFX Forge Preferences")]
+        private static void Open()
+        {
+            SettingsService.OpenUserPreferences(PREFERENCES_PATH);
+        }
     }
 }

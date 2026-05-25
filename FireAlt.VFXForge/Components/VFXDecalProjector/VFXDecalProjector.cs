@@ -1,10 +1,8 @@
-using BovineLabs.Core.Authoring.EntityCommands;
 using BovineLabs.Core.EntityCommands;
 using BovineLabs.Core.PropertyDrawers;
 using FireAlt.VFXForge.Data;
 using KrasCore;
 using KrasCore.Data;
-using KrasCore.Editor;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -12,9 +10,10 @@ using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-namespace FireAlt.VFXForge.Authoring
+namespace FireAlt.VFXForge
 {
     [ExecuteAlways]
+    [DefaultExecutionOrder(-100)] // Needed for Start to be a valid place to use World
     public class VFXDecalProjector : MonoBehaviour
     {
         [Header("References")]
@@ -47,14 +46,17 @@ namespace FireAlt.VFXForge.Authoring
             set
             {
                 SetSprite(value);
-                BakeComponents(_curSprite != _oldSprite);
+                BakeComponents(_curSprite != _oldSprite || value == null);
             }
         }
 
+#if UNITY_EDITOR
         private void Reset()
         {
-            VFXDecalDefinition = VFXSettings.I.defaultDecalVFX;
+            VFXDecalDefinition = Authoring.VFXSettings.DefaultDecalVFX;
+            Sprite = null;
         }
+#endif
 
         private void SetSprite(Sprite sprite)
         {
@@ -72,26 +74,45 @@ namespace FireAlt.VFXForge.Authoring
         {
             drawDistance = math.max(drawDistance, 0f);
             projectionDepth = math.max(projectionDepth, 0f);
-            SetSprite(_sprite);
-            
-            BakeComponents(_curSprite != _oldSprite);
+            Sprite = _sprite;
         }
         
-        private void OnEnable()
+        private void Start()
         {
-            if (World != null && _entity == Entity.Null)
+            if (Application.isPlaying)
             {
-                _entity = World.EntityManager.CreateEntity(typeof(LocalToWorld));
-                World.EntityManager.AddComponentObject(_entity, new HybridEntitySync(this));
-                BakeComponents(true);
+                Init();
             }
         }
 
+        private void OnEnable()
+        {
+            if (!Application.isPlaying)
+            {
+                Init();
+            }
+        }
+        
         private void OnDestroy()
         {
             if (World != null)
             {
                 World.EntityManager.DestroyEntity(_entity);
+            }
+        }
+        
+        private void Init()
+        {
+#if UNITY_EDITOR
+            DefaultWorldInitialization.DefaultLazyEditModeInitialize();
+#endif
+            
+            if (World != null && _entity == Entity.Null)
+            {
+                Debug.Log("Bale");
+                _entity = World.EntityManager.CreateEntity(typeof(LocalToWorld));
+                World.EntityManager.AddComponentObject(_entity, new HybridEntitySync(this));
+                BakeComponents(true);
             }
         }
 
@@ -115,21 +136,10 @@ namespace FireAlt.VFXForge.Authoring
             }
         }
         
-        private class HybridDecalProjectorBaker : Baker<VFXDecalProjector>
-        {
-            public override void Bake(VFXDecalProjector authoring)
-            {
-                var entity = GetEntity(TransformUsageFlags.Renderable);
-
-                var commands = new BakerCommands(this, entity);
-                SetupDecalProjector(ref commands, authoring, entity, true);
-            }
-        }
-        
         private static void SetupDecalProjector<T>(ref T commands, VFXDecalProjector authoring, Entity entity, bool resetDecal)
             where T : IEntityCommands
         {
-            if (authoring.VFXDecalDefinition == null || authoring.Sprite == null) return;
+            if (authoring.VFXDecalDefinition == null) return;
             
             commands.AddComponent(entity, new DecalProjectorData
             {
@@ -152,5 +162,18 @@ namespace FireAlt.VFXForge.Authoring
                 commands.AddComponent<DecalProjectorVFX>(entity);
             }
         }
+        
+#if UNITY_EDITOR
+        private class HybridDecalProjectorBaker : Baker<VFXDecalProjector>
+        {
+            public override void Bake(VFXDecalProjector authoring)
+            {
+                var entity = GetEntity(TransformUsageFlags.Renderable);
+
+                var commands = new BovineLabs.Core.Authoring.EntityCommands.BakerCommands(this, entity);
+                SetupDecalProjector(ref commands, authoring, entity, true);
+            }
+        }
+#endif
     }
 }

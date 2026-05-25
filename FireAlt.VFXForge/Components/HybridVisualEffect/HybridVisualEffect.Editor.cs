@@ -7,7 +7,6 @@ using UnityEngine;
 
 namespace FireAlt.VFXForge
 {
-    [InitializeOnLoad]
     public partial class HybridVisualEffect
     {
         internal const string VFX_DEFINITION_PROPERTY_NAME = nameof(_vfxDefinition);
@@ -186,6 +185,11 @@ namespace FireAlt.VFXForge
             DeregisterVFX();
             RegisterVFX();
             ReinitializeVFX();
+        }
+
+        partial void OnVFXDefinitionChanged()
+        {
+            SetVFXDataBaker();
         }
 
         private void SetVFXDataBaker()

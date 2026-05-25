@@ -134,7 +134,8 @@ namespace FireAlt.VFXForge
                 VFXKey key;
                 if (!_decalVFXMap.TryGetValue(lookup, out var value))
                 {
-                    var go = new GameObject($"[DECAL_VFX] {lookup.Definition.Value.name}_{lookup.Sprite.Value.texture.name}");
+                    var textureName = lookup.Sprite != null ? lookup.Sprite.Value.texture.name : "null";
+                    var go = new GameObject($"[DECAL_VFX] {lookup.Definition.Value.name}_{textureName}");
 #if UNITY_EDITOR
                     if (!Application.isPlaying)
                     {
@@ -225,6 +226,8 @@ namespace FireAlt.VFXForge
 
         private static void SetTextures(VisualEffect ve, DecalLookup lookup)
         {
+            if (lookup.Sprite == null) return;
+            
             ve.SetTexture("BaseMap", lookup.Sprite.Value.texture);
             var count = lookup.Sprite.Value.GetSecondaryTextures(SecondaryTexturesBuffer);
             for (int i = 0; i < count; i++)
