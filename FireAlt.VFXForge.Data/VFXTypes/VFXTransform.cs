@@ -1,4 +1,4 @@
-using BovineLabs.Core.Collections;
+using KrasCore;
 using UnityEngine;
 using UnityEngine.VFX;
 
@@ -23,34 +23,34 @@ namespace FireAlt.VFXForge.Data
         public Vector3 Rotation;
         public Vector3 Scale;
         
-        public bool IsAlive() => BitArrayUtilities.Get32(0, State);
+        public bool IsAlive() => BitOperations.Get32(0, State);
         public void Kill() => SetAlive(false);
         
-        internal bool DidTransformSystemRun() => BitArrayUtilities.Get32(31, State);
+        internal bool DidTransformSystemRun() => BitOperations.Get32(31, State);
         
         internal void SetAlive(bool isActive)
         {
-            BitArrayUtilities.Set32(0, ref State, isActive);
+            BitOperations.Set32(0, ref State, isActive);
         }
         
         internal void SetEntityAlive(bool isEntityAlive)
         {
-            BitArrayUtilities.Set32(1, ref State, isEntityAlive);
+            BitOperations.Set32(1, ref State, isEntityAlive);
         }
         
         internal void SetInTrackingDuration(bool isInTrackingDuration)
         {
-            BitArrayUtilities.Set32(2, ref State, isInTrackingDuration);
+            BitOperations.Set32(2, ref State, isInTrackingDuration);
         }
         
         internal void SetEntityEnabled(bool isEntityEnabled)
         {
-            BitArrayUtilities.Set32(3, ref State, isEntityEnabled);
+            BitOperations.Set32(3, ref State, isEntityEnabled);
         }
         
         internal void SetDidTransformSystemRun()
         {
-            BitArrayUtilities.Set32(31, ref State, true);
+            BitOperations.Set32(31, ref State, true);
         }
     }
 }
