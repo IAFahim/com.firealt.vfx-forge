@@ -10,8 +10,6 @@ namespace FireAlt.VFXForge.Editor
     {
         public static readonly StyleSheet HybridVisualEffectEditorStyleSheet;
 
-        private const string ValidationRoot = "FireAlt.VFXForge.Editor";
-
         static HybridVisualEffectStyleResources()
         {
             HybridVisualEffectEditorStyleSheet = Load<StyleSheet>("Styles/HybridVisualEffectEditor.uss");
@@ -19,7 +17,7 @@ namespace FireAlt.VFXForge.Editor
 
         private static T Load<T>(string path) where T : Object
         {
-            return AssetDatabaseUtils.LoadEditorResource<T>(path, ValidationRoot);
+            return AssetDatabaseUtils.LoadEditorResource<T>(path, "com.firealt.vfx-forge");
         }
     }
 }

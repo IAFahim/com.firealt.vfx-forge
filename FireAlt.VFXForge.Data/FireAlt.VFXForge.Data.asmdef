@@ -2,7 +2,6 @@
     "name": "FireAlt.VFXForge.Data",
     "rootNamespace": "FireAlt.VFXForge.Data",
     "references": [
-        "BovineLabs.Core",
         "Unity.Burst",
         "Unity.Collections",
         "Unity.Entities",

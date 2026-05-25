@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using BovineLabs.Core.Utility;
 using KrasCore;
 using UnityEngine;
 using UnityEngine.VFX;
@@ -49,7 +48,7 @@ namespace FireAlt.VFXForge.Data
         {
             var dataAssembly = ReflectionUtils.GetAssemblyWithType<TBakerInterface>();
               
-            var reflectedTypesList = ReflectionUtility.GetAllAssemblyWithReference(dataAssembly)
+            var reflectedTypesList = ReflectionUtils.GetAllAssemblyWithReference(dataAssembly)
                 .Where(FilterAssembly)
                 .SelectMany(domainAssembly => domainAssembly.GetTypes())
                 .Where(type => typeof(TBakerInterface).IsAssignableFrom(type))
@@ -81,7 +80,7 @@ namespace FireAlt.VFXForge.Data
         {
             var vfxAssembly = ReflectionUtils.GetAssemblyWithType<VFXTypeAttribute>();
 
-            var reflectedTypesList = ReflectionUtility.GetAllAssemblyWithReference(vfxAssembly)
+            var reflectedTypesList = ReflectionUtils.GetAllAssemblyWithReference(vfxAssembly)
                 .Where(FilterAssembly)
                 .SelectMany(domainAssembly => domainAssembly.GetTypes())
                 .Where(type => type.GetCustomAttribute<VFXTypeAttribute>() != null)

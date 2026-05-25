@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using BovineLabs.Core.Editor.SearchWindow;
 using KrasCore.Editor.UI;
 using KrasCore.Editor;
 using FireAlt.VFXForge.Data;

@@ -2,8 +2,6 @@
     "name": "FireAlt.VFXForge.Editor",
     "rootNamespace": "FireAlt.VFXForge.Editor",
     "references": [
-        "BovineLabs.Core",
-        "BovineLabs.Core.Editor",
         "Unity.Burst",
         "Unity.Collections",
         "Unity.Entities",
