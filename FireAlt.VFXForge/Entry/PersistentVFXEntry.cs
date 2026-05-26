@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using FireAlt.VFXForge.Data;
 using KrasCore;
+using KrasCore.Collections;
 using Unity.Assertions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -38,7 +39,7 @@ namespace FireAlt.VFXForge
         internal int NextIndex;
         internal UnsafeArray<VFXTransform> DeferredTransformBuffer;
         internal UnsafeArray<byte> DeferredDataBuffer;
-        internal UnsafeArray<UnsafeArray<byte>> DeferredArrayDataBuffer;
+        internal UnsafeArray<PooledUnsafeArray<byte>> DeferredArrayDataBuffer;
         
         internal UnsafeThreadList<TrackedEntity> SpawnRequests;
         internal UnsafeThreadList<TrackedEntity> KillRequests;
@@ -186,7 +187,7 @@ namespace FireAlt.VFXForge
             if (TryResolveDataIndex(trackedEntity, out var index, out var isDeferred))
             {
                 array = isDeferred 
-                    ? DeferredArrayDataBuffer[index].Reinterpret<U>(UnsafeUtility.SizeOf<byte>()) 
+                    ? DeferredArrayDataBuffer[index].Array.Reinterpret<U>(UnsafeUtility.SizeOf<byte>()) 
                     : ArrayDataMemoryBuffer.ArrayAt<U>(ArrayPtrBuffer[index]);
                 return true;
             }
@@ -200,7 +201,7 @@ namespace FireAlt.VFXForge
             {
                 if (isDeferred)
                 {
-                    array = DeferredArrayDataBuffer[index];
+                    array = DeferredArrayDataBuffer[index].Array;
                     return true;
                 }
 
@@ -276,9 +277,13 @@ namespace FireAlt.VFXForge
             return false;
         }
         
-        private void SetArray<T>(TrackedEntity trackedEntity, NativeArray<T> arrayData) where T : unmanaged
+        private unsafe void SetArray<T>(TrackedEntity trackedEntity, NativeArray<T> arrayData) where T : unmanaged
         {
-            var byteArray = arrayData.ToBytesUnsafe(Allocator.Persistent);
+            var size = arrayData.Length * UnsafeUtility.SizeOf<T>();
+            
+            var byteArray = UnsafeArrayPool<byte>.Rent(size);
+            UnsafeUtility.MemCpy(byteArray.Array.GetUnsafePtr(), arrayData.GetUnsafeReadOnlyPtr(), size);
+            
             DeferredArrayDataBuffer[trackedEntity.IndexInData] = byteArray;
         }
         
@@ -376,9 +381,9 @@ namespace FireAlt.VFXForge
             if (DeferredDataBuffer.IsCreated) DeferredDataBuffer.Dispose();
             if (DeferredArrayDataBuffer.IsCreated)
             {
-                foreach (var instanceArray in DeferredArrayDataBuffer)
+                foreach (var pooledArray in DeferredArrayDataBuffer)
                 {
-                    if (instanceArray.IsCreated) instanceArray.Dispose();
+                    pooledArray.Dispose();
                 }
                 DeferredArrayDataBuffer.Dispose();
             }

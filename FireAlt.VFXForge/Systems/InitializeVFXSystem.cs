@@ -1,6 +1,7 @@
 using System;
 using FireAlt.VFXForge.Data;
 using KrasCore;
+using KrasCore.Collections;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -116,7 +117,7 @@ namespace FireAlt.VFXForge
                     entry.ArraySpawnIndexBuffer = new UnsafeList<VFXArraySpawnIndex>(definition.capacity, Allocator.Persistent);
                     entry.ArrayDataMemoryBuffer = new UnsafeHeapMemory(definition.ArrayDataGpuSize, doubleCapacity, Allocator.Persistent);
                     entry.ArrayPtrBuffer = new UnsafeArray<VFXArrayPtr>(doubleCapacity, Allocator.Persistent);
-                    entry.DeferredArrayDataBuffer = new UnsafeArray<UnsafeArray<byte>>(definition.capacity, Allocator.Persistent);
+                    entry.DeferredArrayDataBuffer = new UnsafeArray<PooledUnsafeArray<byte>>(definition.capacity, Allocator.Persistent);
                 }
 
                 // FreeIndices queue also uses doubleCapacity because we still need the indices looping

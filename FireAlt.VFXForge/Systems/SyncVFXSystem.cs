@@ -5,6 +5,7 @@ using BovineLabs.Core.Pause;
 using BovineLabs.Core.Utility;
 using FireAlt.VFXForge.Data;
 using KrasCore;
+using KrasCore.Collections;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -215,7 +216,7 @@ namespace FireAlt.VFXForge
 
             if (Application.isPlaying)
             {
-                using var toRemove = PooledNativeList<AliveVFX>.Make();
+                using var toRemove = BovineLabs.Core.Utility.PooledNativeList<AliveVFX>.Make();
                 RemoveTimedOutVFX(vfxSingleton.InstantAliveVFX, deltaTime, toRemove.List);
                 RemoveTimedOutVFX(vfxSingleton.PersistentAliveVFX, deltaTime, toRemove.List);
                 
@@ -393,39 +394,38 @@ namespace FireAlt.VFXForge
                     entry.ArrayDataUploadRange = new UploadRange(aliveRange);
                 }
             }
-
+            
             private static unsafe void SpawnPersistentRequests(ref PersistentVFXEntry entry,
                 VFXSingleton.InternalAPI internalApi)
             {
                 foreach (var deferredKey in entry.SpawnRequests)
                 {
+                    using var pooledArrayData = entry.DeferredArrayDataBuffer.IsCreated 
+                        ? entry.DeferredArrayDataBuffer.ElementAt(deferredKey.IndexInData) 
+                        : default;
+                    
                     var deferredTransform = entry.DeferredTransformBuffer[deferredKey.IndexInData];
                     if (!deferredTransform.DidTransformSystemRun())
                     {
                         throw new Exception($"A persistent VFXKey({entry.VFXKey.Value}) spawn was requested between `VFXTransformSystem` and `SyncVFXSystem` which means the upload data does not carry Transform information. Do not spawn persistent VFX in `LateUpdate`.");
                     }
-                    if (!deferredTransform.IsAlive()) continue;
+                    if (!deferredTransform.IsAlive())
+                    {
+                        continue;
+                    }
 
                     TrackedEntity resolvedKey;
-                    var defaultArrayData = default(UnsafeArray<byte>);
-                    ref var arrayData = ref defaultArrayData;
-                    
-                    if (entry.DeferredArrayDataBuffer.IsCreated)
-                    {
-                        arrayData = ref entry.DeferredArrayDataBuffer.ElementAt(deferredKey.IndexInData);
-                    }
                     
                     if (entry.DeferredDataBuffer.IsCreated)
                     {
                         var ptr = (byte*)entry.DeferredDataBuffer.GetUnsafePtr() + deferredKey.IndexInData * entry.DataSizeInBytes;
-                        resolvedKey = internalApi.SpawnPersistentUnsafe(ref entry, deferredKey.Entity, ptr, arrayData, deferredTransform.TrackingDuration);
+                        resolvedKey = internalApi.SpawnPersistentUnsafe(ref entry, deferredKey.Entity, ptr, pooledArrayData.Array, deferredTransform.TrackingDuration);
                     }
                     else
                     {
-                        resolvedKey = internalApi.SpawnPersistent(ref entry, deferredKey.Entity, arrayData, deferredTransform.TrackingDuration);
+                        resolvedKey = internalApi.SpawnPersistent(ref entry, deferredKey.Entity, pooledArrayData.Array, deferredTransform.TrackingDuration);
                     }
 
-                    if (arrayData.IsCreated) arrayData.Dispose();
                     if (!resolvedKey.IsValid) continue;
 
                     entry.TransformBuffer[resolvedKey.IndexInData] = deferredTransform;
