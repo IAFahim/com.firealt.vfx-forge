@@ -3,8 +3,8 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
-using BovineLabs.Core.Utility;
 using KrasCore;
+using KrasCore.Collections;
 
 namespace FireAlt.VFXForge
 {
@@ -35,7 +35,7 @@ namespace FireAlt.VFXForge
             {
                 ref var entry = ref VFXSingleton.GetPersistent(KeysArray[index]);
                 if (entry.TrackedEntities.IsEmpty) return;
-                using var toRemove = PooledNativeList<TrackedEntity>.Make();
+                using var toRemove = NativeListPool<TrackedEntity>.Rent();
                 
                 foreach (var entityWithIndex in entry.TrackedEntities)
                 {

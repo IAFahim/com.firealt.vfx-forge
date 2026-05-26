@@ -1,8 +1,8 @@
 using System;
-using BovineLabs.Core.Extensions;
 using BovineLabs.Core.Utility;
 using FireAlt.VFXForge.Data;
 using KrasCore;
+using KrasCore.Collections;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -185,9 +185,12 @@ namespace FireAlt.VFXForge
 
         private void DestroyUnusedDecalVFX(VFXSingleton vfxSingleton, NativeHashSet<DecalLookup> usedLookups)
         {
-            using var toRemove = PooledNativeList<DecalLookup>.Make();
-            foreach (var (lookup, entry) in _decalVFXMap)
+            using var toRemove = NativeListPool<DecalLookup>.Rent();
+            foreach (var kvPair in _decalVFXMap)
             {
+                var lookup = kvPair.Key; 
+                ref var entry = ref kvPair.Value;
+                
                 var visualEffect = entry.HybridVisualEffect;
                 if (Application.isPlaying)
                 {

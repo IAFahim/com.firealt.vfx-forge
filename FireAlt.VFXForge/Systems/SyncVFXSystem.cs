@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using BovineLabs.Core.Extensions;
-using BovineLabs.Core.Pause;
 using BovineLabs.Core.Utility;
 using FireAlt.VFXForge.Data;
 using KrasCore;
@@ -216,7 +215,7 @@ namespace FireAlt.VFXForge
 
             if (Application.isPlaying)
             {
-                using var toRemove = BovineLabs.Core.Utility.PooledNativeList<AliveVFX>.Make();
+                using var toRemove = NativeListPool<AliveVFX>.Rent();
                 RemoveTimedOutVFX(vfxSingleton.InstantAliveVFX, deltaTime, toRemove.List);
                 RemoveTimedOutVFX(vfxSingleton.PersistentAliveVFX, deltaTime, toRemove.List);
                 
