@@ -400,9 +400,7 @@ namespace FireAlt.VFXForge
             {
                 foreach (var deferredKey in entry.SpawnRequests)
                 {
-                    using var pooledArrayData = entry.DeferredArrayDataBuffer.IsCreated 
-                        ? entry.DeferredArrayDataBuffer.ElementAt(deferredKey.IndexInData) 
-                        : default;
+                    using var pooledArrayData = TakeDeferredArrayData(ref entry, deferredKey);
                     
                     var deferredTransform = entry.DeferredTransformBuffer[deferredKey.IndexInData];
                     if (!deferredTransform.DidTransformSystemRun())
@@ -443,6 +441,19 @@ namespace FireAlt.VFXForge
                     deadRange.Encapsulate(resolvedKey.IndexInData);
                     internalApi.KillPersistent(ref entry, resolvedKey);
                 }
+            }
+            
+            private static PooledUnsafeArray<byte> TakeDeferredArrayData(ref PersistentVFXEntry entry, TrackedEntity deferredKey)
+            {
+                if (!entry.DeferredArrayDataBuffer.IsCreated)
+                {
+                    return default;
+                }
+
+                ref var pooledArray = ref entry.DeferredArrayDataBuffer.ElementAt(deferredKey.IndexInData);
+                var taken = pooledArray;
+                pooledArray = default;
+                return taken;
             }
         }
     }
