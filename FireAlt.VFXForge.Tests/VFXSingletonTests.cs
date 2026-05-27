@@ -32,7 +32,7 @@ namespace FireAlt.VFXForge.Tests
             var singleton = new VFXSingleton(2);
             try
             {
-                Assert.Throws<UnityEngine.Assertions.AssertionException>(() => singleton.GetInstant((VFXKey)100));
+                Assert.Throws<System.ArgumentException>(() => singleton.GetInstant((VFXKey)100));
             }
             finally
             {
@@ -68,7 +68,7 @@ namespace FireAlt.VFXForge.Tests
             var singleton = new VFXSingleton(2);
             try
             {
-                Assert.Throws<UnityEngine.Assertions.AssertionException>(() => singleton.GetPersistent((VFXKey)100));
+                Assert.Throws<System.ArgumentException>(() => singleton.GetPersistent((VFXKey)100));
             }
             finally
             {
@@ -105,7 +105,7 @@ namespace FireAlt.VFXForge.Tests
             try
             {
                 var writer = singleton.AsParallelWriter();
-                Assert.Throws<UnityEngine.Assertions.AssertionException>(() => writer.GetPersistent((VFXKey)200));
+                Assert.Throws<System.ArgumentException>(() => writer.GetPersistent((VFXKey)200));
             }
             finally
             {
