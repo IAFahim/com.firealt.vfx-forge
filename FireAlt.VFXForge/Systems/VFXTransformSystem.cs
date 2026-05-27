@@ -1,5 +1,5 @@
 using FireAlt.VFXForge.Data;
-using KrasCore;
+using FireAlt.Core.Extensions;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;

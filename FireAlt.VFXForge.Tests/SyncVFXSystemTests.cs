@@ -1,4 +1,4 @@
-using KrasCore.Testing;
+using FireAlt.Core.Testing;
 using NUnit.Framework;
 using Unity.Entities;
 

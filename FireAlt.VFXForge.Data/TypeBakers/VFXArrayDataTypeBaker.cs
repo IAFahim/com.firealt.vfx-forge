@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using KrasCore;
+using FireAlt.Core.Extensions;
 using Unity.Collections;
 
 namespace FireAlt.VFXForge.Data

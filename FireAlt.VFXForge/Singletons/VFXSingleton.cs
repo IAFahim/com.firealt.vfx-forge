@@ -2,10 +2,10 @@ using System;
 using System.Diagnostics;
 using FireAlt.VFXForge.Data;
 using JetBrains.Annotations;
-using KrasCore;
+using FireAlt.Core.Collections;
+using FireAlt.Core.Extensions;
 using Unity.Assertions;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
 namespace FireAlt.VFXForge

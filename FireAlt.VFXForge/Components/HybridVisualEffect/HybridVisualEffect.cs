@@ -3,7 +3,8 @@ using UnityEngine.VFX;
 using Unity.Entities;
 using Unity.Transforms;
 using FireAlt.VFXForge.Data;
-using KrasCore;
+using FireAlt.Core;
+using FireAlt.Core.Inspectors;
 
 namespace FireAlt.VFXForge
 {

@@ -1,6 +1,8 @@
 using System;
 using FireAlt.VFXForge.Data;
-using KrasCore;
+using FireAlt;
+using FireAlt.Core.Collections;
+using FireAlt.Core.Extensions;
 using Unity.Assertions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;

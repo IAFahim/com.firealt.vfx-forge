@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using KrasCore.Editor.UI;
-using KrasCore.Editor;
+using FireAlt.Core.Editor;
+using FireAlt.Core.Editor.UI;
 using FireAlt.VFXForge.Data;
 using UnityEditor;
 using UnityEngine.UIElements;

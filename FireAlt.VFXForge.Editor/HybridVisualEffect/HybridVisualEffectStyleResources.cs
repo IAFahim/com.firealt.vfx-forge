@@ -1,4 +1,4 @@
-using KrasCore.Editor;
+using FireAlt.Core.Editor;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;

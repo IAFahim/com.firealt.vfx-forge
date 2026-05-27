@@ -12,7 +12,7 @@
         "FireAlt.VFXForge",
         "Unity.Transforms",
         "Unity.VisualEffectGraph.Runtime",
-        "KrasCore"
+        "FireAlt.Core"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

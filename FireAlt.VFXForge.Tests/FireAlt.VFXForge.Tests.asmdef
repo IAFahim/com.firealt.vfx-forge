@@ -12,7 +12,7 @@
         "Unity.Transforms",
         "FireAlt.VFXForge",
         "FireAlt.VFXForge.Data",
-        "KrasCore"
+        "FireAlt.Core"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

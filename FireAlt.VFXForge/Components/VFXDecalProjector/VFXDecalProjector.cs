@@ -1,7 +1,8 @@
 using FireAlt.VFXForge.Data;
-using KrasCore;
-using KrasCore.Data;
-using KrasCore.EntityCommands;
+using FireAlt.Core;
+using FireAlt.Core.EntityCommands;
+using FireAlt.Core.Inspectors;
+using FireAlt.Core.Rendering;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;

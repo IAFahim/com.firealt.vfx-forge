@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using KrasCore;
+using FireAlt.Core;
 using UnityEngine;
 using UnityEngine.VFX;
 

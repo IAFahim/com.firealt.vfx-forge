@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 223a850fe04c4518a29fd69d1a9edf7b, type: 3}
   m_Name: DamageNumbersDEMODefinition
-  m_EditorClassIdentifier: KrasCore.HybridECS.Data::KrasCore.HybridECS.Data.VFXDefinition
+  m_EditorClassIdentifier: FireAlt.HybridECS.Data::FireAlt.HybridECS.Data.VFXDefinition
   key: 16
   visualEffectAsset: {fileID: 8926484042661614526, guid: ea197b8ae0964d60899ab74b7cf9f705,
     type: 3}

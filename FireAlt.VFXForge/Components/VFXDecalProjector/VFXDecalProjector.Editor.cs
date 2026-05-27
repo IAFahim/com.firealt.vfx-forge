@@ -1,6 +1,6 @@
 #if UNITY_EDITOR
-using KrasCore;
-using KrasCore.EntityCommands;
+using FireAlt.Core;
+using FireAlt.Core.EntityCommands;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;

@@ -1,5 +1,6 @@
 using System;
-using KrasCore;
+using FireAlt.Core.Inspectors;
+using FireAlt.Core.ObjectManagement;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.VFX;

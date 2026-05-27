@@ -1,8 +1,7 @@
 using System;
 using BovineLabs.Core.Utility;
 using FireAlt.VFXForge.Data;
-using KrasCore;
-using KrasCore.Collections;
+using FireAlt.Core.Collections;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;

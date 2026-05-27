@@ -1,6 +1,6 @@
 using System;
 using FireAlt.VFXForge.Data;
-using KrasCore;
+using FireAlt.Core.Extensions;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;

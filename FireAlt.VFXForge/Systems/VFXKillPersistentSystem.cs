@@ -3,8 +3,8 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
-using KrasCore;
-using KrasCore.Collections;
+using FireAlt.Core.Collections;
+using FireAlt.Core.Extensions;
 
 namespace FireAlt.VFXForge
 {

@@ -9,7 +9,7 @@
         "Unity.Mathematics",
         "Unity.Mathematics.Extensions",
         "Unity.VisualEffectGraph.Runtime",
-        "KrasCore"
+        "FireAlt.Core"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],

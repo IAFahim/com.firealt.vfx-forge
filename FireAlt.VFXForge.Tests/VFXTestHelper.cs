@@ -1,5 +1,5 @@
 using FireAlt.VFXForge.Data;
-using KrasCore;
+using FireAlt.Core.Collections;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs.LowLevel.Unsafe;

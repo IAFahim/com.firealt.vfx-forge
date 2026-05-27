@@ -1,4 +1,4 @@
-using KrasCore;
+using FireAlt.Core.Collections;
 using UnityEngine.VFX;
 
 namespace FireAlt.VFXForge.Data

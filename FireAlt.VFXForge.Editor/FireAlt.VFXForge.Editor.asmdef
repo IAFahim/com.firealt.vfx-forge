@@ -11,8 +11,8 @@
         "FireAlt.VFXForge",
         "FireAlt.VFXForge.Authoring",
         "FireAlt.VFXForge.Data",
-        "KrasCore",
-        "KrasCore.Editor"
+        "FireAlt.Core",
+        "FireAlt.Core.Editor"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [

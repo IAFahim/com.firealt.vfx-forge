@@ -1,4 +1,4 @@
-using KrasCore;
+using FireAlt.Core;
 using UnityEngine;
 using UnityEngine.VFX;
 
