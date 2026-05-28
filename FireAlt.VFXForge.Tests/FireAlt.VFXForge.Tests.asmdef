@@ -12,7 +12,8 @@
         "Unity.Transforms",
         "FireAlt.VFXForge",
         "FireAlt.VFXForge.Data",
-        "FireAlt.Core"
+        "FireAlt.Core",
+        "FireAlt.Core.Testing"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"
