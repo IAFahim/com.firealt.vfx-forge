@@ -1,4 +1,4 @@
-using FireAlt.Core;
+using FireAlt.Core.Utility;
 using UnityEngine;
 using UnityEngine.VFX;
 

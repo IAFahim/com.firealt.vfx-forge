@@ -1,6 +1,5 @@
 using System;
 using FireAlt.VFXForge.Data;
-using FireAlt;
 using FireAlt.Core.Collections;
 using FireAlt.Core.Extensions;
 using Unity.Assertions;

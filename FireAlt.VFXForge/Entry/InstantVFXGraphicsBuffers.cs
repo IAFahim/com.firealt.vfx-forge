@@ -1,5 +1,4 @@
 using FireAlt.VFXForge.Data;
-using FireAlt;
 using FireAlt.Core.Extensions;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Profiling;

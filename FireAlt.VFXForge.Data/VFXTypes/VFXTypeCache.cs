@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using FireAlt.Core;
+using FireAlt.Core.Utility;
 using UnityEngine;
 using UnityEngine.VFX;
 
