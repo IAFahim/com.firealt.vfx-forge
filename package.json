@@ -12,6 +12,13 @@
     "com.unity.mathematics": "1.3.3",
     "com.unity.visualeffectgraph": "17.3.0"
   },
+  "samples": [
+    {
+      "displayName": "Demo",
+      "description": "Contains a demo scene with basic DamageNumber VFX setup and VFXDefinitions for all VFX Forge Templates.",
+      "path": "Samples~/Demo"
+    }
+  ],
   "keywords": [
     "vfx",
     "performance"
