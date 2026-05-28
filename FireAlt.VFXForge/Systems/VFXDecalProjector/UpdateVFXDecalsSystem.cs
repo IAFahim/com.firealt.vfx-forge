@@ -1,4 +1,4 @@
-using BovineLabs.Core.Utility;
+using FireAlt.Core.Utility;
 using FireAlt.VFXForge.Data;
 using Unity.Burst;
 using Unity.Entities;
@@ -15,18 +15,18 @@ namespace FireAlt.VFXForge
     {
         private static class Burst
         {
-            public static readonly SharedStatic<BurstTrampoline> Camera = 
-                SharedStatic<BurstTrampoline>.GetOrCreate<UpdateVFXDecalsSystem>();
+            public static readonly SharedStatic<BurstInterop> Camera = 
+                SharedStatic<BurstInterop>.GetOrCreate<UpdateVFXDecalsSystem>();
         }
         
         static unsafe UpdateVFXDecalsSystem()
         {
-            Burst.Camera.Data = new BurstTrampoline(&CameraPositionPacked);
+            Burst.Camera.Data = new BurstInterop(&CameraPositionPacked);
         }
         
         private static unsafe void CameraPositionPacked(void* argumentsPtr, int argumentsSize)
         {
-            ref var cameraPosition = ref BurstTrampoline.ArgumentsFromPtr<float3>(argumentsPtr, argumentsSize);
+            ref var cameraPosition = ref BurstInterop.ArgumentsFromPtr<float3>(argumentsPtr, argumentsSize);
             
             Camera mainCamera = null;
             if (Application.isPlaying)

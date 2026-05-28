@@ -139,7 +139,7 @@ namespace FireAlt.VFXForge
             // Only needed for editor time to show the preview effect
             if (!Application.isPlaying)
             {
-                em.AddComponentObject(_entity, new HybridEntitySync(this));
+                em.AddComponentData(_entity, new HybridEntitySync(this));
             }
 
             World.GetExistingSystemManaged<InitializeVFXSystem>().Update();

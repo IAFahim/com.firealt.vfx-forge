@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
-using BovineLabs.Core.Extensions;
-using BovineLabs.Core.Utility;
 using FireAlt.VFXForge.Data;
 using FireAlt.Core.Collections;
 using FireAlt.Core.Extensions;
+using FireAlt.Core.Utility;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -37,30 +36,30 @@ namespace FireAlt.VFXForge
 
         private static class Burst
         {
-            public static readonly SharedStatic<BurstTrampoline> GetVFXActivityStatus = 
-                SharedStatic<BurstTrampoline>.GetOrCreate<SyncVFXSystem, GetVFXActivityStatusContext>();
-            public static readonly SharedStatic<BurstTrampoline> UploadData = 
-                SharedStatic<BurstTrampoline>.GetOrCreate<SyncVFXSystem, UploadDataContext>();
+            public static readonly SharedStatic<BurstInterop> GetVFXActivityStatus = 
+                SharedStatic<BurstInterop>.GetOrCreate<SyncVFXSystem, GetVFXActivityStatusContext>();
+            public static readonly SharedStatic<BurstInterop> UploadData = 
+                SharedStatic<BurstInterop>.GetOrCreate<SyncVFXSystem, UploadDataContext>();
             public static readonly SharedStatic<int> VFXSystemVersion = 
                 SharedStatic<int>.GetOrCreate<SyncVFXSystem, SystemVersionContext>();
         }
-        
-        public static int SystemVersion => Burst.VFXSystemVersion.Data;
         
         private struct GetVFXActivityStatusContext {}
         private struct UploadDataContext {}
         private struct SystemVersionContext {}
         
+        public static int SystemVersion => Burst.VFXSystemVersion.Data;
+        
         static unsafe SyncVFXSystem()
         {
-            Burst.GetVFXActivityStatus.Data = new BurstTrampoline(&GetVFXActivityStatusPacked);
-            Burst.UploadData.Data = new BurstTrampoline(&UploadDataPacked);
+            Burst.GetVFXActivityStatus.Data = new BurstInterop(&GetVFXActivityStatusPacked);
+            Burst.UploadData.Data = new BurstInterop(&UploadDataPacked);
             Burst.VFXSystemVersion.Data = 1;
         }
 
         private static unsafe void GetVFXActivityStatusPacked(void* argumentsPtr, int argumentsSize)
         {
-            ref var managedArgs = ref BurstTrampoline.ArgumentsFromPtr<BurstManagedPair<UnityObjectRef<HybridVisualEffect>, bool>>(argumentsPtr, argumentsSize);
+            ref var managedArgs = ref BurstInterop.ArgumentsFromPtr<BurstManagedPair<UnityObjectRef<HybridVisualEffect>, bool>>(argumentsPtr, argumentsSize);
             ref var visualEffect = ref managedArgs.First;
             ref var isActive = ref managedArgs.Second;
             
@@ -69,7 +68,7 @@ namespace FireAlt.VFXForge
         
         private static unsafe void UploadDataPacked(void* argumentsPtr, int argumentsSize)
         {
-            ref var managedArgs = ref BurstTrampoline.ArgumentsFromPtr<BurstManagedPair<VFXSingleton, ManagedArgs>>(argumentsPtr, argumentsSize);
+            ref var managedArgs = ref BurstInterop.ArgumentsFromPtr<BurstManagedPair<VFXSingleton, ManagedArgs>>(argumentsPtr, argumentsSize);
             ref var vfxSingleton = ref managedArgs.First;
             ref var args = ref managedArgs.Second;
             
@@ -85,11 +84,11 @@ namespace FireAlt.VFXForge
                 var timeoutDuration = hybridVisualEffect.VFXDefinition.timeoutDuration;
                 if (hybridVisualEffect.VFXDefinition.IsPersistent)
                 {
-                    vfxSingleton.PersistentAliveVFX.GetRef(key).SetTimeoutDuration(timeoutDuration);
+                    vfxSingleton.PersistentAliveVFX.GetValueAsRef(key).SetTimeoutDuration(timeoutDuration);
                 }
                 else
                 {
-                    vfxSingleton.InstantAliveVFX.GetRef(key).SetTimeoutDuration(timeoutDuration);
+                    vfxSingleton.InstantAliveVFX.GetValueAsRef(key).SetTimeoutDuration(timeoutDuration);
                 }
             }
             args.StateChanges.Clear();

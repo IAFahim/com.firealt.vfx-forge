@@ -87,7 +87,7 @@ namespace FireAlt.VFXForge
             if (World != null && _entity == Entity.Null)
             {
                 _entity = World.EntityManager.CreateEntity(typeof(LocalToWorld));
-                World.EntityManager.AddComponentObject(_entity, new HybridEntitySync(this));
+                World.EntityManager.AddComponentData(_entity, new HybridEntitySync(this));
                 BakeComponents(true);
             }
         }

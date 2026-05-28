@@ -1,7 +1,7 @@
 using System;
-using BovineLabs.Core.Utility;
 using FireAlt.VFXForge.Data;
 using FireAlt.Core.Collections;
+using FireAlt.Core.Utility;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -63,7 +63,7 @@ namespace FireAlt.VFXForge
         protected override void OnUpdate()
         {
             var uninitializedQuery = SystemAPI.QueryBuilder().WithAll<RuntimeDecalLookup>().Build();
-            var uninitializedEntities = !BurstUtil.IsEmpty(ref uninitializedQuery);
+            var uninitializedEntities = !BurstUtils.IsEmpty(ref uninitializedQuery);
 
             var vfxSingleton = SystemAPI.GetSingleton<VFXSingleton>();
 
