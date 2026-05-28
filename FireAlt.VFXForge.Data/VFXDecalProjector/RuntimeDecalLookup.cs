@@ -12,13 +12,13 @@ namespace FireAlt.VFXForge.Data
     
     public struct DecalLookup : IEquatable<DecalLookup>
     {
-        public UnityObjectRef<VFXDefinition> Definition;
+        public UnityObjectRef<VFXDecalDefinition> Definition;
         public UnityObjectRef<Sprite> Sprite;
         
         // Used for comparison only
         private UnityObjectRef<Texture> _spriteTexture;
         
-        public DecalLookup(VFXDefinition definition, Sprite sprite)
+        public DecalLookup(VFXDecalDefinition definition, Sprite sprite)
         {
             Definition = definition;
             Sprite = sprite;

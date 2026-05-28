@@ -49,5 +49,30 @@ namespace FireAlt.VFXForge.Editor
                 EditorUtility.SetDirty(component);
             }
         }
+        
+        [MenuItem("FireAlt/Create VFX Decal Definitions from VFX Assets", priority = -17)]
+        public static void CreateDecalDefinitionsFromAssets()
+        {
+            if (Selection.objects == null)
+            {
+                return;
+            }
+
+            foreach (var select in Selection.objects)
+            {
+                if (select is not VisualEffectAsset asset) continue;
+                
+                var path = Path.Combine(AssetDatabaseUtils.GetFolderPath(AssetDatabase.GetAssetPath(asset)),
+                    $"{select.name}Definition.asset");
+                var definition = ScriptableObject.CreateInstance<VFXDecalDefinition>();
+                
+                definition.visualEffectAsset = asset;
+                
+                AssetDatabase.CreateAsset(definition, path);
+                AssetDatabase.ImportAsset(path);
+            }
+            
+            AssetDatabase.SaveAssets();
+        }
     }
 }

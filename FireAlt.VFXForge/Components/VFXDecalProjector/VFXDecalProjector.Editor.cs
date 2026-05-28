@@ -17,6 +17,19 @@ namespace FireAlt.VFXForge
 
         private void OnValidate()
         {
+            if (_registeredDefinition != VFXDecalDefinition)
+            {
+                if (VFXDecalDefinition == null)
+                {
+                    Cleanup();
+                }
+                else
+                {
+                    Init();
+                }
+                _registeredDefinition = VFXDecalDefinition;
+            }
+
             drawDistance = math.max(drawDistance, 0f);
             projectionDepth = math.max(projectionDepth, 0f);
             Sprite = _sprite;

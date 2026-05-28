@@ -1,3 +1,4 @@
+using System;
 using FireAlt.VFXForge.Data;
 using FireAlt.Core;
 using FireAlt.Core.EntityCommands;
@@ -17,7 +18,10 @@ namespace FireAlt.VFXForge
     public partial class VFXDecalProjector : MonoBehaviour
     {
         [Header("References")]
-        public VFXDefinition VFXDecalDefinition;
+        public VFXDecalDefinition VFXDecalDefinition;
+
+        [SerializeField, HideInInspector]
+        private VFXDecalDefinition _registeredDefinition;
         
         [Header("Data")]
         [FormerlySerializedAs("sprite")]
@@ -116,7 +120,11 @@ namespace FireAlt.VFXForge
         private static void SetupDecalProjector<T>(ref T commands, VFXDecalProjector authoring, bool resetDecal)
             where T : IEntityCommands
         {
-            if (authoring.VFXDecalDefinition == null) return;
+            if (authoring.VFXDecalDefinition == null)
+            {
+                Debug.LogError($"{nameof(VFXDecalDefinition)} was null. Decal cannot be rendered.", authoring.gameObject);
+                return;
+            }
             
             commands.AddComponent(new DecalProjectorData
             {

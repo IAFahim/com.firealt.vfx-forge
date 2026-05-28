@@ -7,10 +7,10 @@ using UnityEngine.VFX;
 
 namespace FireAlt.VFXForge.Data
 {
-    public class VFXDefinition : ScriptableObject, IUID, ICloneable
+    public class VFXDefinition : ScriptableObject, IUID
     {
         [SerializeField, InspectorReadOnly]
-        private ushort key;
+        internal ushort key;
         
         int IUID.ID
         {
@@ -61,19 +61,5 @@ namespace FireAlt.VFXForge.Data
             OnVFXDefinitionChanged.Invoke();
         }
 #endif
-
-        public VFXDefinition Clone(ushort newId)
-        {
-            var inst = CreateInstance<VFXDefinition>();
-            inst.key = newId;
-            inst.timeoutDuration = timeoutDuration;
-            inst.capacity = capacity;
-            inst.vfxDataType = vfxDataType;
-            inst.vfxArrayDataType = vfxArrayDataType;
-            inst.visualEffectAsset = visualEffectAsset;
-            inst.vfxType = vfxType;
-            return inst;
-        }
-        object ICloneable.Clone() => Clone(key);
     }
 }

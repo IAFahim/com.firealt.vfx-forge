@@ -149,18 +149,18 @@ namespace FireAlt.VFXForge
                         throw new InvalidOperationException("Ran out of decal VFX keys.");
                     }
                     
-                    var definitionClone = lookup.Definition.Value.Clone(keyCandidate.Value);
-                    hve.VFXDefinition = definitionClone;
+                    var definition = lookup.Definition.Value.CreateDefinition(keyCandidate.Value);
+                    hve.VFXDefinition = definition;
                     hve.Init();
 
                     SetTextures(ve, lookup);
 
                     _decalVFXMap[lookup] = new DecalEntry 
                     { 
-                        Key = definitionClone,
+                        Key = definition,
                         HybridVisualEffect = hve
                     };
-                    key = definitionClone;
+                    key = definition;
                     initializedAny = true;
                 }
                 else

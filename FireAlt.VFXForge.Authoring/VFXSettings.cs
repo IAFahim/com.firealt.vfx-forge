@@ -13,7 +13,7 @@ namespace FireAlt.VFXForge.Authoring
         {
         }
 
-        public static VFXDefinition DefaultDecalVFX
+        public static VFXDecalDefinition DefaultDecalVFX
         {
             get
             {
@@ -24,7 +24,7 @@ namespace FireAlt.VFXForge.Authoring
                 }
 
                 var path = AssetDatabase.GUIDToAssetPath(guid);
-                return string.IsNullOrEmpty(path) ? null : AssetDatabase.LoadAssetAtPath<VFXDefinition>(path);
+                return string.IsNullOrEmpty(path) ? null : AssetDatabase.LoadAssetAtPath<VFXDecalDefinition>(path);
             }
 
             set
@@ -46,7 +46,7 @@ namespace FireAlt.VFXForge.Authoring
             base.OnGUI(searchContext);
 
             EditorGUI.BeginChangeCheck();
-            var defaultDecalVFX = (VFXDefinition)EditorGUILayout.ObjectField("Default Decal VFX", DefaultDecalVFX, typeof(VFXDefinition), false);
+            var defaultDecalVFX = (VFXDecalDefinition)EditorGUILayout.ObjectField("Default Decal VFX", DefaultDecalVFX, typeof(VFXDecalDefinition), false);
             if (EditorGUI.EndChangeCheck())
             {
                 DefaultDecalVFX = defaultDecalVFX;
