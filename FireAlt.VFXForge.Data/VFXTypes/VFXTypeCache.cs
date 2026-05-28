@@ -22,11 +22,17 @@ namespace FireAlt.VFXForge.Data
             { typeof(int), "Core/int" },
             { typeof(uint), "Core/uint" },
             { typeof(float), "Core/float" },
-            { typeof(Color), "Core/Color" },
             { typeof(Vector2), "Core/Vector2" },
             { typeof(Vector3), "Core/Vector3" },
             { typeof(Vector4), "Core/Vector4" },
             { typeof(Matrix4x4), "Core/Matrix4x4" },
+        };
+        private static readonly HashSet<string> InternalVFXTypes = new()
+        {
+            "VFXSpawnIndex",
+            "VFXArraySpawnIndex",
+            "VFXTransform",
+            "VFXArrayPtr",
         };
         
         internal static void Init()
@@ -133,9 +139,7 @@ namespace FireAlt.VFXForge.Data
         private static bool FilterTypes(Type type)
         {
             var typeName = type.Name;
-             
-            if (typeName.Equals("VFXSpawnIndex") || typeName.Equals("VFXTransform") || typeName.Equals("VFXArrayPtr")) return false;
-            return true;
+            return !InternalVFXTypes.Contains(typeName);
         }
 
         private static bool TryGetBakedVFXType(Type bakerType, Type expectedBakerBaseType, out Type bakedType)
