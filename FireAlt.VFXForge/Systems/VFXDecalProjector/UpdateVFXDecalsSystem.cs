@@ -79,6 +79,7 @@ namespace FireAlt.VFXForge
             
             private void Execute(ref DecalProjectorVFX vfx, EnabledRefRW<RuntimeDecalLookup> enabled)
             {
+                if (!VFXSingleton.ContainsPersistent(vfx.Key)) return;
                 vfx.TryKillDecal(VFXSingleton);
                 enabled.ValueRW = true;
             }
@@ -92,6 +93,8 @@ namespace FireAlt.VFXForge
             
             private void Execute(in LocalToWorld ltw, in DecalProjectorData data, ref DecalProjectorVFX vfx, Entity self)
             {
+                if (!VFXSingleton.ContainsPersistent(vfx.Key)) return;
+                
                 var dist = math.distance(CameraPosition, ltw.Position);
                 if (dist > data.DrawDistance && !vfx.TrackedEntity.Equals(TrackedEntity.Null))
                 {
@@ -112,6 +115,7 @@ namespace FireAlt.VFXForge
             
             private void Execute(in DecalProjectorVFX vfx, in DecalProjectorData data)
             {
+                if (!VFXSingleton.ContainsPersistent(vfx.Key)) return;
                 if (!VFXSingleton.GetPersistent(vfx.Key).TryGetUpdateDataAsRef<VFXDecal>(vfx.TrackedEntity, out var updateData))
                 {
                     return;
