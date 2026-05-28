@@ -38,7 +38,7 @@ namespace FireAlt.VFXForge
         
         private void OnEnable()
         {
-            if (!Application.isPlaying)
+            if (!EditorApplication.isPlayingOrWillChangePlaymode)
             {
                 Init();
                 if (_entity != Entity.Null && _isEditorInspectionActive)
@@ -50,7 +50,7 @@ namespace FireAlt.VFXForge
 
         private void OnDisable()
         {
-            if (!Application.isPlaying)
+            if (!EditorApplication.isPlaying)
             {
                 Cleanup();
             }

@@ -78,8 +78,8 @@ namespace FireAlt.VFXForge
         {
 #if UNITY_EDITOR
             DefaultWorldInitialization.DefaultLazyEditModeInitialize();
-            _singleton = GlobalVFXSingleton.Get();
 #endif
+            _singleton = GlobalVFXSingleton.Get();
             if (Application.isPlaying)
             {
                 transform.position = Vector3.zero;
