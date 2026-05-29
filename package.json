@@ -6,6 +6,7 @@
   "unity": "6000.3",
   "license": "MIT",
   "dependencies": {
+    "com.firealt.core": "1.0.0",
     "com.unity.entities": "1.4.2",
     "com.unity.burst": "1.8.29",
     "com.unity.collections": "2.6.2",
