@@ -16,7 +16,7 @@
   "samples": [
     {
       "displayName": "Demo",
-      "description": "Contains a demo scene with basic DamageNumber VFX setup and VFXDefinitions for all VFX Forge Templates.",
+      "description": "Contains a demo scene with a basic DamageNumber VFX setup and VFXDefinitions for all VFX Forge VFXTemplates.",
       "path": "Samples~/Demo"
     }
   ],
