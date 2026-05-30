@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -344,7 +345,7 @@ namespace UnityEditor.VFX.UI
                 s_HybridVisualEffectType = Type.GetType(HybridVisualEffectTypeName);
                 if (s_HybridVisualEffectType == null)
                 {
-                    foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                    foreach (var assembly in AllAssemblies)
                     {
                         s_HybridVisualEffectType = assembly.GetType(HYBRID_VISUAL_EFFECT_FULL_NAME);
                         if (s_HybridVisualEffectType != null)
@@ -399,7 +400,7 @@ namespace UnityEditor.VFX.UI
                 s_InspectionTrackerType = Type.GetType(InspectionTrackerTypeName);
                 if (s_InspectionTrackerType == null)
                 {
-                    foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                    foreach (var assembly in AllAssemblies)
                     {
                         s_InspectionTrackerType = assembly.GetType(INSPECTION_TRACKER_FULL_NAME);
                         if (s_InspectionTrackerType != null)
@@ -451,5 +452,12 @@ namespace UnityEditor.VFX.UI
                 window.Repaint();
             }
         }
+        
+        private static Assembly[] _allAssemblies;
+#if UNITY_6000_6_OR_NEWER
+        public static Assembly[] AllAssemblies => _allAssemblies ??= UnityEngine.Assemblies.CurrentAssemblies.GetLoadedAssemblies().ToArray();
+#else
+        public static Assembly[] AllAssemblies => _allAssemblies ??= AppDomain.CurrentDomain.GetAssemblies();
+#endif
     }
 }
