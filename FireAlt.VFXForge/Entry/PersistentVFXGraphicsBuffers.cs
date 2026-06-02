@@ -24,17 +24,18 @@ namespace FireAlt.VFXForge
         private readonly GraphicsBuffer _arrayPtrBuffer;
         private GraphicsBuffer _arrayDataBuffer;
         
-        public PersistentVFXGraphicsBuffers(VisualEffect target, int dataGpuSize, int arrayDataGpuSize, int doubleCapacity) 
-            : base(target, dataGpuSize, arrayDataGpuSize)
+        public PersistentVFXGraphicsBuffers(VisualEffect target, VFXDefinition definition) 
+            : base(target, definition)
         {
+            var doubleCapacity = definition.capacity * 2;
             CreateGraphicsBuffer(ref _transformBuffer, VFXProperties.TransformBuffer, doubleCapacity, UnsafeUtility.SizeOf<VFXTransform>());
             
-            if (dataGpuSize != 0)
+            if (definition.DataGpuSize != 0)
             {
                 CreateGraphicsBuffer(ref _spawnIndexBuffer, VFXProperties.SpawnIndexBuffer, doubleCapacity, UnsafeUtility.SizeOf<VFXSpawnIndex>());
-                CreateGraphicsBuffer(ref _dataBuffer, VFXProperties.DataBuffer, doubleCapacity, dataGpuSize);
+                CreateGraphicsBuffer(ref _dataBuffer, VFXProperties.DataBuffer, doubleCapacity, definition.DataGpuSize);
             }
-            if (arrayDataGpuSize != 0)
+            if (definition.ArrayDataGpuSize != 0)
             {
                 CreateGraphicsBuffer(ref _arraySpawnIndexBuffer, VFXProperties.ArraySpawnIndexBuffer, doubleCapacity / 2, UnsafeUtility.SizeOf<VFXArraySpawnIndex>());
                 CreateGraphicsBuffer(ref _arrayPtrBuffer, VFXProperties.ArrayPtrBuffer, doubleCapacity, UnsafeUtility.SizeOf<VFXArrayPtr>());

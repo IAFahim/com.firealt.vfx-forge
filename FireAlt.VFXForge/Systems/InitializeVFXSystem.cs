@@ -1,11 +1,9 @@
-using System;
 using FireAlt.VFXForge.Data;
 using FireAlt.Core.Collections;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using UnityEngine;
-using UnityEngine.VFX;
 
 namespace FireAlt.VFXForge
 {
@@ -17,13 +15,12 @@ namespace FireAlt.VFXForge
         {
             EntityManager.CompleteDependencyBeforeRW<VFXSingleton>();
             var vfxSingleton = SystemAPI.GetSingleton<VFXSingleton>();
-            var graphicsBuffersSingleton = SystemAPI.ManagedAPI.GetSingleton<VFXGraphicsBuffersSingleton>();
 
             foreach (var (component, registeredVFX, initializeRW) in SystemAPI.Query<RefRO<HybridVisualEffectData>,
                          RefRW<RegisteredVFX>, EnabledRefRW<HybridVisualEffectData>>())
             {
                 var hve = component.ValueRO.HybridVisualEffect.Value;
-                if (TryAddVFXEntry(ref vfxSingleton, graphicsBuffersSingleton, hve, out var key))
+                if (TryAddVFXEntry(ref vfxSingleton, hve, out var key))
                 {
                     registeredVFX.ValueRW.Key = key;
                     initializeRW.ValueRW = false;
@@ -31,11 +28,10 @@ namespace FireAlt.VFXForge
             }
         }
         
-        private bool TryAddVFXEntry(ref VFXSingleton vfxSingleton, VFXGraphicsBuffersSingleton graphicsBuffersSingleton, HybridVisualEffect hybridVisualEffect,
+        private bool TryAddVFXEntry(ref VFXSingleton vfxSingleton, HybridVisualEffect hybridVisualEffect,
             out VFXKey key)
         {
             var definition = hybridVisualEffect.VFXDefinition;
-            var target = hybridVisualEffect.VisualEffect;
             
             key = definition;
             if (!vfxSingleton.IsPersistent.TryAdd(key, definition.IsPersistent))
@@ -46,17 +42,6 @@ namespace FireAlt.VFXForge
             
             if (!definition.IsPersistent)
             {
-                InstantVFXGraphicsBuffers buffersEntry;
-                try
-                {
-                    buffersEntry = new InstantVFXGraphicsBuffers(target, definition.DataGpuSize, definition.ArrayDataGpuSize);
-                }
-                catch (Exception e)
-                {
-                    HandleException(target, vfxSingleton, key, e);
-                    return false;
-                }
-
                 var entry = new InstantVFXEntry(hybridVisualEffect)
                 {
                     PendingRequestsCount = new UnsafeThreadData<InstantVFXEntry.Requests>(Allocator.Persistent),
@@ -74,23 +59,12 @@ namespace FireAlt.VFXForge
                 }
                 
                 vfxSingleton.InstantVFXGraphEntries.Add(key, entry);
-                graphicsBuffersSingleton.InstantVFXGraphEntries.Add(key, buffersEntry);
             }
             else
             {
                 // We allocate twice the specified user capacity as the data lives for multiple frames
                 // and destruction can create holes that have to exist when publishing the buffer to GPU
                 var doubleCapacity = definition.capacity * 2;
-                PersistentVFXGraphicsBuffers buffersEntry;
-                try
-                {
-                    buffersEntry = new PersistentVFXGraphicsBuffers(target, definition.DataGpuSize, definition.ArrayDataGpuSize, doubleCapacity);
-                }
-                catch (Exception e)
-                {
-                    HandleException(target, vfxSingleton, key, e);
-                    return false;
-                }
                 
                 var entry = new PersistentVFXEntry(hybridVisualEffect)
                 {
@@ -128,36 +102,13 @@ namespace FireAlt.VFXForge
                 entry.FreeIndices = new UnsafePriorityHeap<int>(freeIndices, Allocator.Persistent);
                 
                 vfxSingleton.PersistentVFXGraphEntries.Add(key, entry);
-                graphicsBuffersSingleton.PersistentVFXGraphEntries.Add(key, buffersEntry);
             }
 
             if (Application.isPlaying)
             {
                 hybridVisualEffect.SetVFXActive(false);
             }
-            else
-            {
-                AddEditorAliveVFX(
-                    definition.IsPersistent ? vfxSingleton.PersistentAliveVFX : vfxSingleton.InstantAliveVFX,
-                    hybridVisualEffect, key);
-            }
             return true;
-        }
-
-        private static void HandleException(VisualEffect visualEffect, VFXSingleton vfxSingleton, VFXKey key, Exception e)
-        {
-            Debug.LogException(e, visualEffect);
-            vfxSingleton.IsPersistent.Remove(key);
-        }
-
-        private static void AddEditorAliveVFX(NativeHashMap<VFXKey, AliveVFX> aliveVfxMap, HybridVisualEffect hybridVisualEffect, VFXKey key)
-        {
-            aliveVfxMap.Add(key, new AliveVFX
-            {
-                HybridVisualEffect = hybridVisualEffect,
-                Key = key,
-                InactivityTimeRemaining = -1f
-            });
         }
     }
 }

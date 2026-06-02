@@ -36,11 +36,11 @@ namespace FireAlt.VFXForge
         protected readonly int DataGpuSize;
         protected readonly int ArrayDataGpuSize;
 
-        protected VFXGraphicsBuffers(VisualEffect target, int dataGpuSize, int arrayDataGpuSize)
+        protected VFXGraphicsBuffers(VisualEffect target, VFXDefinition definition)
         {
             Target = target;
-            DataGpuSize = dataGpuSize;
-            ArrayDataGpuSize = arrayDataGpuSize;
+            DataGpuSize = definition.DataGpuSize;
+            ArrayDataGpuSize = definition.ArrayDataGpuSize;
         }
         
         protected void CreateGraphicsBuffer(ref GraphicsBuffer graphicsBuffer, ShaderProperty vfxProperty, int count, int stride)

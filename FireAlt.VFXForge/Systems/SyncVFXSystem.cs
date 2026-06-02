@@ -78,17 +78,35 @@ namespace FireAlt.VFXForge
             {
                 var hybridVisualEffect = stateChange.HybridVisualEffect.Value;
                 hybridVisualEffect.SetVFXActive(stateChange.Enabled);
+                var definition = hybridVisualEffect.VFXDefinition;
+                VFXKey key = definition;
 
-                if (!stateChange.Enabled) continue;
-                VFXKey key = hybridVisualEffect.VFXDefinition;
-                var timeoutDuration = hybridVisualEffect.VFXDefinition.timeoutDuration;
-                if (hybridVisualEffect.VFXDefinition.IsPersistent)
+                if (stateChange.Enabled)
                 {
-                    vfxSingleton.PersistentAliveVFX.GetValueAsRef(key).SetTimeoutDuration(timeoutDuration);
+                    var timeoutDuration = definition.timeoutDuration;
+                    if (definition.IsPersistent)
+                    {
+                        graphicsBuffersSingleton.PersistentVFXGraphEntries[key] = new PersistentVFXGraphicsBuffers(
+                                hybridVisualEffect.VisualEffect, definition);
+                        vfxSingleton.PersistentAliveVFX.GetValueAsRef(key).SetTimeoutDuration(timeoutDuration);
+                    }
+                    else
+                    {
+                        graphicsBuffersSingleton.InstantVFXGraphEntries[key] = new InstantVFXGraphicsBuffers(
+                            hybridVisualEffect.VisualEffect, definition);
+                        vfxSingleton.InstantAliveVFX.GetValueAsRef(key).SetTimeoutDuration(timeoutDuration);
+                    }
                 }
                 else
                 {
-                    vfxSingleton.InstantAliveVFX.GetValueAsRef(key).SetTimeoutDuration(timeoutDuration);
+                    if (definition.IsPersistent)
+                    {
+                        graphicsBuffersSingleton.PersistentVFXGraphEntries[key].Dispose();
+                    }
+                    else
+                    {
+                        graphicsBuffersSingleton.InstantVFXGraphEntries[key].Dispose();
+                    }
                 }
             }
             args.StateChanges.Clear();
@@ -217,11 +235,11 @@ namespace FireAlt.VFXForge
                 using var toRemove = NativeListPool<AliveVFX>.Rent();
                 RemoveTimedOutVFX(vfxSingleton.InstantAliveVFX, deltaTime, toRemove.List);
                 RemoveTimedOutVFX(vfxSingleton.PersistentAliveVFX, deltaTime, toRemove.List);
-                
-                AddVFX(vfxSingleton.PersistentVFXGraphEntries, vfxSingleton.PersistentAliveVFX);
-                AddVFX(vfxSingleton.InstantVFXGraphEntries, vfxSingleton.InstantAliveVFX);
             }
-            
+                
+            AddVFX(vfxSingleton.PersistentVFXGraphEntries, vfxSingleton.PersistentAliveVFX); 
+            AddVFX(vfxSingleton.InstantVFXGraphEntries, vfxSingleton.InstantAliveVFX);
+    
             var persistentKeys = vfxSingleton.PersistentAliveVFX.GetKeyArray(state.WorldUpdateAllocator);
             var resolvePersistentHandle = new ResolvePersistentJob
             {
@@ -284,7 +302,7 @@ namespace FireAlt.VFXForge
         {
             foreach (var pair in entryMap)
             {
-                if (pair.Value.HasPendingRequests && !aliveVfxMap.ContainsKey(pair.Key))
+                if ((pair.Value.HasPendingRequests || !Application.isPlaying) && !aliveVfxMap.ContainsKey(pair.Key))
                 {
                     _stateChanges.Add(new VFXStateChange
                     {

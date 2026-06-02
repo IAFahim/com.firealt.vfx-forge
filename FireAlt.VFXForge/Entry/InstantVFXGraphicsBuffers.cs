@@ -19,14 +19,14 @@ namespace FireAlt.VFXForge
         private GraphicsBuffer _arrayPtrBuffer;
         private GraphicsBuffer _arraySpawnIndexBuffer;
         
-        public InstantVFXGraphicsBuffers(VisualEffect target, int dataGpuSize, int arrayDataGpuSize) 
-            : base(target, dataGpuSize, arrayDataGpuSize)
+        public InstantVFXGraphicsBuffers(VisualEffect target, VFXDefinition definition) 
+            : base(target, definition)
         {
-            if (dataGpuSize != 0)
+            if (definition.DataGpuSize != 0)
             {
                 ResizeDataBuffer(4096);
             }
-            if (arrayDataGpuSize != 0)
+            if (definition.ArrayDataGpuSize != 0)
             {
                 ResizeArrayDataBuffer(4096, 32, 64);
             }
