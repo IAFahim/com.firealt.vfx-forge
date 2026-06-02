@@ -11,6 +11,7 @@ It lets gameplay code submit VFX requests as unmanaged data, batch those request
   - [Getting Started](Documentation~/GettingStarted.md)
   - [Instant VFX](Documentation~/InstantVFX.md)
   - [Persistent VFX](Documentation~/PersistentVFX.md)
+  - [VFX Decal Projector](Documentation~/VFXDecalProjector.md)
 - [Editor Preview](#editor-preview)
 - [System Order](#system-order)
 - [Parallel Safety](#parallel-safety)
