@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using FireAlt.VFXForge.Data;
 using FireAlt.Core.Collections;
 using FireAlt.Core.Extensions;
@@ -11,7 +10,6 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 using UnityEngine;
-using UnityEngine.Profiling;
 
 namespace FireAlt.VFXForge
 {
@@ -25,15 +23,7 @@ namespace FireAlt.VFXForge
             public UnityObjectRef<HybridVisualEffect> HybridVisualEffect;
             public bool Enabled;
         }
-
-        private struct ManagedArgs
-        {
-            public EntityQuery ManagedSingletonQuery;
-            public float WorldDeltaTime;
-            public JobHandle ResolvePersistentHandle;
-            public NativeList<VFXStateChange> StateChanges;
-        }
-
+        
         private static class Burst
         {
             public static readonly SharedStatic<BurstInterop> GetVFXActivityStatus = 
@@ -55,161 +45,6 @@ namespace FireAlt.VFXForge
             Burst.GetVFXActivityStatus.Data = new BurstInterop(&GetVFXActivityStatusPacked);
             Burst.UploadData.Data = new BurstInterop(&UploadDataPacked);
             Burst.VFXSystemVersion.Data = 1;
-        }
-
-        private static unsafe void GetVFXActivityStatusPacked(void* argumentsPtr, int argumentsSize)
-        {
-            ref var managedArgs = ref BurstInterop.ArgumentsFromPtr<BurstManagedPair<UnityObjectRef<HybridVisualEffect>, bool>>(argumentsPtr, argumentsSize);
-            ref var visualEffect = ref managedArgs.First;
-            ref var isActive = ref managedArgs.Second;
-            
-            isActive = visualEffect.Value.VisualEffect.aliveParticleCount > 0;
-        }
-        
-        private static unsafe void UploadDataPacked(void* argumentsPtr, int argumentsSize)
-        {
-            ref var managedArgs = ref BurstInterop.ArgumentsFromPtr<BurstManagedPair<VFXSingleton, ManagedArgs>>(argumentsPtr, argumentsSize);
-            ref var vfxSingleton = ref managedArgs.First;
-            ref var args = ref managedArgs.Second;
-            
-            var graphicsBuffersSingleton = args.ManagedSingletonQuery.GetSingleton<VFXGraphicsBuffersSingleton>();
-            
-            foreach (var stateChange in args.StateChanges)
-            {
-                var hybridVisualEffect = stateChange.HybridVisualEffect.Value;
-                hybridVisualEffect.SetVFXActive(stateChange.Enabled);
-                var definition = hybridVisualEffect.VFXDefinition;
-                VFXKey key = definition;
-
-                if (stateChange.Enabled)
-                {
-                    var timeoutDuration = definition.timeoutDuration;
-                    if (definition.IsPersistent)
-                    {
-                        graphicsBuffersSingleton.PersistentVFXGraphEntries[key] = new PersistentVFXGraphicsBuffers(
-                                hybridVisualEffect.VisualEffect, definition);
-                        vfxSingleton.PersistentAliveVFX.GetValueAsRef(key).SetTimeoutDuration(timeoutDuration);
-                    }
-                    else
-                    {
-                        graphicsBuffersSingleton.InstantVFXGraphEntries[key] = new InstantVFXGraphicsBuffers(
-                            hybridVisualEffect.VisualEffect, definition);
-                        vfxSingleton.InstantAliveVFX.GetValueAsRef(key).SetTimeoutDuration(timeoutDuration);
-                    }
-                }
-                else
-                {
-                    if (definition.IsPersistent)
-                    {
-                        graphicsBuffersSingleton.PersistentVFXGraphEntries[key].Dispose();
-                    }
-                    else
-                    {
-                        graphicsBuffersSingleton.InstantVFXGraphEntries[key].Dispose();
-                    }
-                }
-            }
-            args.StateChanges.Clear();
-            
-            var isPlaying = Application.isPlaying;
-            var unityDeltaTime = Time.deltaTime;
-            var deltaTimeMultiplier = args.WorldDeltaTime / unityDeltaTime;
-            if (unityDeltaTime == 0)
-            {
-                deltaTimeMultiplier = 1f;
-            }
-            
-            Profiler.BeginSample("InstantVFXGraphEntries");
-            foreach (var pair in vfxSingleton.InstantAliveVFX)
-            {
-                ref var entry = ref vfxSingleton.GetInstant(pair.Key);
-                var vfxGraph = entry.HybridVisualEffect.Value.VisualEffect;
-                var graphicsBuffers = graphicsBuffersSingleton.InstantVFXGraphEntries[pair.Key];
-                if (!graphicsBuffers.HasRequiredProperties()) continue;
-
-                var spawnRequestCount = entry.RequestsCount;
-                var spawnArrayRequestCount = entry.ArrayRequestsCount;
-                
-                if (isPlaying)
-                {
-                    vfxGraph.playRate = deltaTimeMultiplier;
-                }
-                Common.TrySetInt(vfxGraph, VFXProperties.SpawnRequestsCount, spawnRequestCount);
-                Common.TrySetInt(vfxGraph, VFXProperties.SpawnArrayRequestsCount, spawnArrayRequestCount);
-                
-                if (spawnRequestCount == 0 && spawnArrayRequestCount == 0) continue;
-
-                if (entry.DataSizeInBytes > 0)
-                {
-                    graphicsBuffers.SetDataBuffer(entry.DataBuffer.List);
-                    entry.DataBuffer.Clear();
-                }
-                if (entry.ArrayDataSizeInBytes > 0)
-                {
-                    graphicsBuffers.SetArrayDataBuffer(entry.ArrayDataBuffer.List, entry.ArrayPtrBuffer.List, entry.ArraySpawnIndexBuffer.List);
-                    entry.ArrayDataBuffer.Clear();
-                    entry.ArrayPtrBuffer.Clear();
-                    entry.ArraySpawnIndexBuffer.Clear();
-                }
-                
-                entry.ResetRequestsCount();
-            }
-            Profiler.EndSample();
-            
-            args.ResolvePersistentHandle.Complete();
-            
-            Profiler.BeginSample("PersistentVFXGraphEntries");
-            foreach (var pair in vfxSingleton.PersistentAliveVFX)
-            {
-                ref var entry = ref vfxSingleton.GetPersistent(pair.Key);
-                var vfxGraph = entry.HybridVisualEffect.Value.VisualEffect;
-                var graphicsBuffers = graphicsBuffersSingleton.PersistentVFXGraphEntries[pair.Key];
-                if (!graphicsBuffers.HasRequiredProperties()) continue;
-                
-                if (isPlaying)
-                {
-                    vfxGraph.playRate = deltaTimeMultiplier;
-                }
-                Common.TrySetInt(vfxGraph, VFXProperties.SpawnRequestsCount, entry.RequestsCount);
-                Common.TrySetInt(vfxGraph, VFXProperties.SpawnArrayRequestsCount, entry.ArrayRequestsCount);
-                
-                if (entry.DataUploadRange.IsValid())
-                {
-                    graphicsBuffers.SetTransformBuffer(entry.TransformBuffer, entry.DataUploadRange);
-                    
-                    if (entry.DataSizeInBytes > 0)
-                    {
-                        graphicsBuffers.SetDataBuffer(entry.DataBuffer, entry.DataUploadRange);
-                    }
-                }
-                if (entry.ArrayDataSizeInBytes > 0 && entry.ArrayDataUploadRange.IsValid())
-                {
-                    graphicsBuffers.SetArrayDataBuffer(entry.ArrayDataMemoryBuffer, entry.ArrayPtrBuffer,
-                        entry.ArrayDataUploadRange, entry.DataUploadRange);
-                }
-
-                if (entry.RequestsCount == 0 && entry.ArrayRequestsCount == 0) continue;
-                graphicsBuffers.SetIndexBuffers(entry.SpawnIndexBuffer, entry.ArraySpawnIndexBuffer);
-                entry.ResetRequestsCount();
-            }
-            Profiler.EndSample();
-        }
-
-        private NativeList<VFXStateChange> _stateChanges;
-        
-        public void OnCreate(ref SystemState state)
-        {
-            const int vfxCapacity = 32;
-            
-            state.EntityManager.CreateSingleton(new VFXSingleton(vfxCapacity));
-            var entity = state.EntityManager.CreateEntity(typeof(VFXGraphicsBuffersSingleton));
-            state.EntityManager.AddComponentObject(entity, new VFXGraphicsBuffersSingleton
-            {
-                InstantVFXGraphEntries = new Dictionary<VFXKey, InstantVFXGraphicsBuffers>(vfxCapacity),
-                PersistentVFXGraphEntries = new Dictionary<VFXKey, PersistentVFXGraphicsBuffers>(vfxCapacity)
-            });
-            
-            _stateChanges = new NativeList<VFXStateChange>(4, Allocator.Persistent);
         }
 
         public void OnDestroy(ref SystemState state)
