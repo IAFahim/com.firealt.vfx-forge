@@ -64,7 +64,7 @@ namespace FireAlt.VFXForge
             Burst.VFXSystemVersion.Data++;
 
             var deltaTime = SystemAPI.Time.DeltaTime;
-
+            
             if (Application.isPlaying)
             {
                 using var toRemove = NativeListPool<AliveVFX>.Rent();

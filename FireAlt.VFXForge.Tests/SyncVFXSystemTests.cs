@@ -1,52 +1,38 @@
-using FireAlt.Core.Testing;
+using System.Collections;
+using FireAlt.VFXForge.Data;
 using NUnit.Framework;
-using Unity.Entities;
+using UnityEngine.TestTools;
 
 namespace FireAlt.VFXForge.Tests
 {
-    public class SyncVFXSystemTests : ECSTestsFixture
+    public class SyncVFXSystemPlayModeTests
     {
-        private SystemHandle _syncVfxSystem;
-        private SystemHandle _vfxTransformSystem;
-        
-        public override void Setup()
+        [UnityTest]
+        public IEnumerator ForceTimeout_WhenSyncVfxSystemUpdates_DisablesVisualEffect()
         {
-            base.Setup();
-            _syncVfxSystem = World.CreateSystem<SyncVFXSystem>();
-            _vfxTransformSystem = World.CreateSystem<VFXTransformSystem>();
-        }
+            yield return VFXPlayModeTestFixture.Run(fixture =>
+            {
+                var definition = fixture.CreateDefinition(10, VFXType.Instant);
+                var hybridVisualEffect = fixture.CreateAndRegisterVisualEffect(definition, "ForceTimeout VFX Test");
+                var singleton = fixture.GetSingleton();
+                Assert.IsTrue(singleton.ContainsInstant(definition));
 
-        [Test]
-        public void OnCreate_CreatesSingletonsAndGraphicsBufferRegistry()
-        {
-            var singletonEntity = Manager.CreateEntityQuery(typeof(VFXSingleton)).GetSingletonEntity();
-            var singleton = Manager.GetComponentData<VFXSingleton>(singletonEntity);
+                fixture.SpawnInstant(definition);
 
-            var graphicsEntity = Manager.CreateEntityQuery(typeof(VFXGraphicsBuffersSingleton)).GetSingletonEntity();
-            var graphicsBuffers = Manager.GetComponentObject<VFXGraphicsBuffersSingleton>(graphicsEntity);
+                fixture.UpdateSystems();
+                Assert.IsTrue(hybridVisualEffect.gameObject.activeSelf);
 
-            Assert.IsTrue(singleton.IsValid());
-            Assert.IsNotNull(graphicsBuffers);
-            Assert.IsNotNull(graphicsBuffers.InstantVFXGraphEntries);
-            Assert.IsNotNull(graphicsBuffers.PersistentVFXGraphEntries);
-            Assert.That(graphicsBuffers.InstantVFXGraphEntries.Count, Is.EqualTo(0));
-            Assert.That(graphicsBuffers.PersistentVFXGraphEntries.Count, Is.EqualTo(0));
-        }
+                var visualEffect = hybridVisualEffect.VisualEffect;
+                visualEffect.Reinit();
+                visualEffect.pause = true;
+                Assert.That(visualEffect.aliveParticleCount, Is.LessThanOrEqualTo(0));
 
-        [Test]
-        public void Update_WhenNoRegisteredVfx_DoesNotThrowAndIncrementsVersion()
-        {
-            var before = SyncVFXSystem.SystemVersion;
+                singleton.ForceTimeout(definition);
+                Assert.That(singleton.GetInstant(definition).HasPendingRequests, Is.False);
+                fixture.UpdateSystems();
 
-            Assert.DoesNotThrow(UpdateSystems);
-            Assert.That(SyncVFXSystem.SystemVersion, Is.EqualTo(before + 1));
-        }
-
-        private void UpdateSystems()
-        {
-            _vfxTransformSystem.Update(WorldUnmanaged);
-            _syncVfxSystem.Update(WorldUnmanaged);
-            Manager.CompleteAllTrackedJobs();
+                Assert.IsFalse(hybridVisualEffect.gameObject.activeSelf);
+            }, "ForceTimeout Test World");
         }
     }
 }

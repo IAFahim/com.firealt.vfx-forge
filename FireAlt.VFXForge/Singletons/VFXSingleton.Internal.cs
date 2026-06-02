@@ -27,7 +27,7 @@ namespace FireAlt.VFXForge
             InstantAliveVFX = new NativeHashMap<VFXKey, AliveVFX>(4, Allocator.Persistent);
             PersistentAliveVFX = new NativeHashMap<VFXKey, AliveVFX>(4, Allocator.Persistent);
         }
-        
+
         internal InternalAPI AsInternal()
         {
             return new InternalAPI();

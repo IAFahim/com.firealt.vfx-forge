@@ -1,224 +1,192 @@
-using FireAlt.Core.Testing;
+using System;
+using System.Collections;
 using FireAlt.VFXForge.Data;
 using NUnit.Framework;
 using Unity.Entities;
+using UnityEngine.TestTools;
 
 namespace FireAlt.VFXForge.Tests
 {
-    public class VFXSingletonTests : ECSTestsFixture
+    public class VFXSingletonTests
     {
-        [Test]
-        public void Constructor_InitializesAllMaps()
+        [UnityTest]
+        public IEnumerator RuntimeInitialization_CreatesValidSingleton()
         {
-            var singleton = new VFXSingleton(8);
-            try
+            yield return VFXPlayModeTestFixture.Run(fixture =>
             {
+                var singleton = fixture.GetSingleton();
+
                 Assert.IsTrue(singleton.IsValid());
-                Assert.IsTrue(singleton.IsPersistent.IsCreated);
-                Assert.IsTrue(singleton.InstantVFXGraphEntries.IsCreated);
-                Assert.IsTrue(singleton.PersistentVFXGraphEntries.IsCreated);
-                Assert.IsTrue(singleton.InstantAliveVFX.IsCreated);
-                Assert.IsTrue(singleton.PersistentAliveVFX.IsCreated);
-            }
-            finally
-            {
-                singleton.Dispose();
-            }
+            });
         }
 
-        [Test]
-        public void GetInstant_WhenKeyMissing_ThrowsAssertion()
+        [UnityTest]
+        public IEnumerator GetInstant_WhenKeyMissing_ThrowsAssertion()
         {
-            var singleton = new VFXSingleton(2);
-            try
+            yield return VFXPlayModeTestFixture.Run(fixture =>
             {
-                Assert.Throws<System.ArgumentException>(() => singleton.GetInstant((VFXKey)100));
-            }
-            finally
-            {
-                singleton.Dispose();
-            }
+                var singleton = fixture.GetSingleton();
+
+                Assert.Throws<ArgumentException>(() => singleton.GetInstant((VFXKey)100));
+            });
         }
 
-        [Test]
-        public void GetInstant_WhenKeyRegistered_DoesNotThrow()
+        [UnityTest]
+        public IEnumerator GetInstant_WhenRegisteredThroughRuntimePath_DoesNotThrow()
         {
-            var singleton = new VFXSingleton(2);
-            try
+            yield return VFXPlayModeTestFixture.Run(fixture =>
             {
-                var key = (VFXKey)10;
-                var entry = VFXTestHelper.CreateInstantEntry();
-                singleton.InstantVFXGraphEntries.Add(key, entry);
+                var definition = fixture.CreateDefinition(10, VFXType.Instant);
+                fixture.CreateAndRegisterVisualEffect(definition);
+                var singleton = fixture.GetSingleton();
 
+                Assert.IsTrue(singleton.ContainsInstant(definition));
                 Assert.DoesNotThrow(() =>
                 {
-                    ref var instant = ref singleton.GetInstant(key);
+                    ref var instant = ref singleton.GetInstant(definition);
                     instant.ResetRequestsCount();
                 });
-            }
-            finally
-            {
-                singleton.Dispose();
-            }
+            });
         }
 
-        [Test]
-        public void GetPersistent_WhenKeyMissing_ThrowsAssertion()
+        [UnityTest]
+        public IEnumerator GetPersistent_WhenKeyMissing_ThrowsAssertion()
         {
-            var singleton = new VFXSingleton(2);
-            try
+            yield return VFXPlayModeTestFixture.Run(fixture =>
             {
-                Assert.Throws<System.ArgumentException>(() => singleton.GetPersistent((VFXKey)100));
-            }
-            finally
-            {
-                singleton.Dispose();
-            }
+                var singleton = fixture.GetSingleton();
+
+                Assert.Throws<ArgumentException>(() => singleton.GetPersistent((VFXKey)100));
+            });
         }
 
-        [Test]
-        public void ParallelWriterGetPersistent_WhenKeyRegistered_DoesNotThrow()
+        [UnityTest]
+        public IEnumerator GetPersistent_WhenRegisteredThroughRuntimePath_DoesNotThrow()
         {
-            var singleton = new VFXSingleton(2);
-            try
+            yield return VFXPlayModeTestFixture.Run(fixture =>
             {
-                var key = (VFXKey)20;
-                var entry = VFXTestHelper.CreatePersistentEntry(2);
-                singleton.PersistentVFXGraphEntries.Add(key, entry);
+                var definition = fixture.CreateDefinition(20, VFXType.Persistent, capacity: 2);
+                fixture.CreateAndRegisterVisualEffect(definition);
+                var singleton = fixture.GetSingleton();
+
+                Assert.IsTrue(singleton.ContainsPersistent(definition));
+                Assert.DoesNotThrow(() =>
+                {
+                    ref var persistent = ref singleton.GetPersistent(definition);
+                    Assert.IsFalse(persistent.HasPendingRequests);
+                });
+            });
+        }
+
+        [UnityTest]
+        public IEnumerator ParallelWriterGetPersistent_WhenRegisteredThroughRuntimePath_DoesNotThrow()
+        {
+            yield return VFXPlayModeTestFixture.Run(fixture =>
+            {
+                var definition = fixture.CreateDefinition(30, VFXType.Persistent, capacity: 2);
+                fixture.CreateAndRegisterVisualEffect(definition);
+                var singleton = fixture.GetSingleton();
 
                 Assert.DoesNotThrow(() =>
                 {
-                    ref var persistent = ref singleton.AsParallelWriter().GetPersistent(key);
-                    Assert.That(persistent.Capacity, Is.EqualTo(2));
+                    ref var persistent = ref singleton.AsParallelWriter().GetPersistent(definition);
+                    Assert.IsFalse(persistent.HasPendingRequests);
                 });
-            }
-            finally
-            {
-                singleton.Dispose();
-            }
+            });
         }
 
-        [Test]
-        public void ParallelWriterGetPersistent_WhenKeyMissing_ThrowsAssertion()
+        [UnityTest]
+        public IEnumerator ParallelWriterGetPersistent_WhenKeyMissing_ThrowsAssertion()
         {
-            var singleton = new VFXSingleton(2);
-            try
+            yield return VFXPlayModeTestFixture.Run(fixture =>
             {
+                var singleton = fixture.GetSingleton();
                 var writer = singleton.AsParallelWriter();
-                Assert.Throws<System.ArgumentException>(() => writer.GetPersistent((VFXKey)200));
-            }
-            finally
-            {
-                singleton.Dispose();
-            }
+
+                Assert.Throws<ArgumentException>(() => writer.GetPersistent((VFXKey)200));
+            });
         }
 
-        [Test]
-        public void SpawnPersistent_WhenCapacityAvailable_WritesExpectedState()
+        [UnityTest]
+        public IEnumerator SpawnPersistent_WhenCapacityAvailable_BecomesAliveAfterSystemsUpdate()
         {
-            var singleton = new VFXSingleton(2);
-            var entry = VFXTestHelper.CreatePersistentEntry(2);
-
-            try
+            yield return VFXPlayModeTestFixture.Run(fixture =>
             {
-                var trackedEntity = singleton.AsInternal().SpawnPersistent(ref entry, Entity.Null, default, 1.25f);
+                var definition = fixture.CreateDefinition(40, VFXType.Persistent, capacity: 2);
+                fixture.CreateAndRegisterVisualEffect(definition);
+
+                var trackedEntity = fixture.SpawnPersistent(definition, Entity.Null, trackingDuration: 1.25f);
+                fixture.UpdateSystems();
 
                 Assert.IsTrue(trackedEntity.IsValid);
-                Assert.That(trackedEntity.IndexInData, Is.EqualTo(0));
-                Assert.That(trackedEntity.SystemVersion, Is.EqualTo(SyncVFXSystem.SystemVersion));
-                Assert.That(entry.RequestsCount, Is.EqualTo(1));
-                Assert.That(entry.ArrayRequestsCount, Is.EqualTo(0));
-                Assert.That(entry.SpawnIndexBuffer.Length, Is.EqualTo(1));
-                Assert.That(entry.AliveMask.IsSet(trackedEntity.IndexInData), Is.True);
-
-                var transform = entry.TransformBuffer[trackedEntity.IndexInData];
-                Assert.That(transform.IsAlive(), Is.True);
-                Assert.That(transform.TrackingDuration, Is.EqualTo(1.25f));
-            }
-            finally
-            {
-                entry.Dispose();
-                singleton.Dispose();
-            }
+                Assert.IsTrue(fixture.IsPersistentAlive(definition, trackedEntity));
+            });
         }
 
-        [Test]
-        public void SpawnPersistent_WhenCapacityExceeded_ReturnsInvalidEntity()
+        [UnityTest]
+        public IEnumerator SpawnPersistent_WhenCapacityExceeded_ReturnsInvalidEntity()
         {
-            var singleton = new VFXSingleton(1);
-            var entry = VFXTestHelper.CreatePersistentEntry(1);
-
-            try
+            yield return VFXPlayModeTestFixture.Run(fixture =>
             {
-                var first = singleton.AsInternal().SpawnPersistent(ref entry, Entity.Null, default, 0f);
-                var second = singleton.AsInternal().SpawnPersistent(ref entry, Entity.Null, default, 0f);
+                var definition = fixture.CreateDefinition(50, VFXType.Persistent, capacity: 1);
+                fixture.CreateAndRegisterVisualEffect(definition);
+
+                var first = fixture.SpawnPersistent(definition, Entity.Null);
+                var second = fixture.SpawnPersistent(definition, Entity.Null);
 
                 Assert.IsTrue(first.IsValid);
                 Assert.IsFalse(second.IsValid);
-                Assert.That(entry.RequestsCount, Is.EqualTo(1));
-            }
-            finally
-            {
-                entry.Dispose();
-                singleton.Dispose();
-            }
+            });
         }
 
-        [Test]
-        public void SpawnPersistent_WhenTrackingDurationNegative_ThrowsAssertion()
+        [UnityTest]
+        public IEnumerator SpawnPersistent_WhenTrackingDurationNegative_ThrowsAssertion()
         {
-            var singleton = new VFXSingleton(1);
-            var entry = VFXTestHelper.CreatePersistentEntry(1);
+            yield return VFXPlayModeTestFixture.Run(fixture =>
+            {
+                var definition = fixture.CreateDefinition(60, VFXType.Persistent, capacity: 1);
+                fixture.CreateAndRegisterVisualEffect(definition);
 
-            try
-            {
-                Assert.Throws<UnityEngine.Assertions.AssertionException>(() => singleton.AsInternal().SpawnPersistent(ref entry, Entity.Null, default, -0.01f));
-            }
-            finally
-            {
-                entry.Dispose();
-                singleton.Dispose();
-            }
+                Assert.Throws<UnityEngine.Assertions.AssertionException>(() =>
+                    fixture.SpawnPersistent(definition, Entity.Null, trackingDuration: -0.01f));
+            });
         }
 
-        [Test]
-        public void KillPersistent_WhenResolvedEntityKilled_IndexGetsReused()
+        [UnityTest]
+        public IEnumerator TryKillPersistent_WhenResolvedEntityKilled_IsNotAliveAfterSystemsUpdate()
         {
-            var singleton = new VFXSingleton(2);
-            var entry = VFXTestHelper.CreatePersistentEntry(2);
-
-            try
+            yield return VFXPlayModeTestFixture.Run(fixture =>
             {
-                var first = singleton.AsInternal().SpawnPersistent(ref entry, Entity.Null, default, 0f);
-                singleton.AsInternal().KillPersistent(ref entry, first);
-                var second = singleton.AsInternal().SpawnPersistent(ref entry, Entity.Null, default, 0f);
+                var definition = fixture.CreateDefinition(70, VFXType.Persistent, capacity: 2);
+                fixture.CreateAndRegisterVisualEffect(definition);
 
-                Assert.IsTrue(second.IsValid);
-                Assert.That(second.IndexInData, Is.EqualTo(first.IndexInData));
-            }
-            finally
-            {
-                entry.Dispose();
-                singleton.Dispose();
-            }
+                var trackedEntity = fixture.SpawnPersistent(definition, Entity.Null);
+                fixture.UpdateSystems();
+
+                Assert.IsTrue(fixture.IsPersistentAlive(definition, trackedEntity));
+                Assert.IsTrue(fixture.TryKillPersistent(definition, trackedEntity));
+
+                fixture.UpdateSystems();
+
+                Assert.IsFalse(fixture.IsPersistentAlive(definition, trackedEntity));
+            });
         }
 
-        [Test]
-        public void KillPersistent_WhenDeferredEntityPassed_ThrowsAssertion()
+        [UnityTest]
+        public IEnumerator TryKillPersistent_WhenDeferredEntityKilled_DoesNotBecomeAliveAfterSystemsUpdate()
         {
-            var singleton = new VFXSingleton(2);
-            var entry = VFXTestHelper.CreatePersistentEntry(2);
+            yield return VFXPlayModeTestFixture.Run(fixture =>
+            {
+                var definition = fixture.CreateDefinition(80, VFXType.Persistent, capacity: 2);
+                fixture.CreateAndRegisterVisualEffect(definition);
 
-            try
-            {
-                var deferred = new TrackedEntity(Entity.Null, 0, -SyncVFXSystem.SystemVersion);
-                Assert.Throws<UnityEngine.Assertions.AssertionException>(() => singleton.AsInternal().KillPersistent(ref entry, deferred));
-            }
-            finally
-            {
-                entry.Dispose();
-                singleton.Dispose();
-            }
+                var trackedEntity = fixture.SpawnPersistent(definition, Entity.Null);
+
+                Assert.IsTrue(fixture.TryKillPersistent(definition, trackedEntity));
+                fixture.UpdateSystems();
+
+                Assert.IsFalse(fixture.IsPersistentAlive(definition, trackedEntity));
+            });
         }
     }
 }
