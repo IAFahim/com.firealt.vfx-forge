@@ -1,8 +1,8 @@
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using FireAlt.VFXForge.Data;
 using JetBrains.Annotations;
-using FireAlt.Core.Collections;
 using FireAlt.Core.Extensions;
 using Unity.Assertions;
 using Unity.Collections;
@@ -10,96 +10,41 @@ using Unity.Entities;
 
 namespace FireAlt.VFXForge
 {
-    public struct VFXSingleton : IComponentData, IDisposable
+    public partial struct VFXSingleton : IComponentData, IDisposable
     {
-        internal readonly struct InternalAPI
+        public ParallelWriter AsParallelWriter()
         {
-            internal TrackedEntity SpawnPersistent(ref PersistentVFXEntry entry, Entity entityToTrack,
-                UnsafeArray<byte> arrayData, float trackingDuration)
-            {
-                Assert.IsTrue(trackingDuration >= 0f);
-                var trackedEntity = new TrackedEntity(entityToTrack, -1, 0);
-            
-                if (entry.RequestsCount >= entry.Capacity
-                    || entry.TrackedEntities.Count >= entry.Capacity
-                    || !entry.FreeIndices.TryDequeue(out var index))
-                {
-                    return trackedEntity;
-                }
-            
-                trackedEntity.IndexInData = index;
-                trackedEntity.SystemVersion = SyncVFXSystem.SystemVersion;
-                
-                var transform = default(VFXTransform);
-                transform.SetAlive(true);
-                transform.TrackingDuration = trackingDuration;
-                entry.TransformBuffer[index] = transform;
-                entry.TrackedEntities.Add(trackedEntity);
-                entry.AliveMask.Set(index);
+            Assert.IsTrue(IsValid());
+            return new ParallelWriter(InstantVFXGraphEntries, PersistentVFXGraphEntries);
+        }
 
-                if (entry.SpawnIndexBuffer.IsCreated)
-                {
-                    entry.SpawnIndexBuffer.Add(new VFXSpawnIndex((uint)index));
-                }
-                if (arrayData.IsCreated && arrayData.Length > 0)
-                {
-                    var arrayLength = arrayData.Length / entry.ArrayDataSizeInBytes;
-                    entry.ArrayPtrBuffer[trackedEntity.IndexInData] = entry.ArrayDataMemoryBuffer.Allocate(arrayData);
-                    
-                    for (int i = 0; i < arrayLength; i++)
-                    {
-                        entry.ArraySpawnIndexBuffer.Add(new VFXArraySpawnIndex((uint)index, (uint)i));
-                    }
-                    entry.ArrayRequestsCount += arrayLength;
-                }
-                
-                entry.RequestsCount++;
-                return trackedEntity;
-            }
-            
-            internal unsafe TrackedEntity SpawnPersistentUnsafe(ref PersistentVFXEntry entry, Entity entityToTrack,
-                byte* data, UnsafeArray<byte> arrayData, float trackingDuration)
-            {
-                Assert.IsTrue(data != null);
+        public bool IsValid()
+        {
+            return IsPersistent.IsCreated;
+        }
 
-                var trackedEntity = SpawnPersistent(ref entry, entityToTrack, arrayData, trackingDuration);
-                if (!trackedEntity.IsValid) return trackedEntity;
+        public ref InstantVFXEntry GetInstant(in VFXKey key)
+        {
+            CheckContainsInstant(InstantVFXGraphEntries, key);
+            ref var entry = ref InstantVFXGraphEntries.GetValueAsRef(key);
+            return ref entry;
+        }
+        
+        public ref PersistentVFXEntry GetPersistent(in VFXKey key)
+        {
+            CheckContainsPersistent(PersistentVFXGraphEntries, key);
+            ref var entry = ref PersistentVFXGraphEntries.GetValueAsRef(key);
+            return ref entry;
+        }
+        
+        public bool ContainsInstant(in VFXKey key)
+        {
+            return InstantVFXGraphEntries.ContainsKey(key);
+        }
 
-                if (entry.DataSizeInBytes != 0)
-                {
-                    entry.DataBuffer.SetDataUnsafe(trackedEntity.IndexInData, data, entry.DataSizeInBytes);
-                }
-                return trackedEntity;
-            }
-            
-            internal void KillPersistent(ref PersistentVFXEntry entry, TrackedEntity resolvedKey)
-            {
-                Assert.IsTrue(!resolvedKey.IsDeferred(SyncVFXSystem.SystemVersion));
-                var index = resolvedKey.IndexInData;
-                Assert.IsTrue(index >= 0 && index < entry.Capacity * 2);
-                
-                if (!entry.TrackedEntities.Remove(resolvedKey)) return;
-                
-                ref var transform = ref entry.TransformBuffer.ElementAt(index);
-                transform.Kill();
-                entry.AliveMask.Unset(index);
-
-                if (entry.ArrayDataMemoryBuffer.IsCreated)
-                {
-                    MemoryPtr ptr = entry.ArrayPtrBuffer[index];
-                    if (ptr.IsValid && entry.ArrayDataMemoryBuffer.Contains(ptr))
-                    {
-                        entry.ArrayDataMemoryBuffer.Free(entry.ArrayPtrBuffer[index]);
-                    }
-                }
-                
-                if (entry.ResolvedToRequestMap.TryGetValue(resolvedKey, out var request))
-                {
-                    entry.ResolvedToRequestMap.Remove(resolvedKey);
-                    entry.DeferredToResolvedMap.Remove(request);
-                }
-                entry.FreeIndices.Enqueue(index);
-            }
+        public bool ContainsPersistent(in VFXKey key)
+        {
+            return PersistentVFXGraphEntries.ContainsKey(key);
         }
         
         public struct ParallelWriter
@@ -141,76 +86,6 @@ namespace FireAlt.VFXForge
             }
         }
         
-        internal NativeHashMap<VFXKey, bool> IsPersistent;
-        
-        internal NativeHashMap<VFXKey, InstantVFXEntry> InstantVFXGraphEntries;
-        internal NativeHashMap<VFXKey, PersistentVFXEntry> PersistentVFXGraphEntries;
-        
-        internal NativeHashMap<VFXKey, AliveVFX> InstantAliveVFX;
-        internal NativeHashMap<VFXKey, AliveVFX> PersistentAliveVFX;
-        
-        internal VFXSingleton(int capacity)
-        {
-            IsPersistent = new NativeHashMap<VFXKey, bool>(capacity, Allocator.Persistent);
-            
-            InstantVFXGraphEntries = new NativeHashMap<VFXKey, InstantVFXEntry>(capacity, Allocator.Persistent);
-            PersistentVFXGraphEntries = new NativeHashMap<VFXKey, PersistentVFXEntry>(capacity, Allocator.Persistent);
-            
-            InstantAliveVFX = new NativeHashMap<VFXKey, AliveVFX>(4, Allocator.Persistent);
-            PersistentAliveVFX = new NativeHashMap<VFXKey, AliveVFX>(4, Allocator.Persistent);
-        }
-        
-        internal InternalAPI AsInternal()
-        {
-            return new InternalAPI();
-        }
-        
-        public ParallelWriter AsParallelWriter()
-        {
-            return new ParallelWriter(InstantVFXGraphEntries, PersistentVFXGraphEntries);
-        }
-
-        public bool IsValid()
-        {
-            return IsPersistent.IsCreated;
-        }
-
-        public ref InstantVFXEntry GetInstant(in VFXKey key)
-        {
-            CheckContainsInstant(InstantVFXGraphEntries, key);
-            ref var entry = ref InstantVFXGraphEntries.GetValueAsRef(key);
-            return ref entry;
-        }
-        
-        public ref PersistentVFXEntry GetPersistent(in VFXKey key)
-        {
-            CheckContainsPersistent(PersistentVFXGraphEntries, key);
-            ref var entry = ref PersistentVFXGraphEntries.GetValueAsRef(key);
-            return ref entry;
-        }
-
-        public void Dispose()
-        {
-            IsPersistent.Dispose();
-            InstantAliveVFX.Dispose();
-            PersistentAliveVFX.Dispose();
-            
-            foreach (var pair in InstantVFXGraphEntries)
-            {
-                if (pair.Value.HybridVisualEffect.Value != null)
-                    pair.Value.HybridVisualEffect.Value.VisualEffect.Reinit();
-                pair.Value.Dispose();
-            }
-            InstantVFXGraphEntries.Dispose();
-            foreach (var pair in PersistentVFXGraphEntries)
-            {
-                if (pair.Value.HybridVisualEffect.Value != null)
-                    pair.Value.HybridVisualEffect.Value.VisualEffect.Reinit();
-                pair.Value.Dispose();
-            }
-            PersistentVFXGraphEntries.Dispose();
-        }
-        
         [AssertionMethod]
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
         [Conditional("UNITY_DOTS_DEBUG")]
@@ -231,6 +106,31 @@ namespace FireAlt.VFXForge
             {
                 throw new ArgumentException($"Persistent VFX Graph Entries does not contain {key}. The VFX was not yet registered.");
             }
+        }
+        
+        [SuppressMessage("ReSharper", "Unity.BurstLoadingManagedType")]
+        public void Dispose()
+        {
+            IsPersistent.Dispose();
+            InstantAliveVFX.Dispose();
+            PersistentAliveVFX.Dispose();
+            
+            foreach (var pair in InstantVFXGraphEntries)
+            {
+                var hve = pair.Value.HybridVisualEffect.Value;
+                if (hve != null)
+                    hve.VisualEffect.Reinit();
+                pair.Value.Dispose();
+            }
+            InstantVFXGraphEntries.Dispose();
+            foreach (var pair in PersistentVFXGraphEntries)
+            {
+                var hve = pair.Value.HybridVisualEffect.Value;
+                if (hve != null)
+                    hve.VisualEffect.Reinit();
+                pair.Value.Dispose();
+            }
+            PersistentVFXGraphEntries.Dispose();
         }
     }
 }
