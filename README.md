@@ -13,13 +13,12 @@ It lets gameplay code submit VFX requests as unmanaged data, batch those request
 - [Creating VFX Definitions](#creating-vfx-definitions)
 - [VFX Graph Requirements](#vfx-graph-requirements)
 - [Registering a Visual Effect](#registering-a-visual-effect)
-- [Spawning Instant VFX](#spawning-instant-vfx)
-- [Spawning Persistent VFX](#spawning-persistent-vfx)
-- [Updating and Killing Persistent VFX](#updating-and-killing-persistent-vfx)
+- [Instant VFX](#spawning-instant-vfx)
+- [Persistent VFX](#spawning-persistent-vfx)
 - [Editor Preview](#editor-preview-and-preferences)
 - [System Order](#system-order)
 - [Parallel Safety](#parallel-safety)
-- [Memory Management](#memory-management)
+- [GPU Memory Management](#memory-management)
 - [Performance Notes](#performance-notes)
 - [Limitations and What to Avoid](#limitations-and-what-to-avoid)
 - [Samples](#samples)
@@ -235,7 +234,7 @@ public struct VFXKeys
 }
 ```
 
-## Spawning Instant VFX
+## Instant VFX
 
 Spawn from ECS/MonoBehavior/Job by getting the registered instant entry:
 
@@ -271,8 +270,9 @@ private partial struct SpawnExplosionJob : IJobEntity
 | `SpawnUnsafe(NativeArray<byte> arrayData)`                            | Unsafe raw byte path for array-only spawns.                   |
 
 Instant requests are gathered per worker thread, merged and remapped during `SyncVFXSystem`, uploaded to VFX Graph, then cleared.
+Instant VFX are by design "instant" and thus the only way to supply data to the VFX is to pass it in the request method.
 
-## Spawning Persistent VFX
+## Persistent VFX
 
 Persistent VFX return a `TrackedEntity` handle:
 
@@ -299,7 +299,7 @@ Persistent behavior:
 - Positive `trackingDuration` keeps the effect alive until `StartTrackingTime + trackingDuration`, then the transform system marks it dead.
 - Negative tracking durations assert.
 
-## Updating and Killing Persistent VFX
+### Updating and Killing Persistent VFX
 
 Persistent entries expose query, update, and kill methods for the returned handle:
 
