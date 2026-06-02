@@ -2,12 +2,11 @@
 
 VFX Forge is a Unity VFX Graph framework for driving instant and persistent visual effects from ECS systems and hybrid MonoBehaviours.
 
-This README is currently a documentation draft. Each section below records the package surface discovered in the repository and what the final README should explain.
+It lets gameplay code submit VFX requests as unmanaged data, batch those requests into GPU buffers, and render many effect instances through a small number of registered VFX Graphs instead of spawning one GameObject per visual effect instance.
 
 ## Contents
 
 - [Overview](#overview)
-- [Package Layout](#package-layout)
 - [Core Concepts](#core-concepts)
 - [Getting Started](#getting-started)
 - [Authoring VFX Data Types](#authoring-vfx-data-types)
@@ -17,59 +16,59 @@ This README is currently a documentation draft. Each section below records the p
 - [Spawning Instant VFX](#spawning-instant-vfx)
 - [Spawning Persistent VFX](#spawning-persistent-vfx)
 - [Updating and Killing Persistent VFX](#updating-and-killing-persistent-vfx)
-- [Decal Projector VFX](#decal-projector-vfx)
-- [Editor Preview and Preferences](#editor-preview-and-preferences)
+- [Editor Preview](#editor-preview-and-preferences)
 - [System Order](#system-order)
-- [API Reference](#api-reference)
 - [Parallel Safety](#parallel-safety)
 - [Memory Management](#memory-management)
 - [Performance Notes](#performance-notes)
-- [Validation and Debugging](#validation-and-debugging)
 - [Limitations and What to Avoid](#limitations-and-what-to-avoid)
 - [Samples](#samples)
-- [Future Documentation TODO](#future-documentation-todo)
 
 ## Overview
 
-Document the high-level promise here: VFX Forge lets gameplay code spawn GPU-buffer-backed VFX without allocating a new GameObject per effect instance.
-The final section should distinguish:
+VFX Forge features:
 
-- **Instant VFX**: one-frame spawn requests uploaded to a VFX Graph.
-- **Persistent VFX**: tracked entries that keep transform, optional per-instance data, and optional array data alive across frames.
-- **Hybrid authoring**: `HybridVisualEffect` owns the `VisualEffect` component and registers a `VFXDefinition` into the ECS singleton.
-- **GPU buffer batching**: data is uploaded through `GraphicsBuffer` properties rather than individual exposed fields.
+- **Instant VFX**: one-frame spawn requests. Gameplay systems enqueue requests, `SyncVFXSystem` uploads the request buffers to VFX Graph, then the request buffers are cleared.
+- **Persistent VFX**: tracked effect instances. Each spawn returns a `TrackedEntity` handle that can be checked, updated, or killed while the effect is alive.
+- **Hybrid authoring**: `HybridVisualEffect` owns the Unity `VisualEffect` component, points it at a `VFXDefinition`, and registers that graph into the current ECS world.
+- **GPU buffer batching**: per-instance and array data are uploaded through `GraphicsBuffer` properties such as `DataBuffer`, `ArrayDataBuffer`, and `TransformBuffer`.
+
+The package is split into runtime, data, authoring, editor, optional BovineLabs integration, tests, shaders, and samples.
 
 ## Core Concepts
 
-Explain the core model before showing code:
+`VFXDefinition` is the ScriptableObject identity for a graph. It stores the necessary information to describe a VFX.
 
-- `VFXDefinition` is the ScriptableObject identity for a graph. It stores the key, graph asset, VFX type, capacity, timeout, data type, and array data type.
-- `VFXKey` is the compact runtime handle derived from a definition key. (ushort size. Thus no more than sizeof(ushort) definitions can exist. Main bottleneck: Decals which do not share the same texture (as each unique texture is 1 definition). SOlution: use sprite atlasses)
-- `VFXSingleton` is the ECS singleton that stores registered graph entries for the current world.
-- `InstantVFXEntry` accepts spawn requests and optional payload data for instant graphs.
-- `PersistentVFXEntry` returns `TrackedEntity` handles that can be queried, updated, or killed while the effect is alive.
-- `TrackedEntity` can be deferred for the current frame until `SyncVFXSystem` resolves it into the persistent backing buffers.
-- `VFXTransform` is the persistent transform payload uploaded to VFX Graphs and includes lifetime/alive state bits.
+`VFXKey` is the runtime handle used to find registered graph entries. It stores a `ushort`, so a project can have at most `ushort.MaxValue` VFX keys.
+Decals can consume keys quickly because each unique texture lookup creates its own definition; prefer sprite atlases where many decals should share a texture source.
+
+`VFXSingleton` is the ECS singleton. It is the public API entry, stores registered instant and persistent entries and exposes `AsParallelWriter()` for job usage.
+
+`InstantVFXEntry` accepts one-frame spawn requests with optional single data and optional array data.
+
+`PersistentVFXEntry` accepts tracked spawn requests and returns `TrackedEntity` handles. A persistent handle may be deferred until `SyncVFXSystem` resolves it into the backing persistent buffers.
+
+`VFXTransform` is the persistent transform payload uploaded to VFX Graph. It includes position, rotation, scale, tracking duration, and packed alive state.
 
 ## Getting Started
 
-Draft the final flow:
-
-1. Create unmanaged VFX data structs and mark them with `[VFXType(VFXTypeAttribute.Usage.GraphicsBuffer)]`.
+1. Create unmanaged payload structs and mark custom payloads with `[VFXType(VFXTypeAttribute.Usage.GraphicsBuffer)]`.
 2. Create or choose a VFX Graph template from `Shaders/Templates`.
-3. Create a `VFXDefinition` asset through the VFX Forge editor menu.
-4. VFX Forge editor menu does that -> [Assign the VFX Graph asset], choose instant or persistent mode, set capacity and timeout, and select data types.
-5. // Add a `HybridVisualEffect` GameObject with a `VisualEffect` component and assign the definition. <- this is not needed as the VFX Forge editor menu does it 
-6. From ECS, fetch `VFXSingleton`, get the registered entry by key, and call `Spawn`.
-
-The final README should include a complete minimal scene setup, including how definitions receive stable IDs through the project object-management workflow.
+3. Select the VFX Graph asset and run `FireAlt/Create VFX Definitions from VFX Assets` on the main toolbar.
+4. Configure the generated `VFXDefinition`: choose `Instant` or `Persistent`, set capacity and timeout, and select the single payload and array payload types.
+5. Use the generated GameObject with `VisualEffect` and `HybridVisualEffect`. The menu creates and wires it to the generated definition.
+6. 
+   1. From ECS, fetch `VFXSingleton` using `SystemAPI.GetSingleton<VFXSingleton>()`, get the registered entry by `VFXKey`, and call `Spawn`.  
+   2. From MonoBehavior, fetch `VFXSingleton` using `GlobalVFXSingleton.Get()`, get the registered entry by `VFXKey`, and call `Spawn`.
 
 ## Authoring VFX Data Types
 
-Document that VFX payload types must be unmanaged and registered for GraphicsBuffer use.
-Examples exist in `Assets/Scripts/Game/Game.Data/VFXTypes` and `Samples~/Demo/DamageNumbers`.
+Payload types must be unmanaged. Custom payload structs should be marked with `VFXTypeAttribute` so VFX Graph would see them and VFX Forge can discover them and expose them in definition dropdowns.
 
 ```csharp
+using UnityEngine;
+using UnityEngine.VFX;
+
 [VFXType(VFXTypeAttribute.Usage.GraphicsBuffer)]
 public struct VFXHitSparksRequest
 {
@@ -78,53 +77,131 @@ public struct VFXHitSparksRequest
 }
 ```
 
-Also document array-data payloads and custom bakers:
+Array payloads are authored the same way:
 
-- `VFXDataTypeBaker<T>` bakes one data value for editor preview or authored defaults. <- show code for a basic one
-- `VFXArrayDataTypeBaker<T>` bakes a temporary `NativeArray<T>` for array data. <- show code for a basic one
-- Default bakers exist for every registered data type.
-- Built-in supported Unity types include `int`, `uint`, `float`, `Vector2`, `Vector3`, `Vector4`, and `Matrix4x4`.
+```csharp
+using UnityEngine.VFX;
 
-Mention the important rule: if a baker targets a custom type, that type must also be registered with `VFXTypeAttribute`.
+[VFXType(VFXTypeAttribute.Usage.GraphicsBuffer)]
+public struct VFXDamageNumberGlyph
+{
+    public uint GlyphIndex;
+}
+```
+
+Built-in supported Unity types include `int`, `uint`, `float`, `Vector2`, `Vector3`, `Vector4`, and `Matrix4x4`.
+
+### Data Bakers
+
+`VFXDataTypeBaker<T>` bakes one payload value for editor preview.
+
+```csharp
+using System;
+using FireAlt.VFXForge.Data;
+using UnityEngine;
+
+[Serializable] // Must be marked with System.Serializable to be able to see in the inspector
+public class HitSparkBaker : VFXDataTypeBaker<VFXHitSparksRequest>
+{
+    public Vector3 Position;
+    public Color Color; // DataBakers are useful to convert arbitrary data into a VFX ready data
+
+    public override VFXHitSparksRequest Bake()
+    {
+        return new VFXHitSparksRequest
+        {
+            Position = Position,
+            Color = Color.rgb,
+        };
+    }
+}
+```
+
+`VFXArrayDataTypeBaker<T>` bakes variable-length array payloads.
+
+```csharp
+using System;
+using FireAlt.VFXForge.Data;
+using Unity.Collections;
+
+[Serializable] // Must be marked with System.Serializable to be able to see in the inspector
+public class DamageGlyphBaker : VFXArrayDataTypeBaker<VFXDamageNumberArrayData>
+{
+     public int number;
+     
+     public override NativeArray<VFXDamageNumberArrayData> Bake()
+     {
+         var list = new NativeList<VFXDamageNumberArrayData>(Allocator.Temp);
+         BakeGlyphs(number, list); // Populate the NativeList with any data (the implementation is omitted)
+         return list.AsArray();
+     }
+}
+```
+
+Default bakers exist for every registered payload type, but for them to be visible in the inspector, a `[System.Serializable]` is required on the VFX data type.
+Custom bakers are only needed when the default field editor is not enough, and do not require `[System.Serializable]` on the VFX data type.
 
 ## Creating VFX Definitions
 
-Describe `VFXDefinition` fields:
+`VFXDefinition` fields:
 
-- `visualEffectAsset`: VFX Graph asset used by the backing `VisualEffect`.
-- `vfxType`: `Instant` or `Persistent`.
-- `capacity`: persistent maximum active tracked entries; internally many persistent buffers allocate double capacity to handle holes and reuse.
-- `timeoutDuration`: how long an inactive graph remains enabled before buffers are disposed and the GameObject is deactivated.
-- `vfxDataType`: optional per-spawn or per-instance payload type.
-- `vfxArrayDataType`: optional variable-length array payload type.
+| Field               | Purpose                                                                                                                 |
+|---------------------|-------------------------------------------------------------------------------------------------------------------------|
+| `visualEffectAsset` | VFX Graph asset assigned to the backing `VisualEffect`.                                                                 |
+| `vfxType`           | `Instant` or `Persistent`.                                                                                              |
+| `capacity`          | Maximum active persistent entries. Persistent buffers allocate extra backing storage to handle holes and delayed reuse. |
+| `timeoutDuration`   | How long an inactive graph remains enabled before buffers are disposed and the GameObject is deactivated.               |
+| `vfxDataType`       | Optional per-spawn or per-instance payload type.                                                                        |
+| `vfxArrayDataType`  | Optional variable-length array payload type.                                                                            |
+
+In the editor, `capacity` is clamped to at least `1` and `timeoutDuration` is clamped to at least `0`.
 
 ## VFX Graph Requirements
 
-List required exposed properties and buffers. The graph must expose `Bounds` as a `Vector3`, because `HybridVisualEffect` validates and expands it.
+The graph must expose `Bounds` as a `Vector3`. `HybridVisualEffect` uses it to fully remove the need to adjust the bounds in the VFX Asset itself.
 
-VFX Forge properties (names must match):
+VFX Forge provides several VFX Asset properties which can be used in the graph to fetch the VFX Forge data:
 
-| Property | Purpose |
-| --- | --- |
-| `SpawnRequestsCount` | Number of single-instance spawn requests uploaded this frame. |
-| `SpawnArrayRequestsCount` | Number of array element spawn requests uploaded this frame. |
-| `DataBuffer` | Per-spawn or per-instance data payload. |
-| `ArrayDataBuffer` | Contiguous array payload data. |
-| `ArrayPtrBuffer` | Per-spawn pointer/count metadata into array data. |
-| `ArraySpawnIndexBuffer` | Index mapping for array element particles. |
-| `SpawnIndexBuffer` | Persistent spawn index list for newly activated entries. |
-| `TransformBuffer` | Persistent transform/lifetime data. |
+| Property                  | Type             | Purpose                                                       |
+|---------------------------|------------------|---------------------------------------------------------------|
+| `SpawnRequestsCount`      | `uint`           | Number of single-instance spawn requests uploaded this frame. |
+| `SpawnArrayRequestsCount` | `uint`           | Number of array element spawn requests uploaded this frame.   |
+| `DataBuffer`              | `GraphicsBuffer` | Per-spawn or per-instance data payload.                       |
+| `ArrayDataBuffer`         | `GraphicsBuffer` | Contiguous array payload data.                                |
+| `ArrayPtrBuffer`          | `GraphicsBuffer` | Per-spawn pointer/count metadata into array data.             |
+| `ArraySpawnIndexBuffer`   | `GraphicsBuffer` | Index mapping for array element particles.                    |
+| `SpawnIndexBuffer`        | `GraphicsBuffer` | Persistent spawn index list for newly activated entries.      |
+| `TransformBuffer`         | `GraphicsBuffer` | Persistent transform/lifetime data.                           |
 
-The final README should map these properties to the included VFX blocks:
+Required buffers depend on the definition:
 
+- Instant graphs with single payload data need `DataBuffer`.
+- Instant graphs with array payload data need `ArrayDataBuffer`, `ArrayPtrBuffer`, and `ArraySpawnIndexBuffer`.
+- Persistent graphs always need `TransformBuffer` (to, at the very least, read `IsActive` status).
+- Persistent graphs with single payload data need `DataBuffer` and may need `SpawnIndexBuffer` depending on graph shape.
+- Persistent graphs with array payload data need `ArrayDataBuffer`, `ArrayPtrBuffer`, and may need `ArraySpawnIndexBuffer` depending on graph shape.
+
+The included VFX Graph templates and blocks will greatly simplify the boilerplate needed to setup a VFX Asset. These are:
+
+- `Shaders/Templates/Instant(Single).vfx`
+- `Shaders/Templates/Instant(Array).vfx`
+- `Shaders/Templates/Instant(Single+Array).vfx`
+- `Shaders/Templates/Persistent(Single).vfx`
+- `Shaders/Templates/Persistent(Array).vfx`
+- `Shaders/Templates/Persistent(Single+Array).vfx`
 - `[VFX Forge] Initialize Instant Particle`
 - `[VFX Forge] Initialize Array Particle`
 - `[VFX Forge] Initialize Persistent Particle`
 - `[VFX Forge] Initialize Persistent Particle (With Array)`
 
+My personal preferred way is to use one of the templates provided and build the graph from there. 
+The templates come with all VFX Forge fields needed for a given effect and are orginized in a "Internal" property folder to reduce clutter. 
+
 ## Registering a Visual Effect
 
-Explain `HybridVisualEffect`:
+`HybridVisualEffect` is the bridge between Unity's `VisualEffect` component and VFX Forge.
+
+It:
 
 - Requires a `VisualEffect` component.
 - Assigns the definition's graph asset to the `VisualEffect`.
@@ -133,218 +210,203 @@ Explain `HybridVisualEffect`:
 - Deactivates the graph GameObject in play mode until there are pending requests or editor preview activity.
 - Reinitializes the graph during cleanup.
 
-Warn that each `VFXDefinition` key can only be registered once in a world. Duplicate registrations log an error and are rejected.
+Each `VFXDefinition` key can only be registered once in a world. Duplicate registrations are rejected.
+
+Projects usually define a small key wrapper such as `VFXKeys` so gameplay systems do not pass raw numbers around:
+
+```csharp
+using FireAlt.VFXForge.Data;
+
+public struct VFXKeys
+{
+    public const ushort Explosion = 1;
+
+    private ushort _value;
+
+    public static implicit operator VFXKey(VFXKeys value)
+    {
+        return new VFXKey { Value = value._value };
+    }
+
+    public static implicit operator VFXKeys(ushort value)
+    {
+        return new VFXKeys { _value = value };
+    }
+}
+```
 
 ## Spawning Instant VFX
 
-Document the instant API (explain what VFXKeys is + show code for it):
+Spawn from ECS/MonoBehavior/Job by getting the registered instant entry:
 
 ```csharp
-var vfx = SystemAPI.GetSingleton<VFXSingleton>().AsParallelWriter();
-vfx.GetInstant(VFXKeys.Explosion).Spawn(new VFXExplosion
+using FireAlt.VFXForge;
+using Unity.Burst;
+using Unity.Entities;
+
+[BurstCompile]
+private partial struct SpawnExplosionJob : IJobEntity
 {
-    Position = position,
-});
+    public VFXSingleton.ParallelWriter VFX;
+
+    private void Execute(in ExplosionRequest request)
+    {
+        VFX.GetInstant(VFXKeys.Explosion).Spawn(new VFXExplosion
+        {
+            Position = request.Position,
+        });
+    }
+}
 ```
 
-Available forms to document:
+`InstantVFXEntry` overloads:
 
-- `Spawn()`
-- `Spawn<T>(T spawnData)`
-- `Spawn<U>(NativeArray<U> arrayData)`
-- `Spawn<T, U>(T spawnData, NativeArray<U> arrayData)`
-- `SpawnUnsafe(byte* spawnData, NativeArray<byte> arrayData = default)`
-- `SpawnUnsafe(NativeArray<byte> arrayData)`
+| Method                                                                | Use                                                           |
+|-----------------------------------------------------------------------|---------------------------------------------------------------|
+| `Spawn()`                                                             | Spawn with no payload data.                                   |
+| `Spawn<T>(T spawnData)`                                               | Spawn with single payload value.                              |
+| `Spawn<U>(NativeArray<U> arrayData)`                                  | Spawn with array payload data only.                           |
+| `Spawn<T, U>(T spawnData, NativeArray<U> arrayData)`                  | Spawn with single payload and array payload data.             |
+| `SpawnUnsafe(byte* spawnData, NativeArray<byte> arrayData = default)` | Unsafe raw byte path for single data and optional array data. |
+| `SpawnUnsafe(NativeArray<byte> arrayData)`                            | Unsafe raw byte path for array-only spawns.                   |
 
-Explain that instant requests are gathered per worker thread, remapped, uploaded during `SyncVFXSystem`, then cleared.
+Instant requests are gathered per worker thread, merged and remapped during `SyncVFXSystem`, uploaded to VFX Graph, then cleared.
 
 ## Spawning Persistent VFX
 
-Document persistent spawn:
+Persistent VFX return a `TrackedEntity` handle:
 
 ```csharp
 var tracked = vfx.GetPersistent(VFXKeys.ElectroArc).Spawn(targetEntity, duration);
 ```
 
-Available forms to document:
+`PersistentVFXEntry` overloads:
 
-- `Spawn(Entity entityToTrack, float trackingDuration = 0f)`
-- `Spawn<T>(Entity entityToTrack, T data, float trackingDuration = 0f)`
-- `Spawn<U>(Entity entityToTrack, NativeArray<U> arrayData, float trackingDuration = 0f)`
-- `Spawn<T, U>(Entity entityToTrack, T data, NativeArray<U> arrayData, float trackingDuration = 0f)`
-- unsafe byte-pointer variants.
+| Method                                                                                                               | Use                                                           |
+|----------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
+| `Spawn(Entity entityToTrack, float trackingDuration = 0f)`                                                           | Spawn with no additional data.                                |
+| `Spawn<T>(Entity entityToTrack, T data, float trackingDuration = 0f)`                                                | Spawn with single payload data.                               |
+| `Spawn<U>(Entity entityToTrack, NativeArray<U> arrayData, float trackingDuration = 0f)`                              | Spawn with array payload data.                                |
+| `Spawn<T, U>(Entity entityToTrack, T data, NativeArray<U> arrayData, float trackingDuration = 0f)`                   | Spawn with both payload types.                                |
+| `SpawnUnsafe(Entity entityToTrack, byte* data, NativeArray<byte> arrayData = default, float trackingDuration = 0f) ` | Unsafe raw byte path for single data and optional array data. |
+| `SpawnUnsafe(Entity entityToTrack, NativeArray<byte> arrayData, float trackingDuration = 0f)`                        | Unsafe raw byte path for array-only spawns.                   |
 
-Explain behavior:
+Persistent behavior:
 
-- Returns `TrackedEntity.Null`/invalid when capacity is exceeded.
-- Tracks `LocalToWorld` for the entity when present.
-- `Entity.Null` is allowed for non-entity-tracked persistent effects.
-- `trackingDuration == 0` means continue tracking until manually killed or the tracked entity dies.
-- eplxain positive tracking duration
+- If capacity is exceeded, the returned `TrackedEntity` is invalid, but the `Entity` inside of it is always valid.
+- `Entity.Null` is valid for non-entity-tracked persistent effects.
+- `trackingDuration == 0` keeps tracking until the VFX is killed or the tracked entity dies.
+- Positive `trackingDuration` keeps the effect alive until `StartTrackingTime + trackingDuration`, then the transform system marks it dead.
+- Negative tracking durations assert.
 
 ## Updating and Killing Persistent VFX
 
-Document the post-spawn API:
+Persistent entries expose query, update, and kill methods for the returned handle:
 
 ```csharp
 ref var entry = ref vfx.GetPersistent(VFXKeys.ElectroArc);
 
-if (entry.IsAlive(trackedEntity))
+entry.TrySetUpdateData(trackedEntity, playerPosition);
+
+if (!entry.IsAlive(trackedEntity))
 {
-    entry.TrySetUpdateData(trackedEntity, playerPosition); // TrySet can be used without IsAlive check (as any `Try` methods)
+    buffer.RemoveAtSwapBack(i); // Some gameplay buffer which keeps track of VFX instances
 }
 
 entry.TryKill(trackedEntity);
 ```
 
-Cover:
+`Try` methods can be called without a separate `IsAlive` check. They return `false` when the handle cannot be resolved.
 
-- `IsAlive(TrackedEntity)`
-- `TryGetUpdateDataAsRef<T>(TrackedEntity, out Ref<T>)`
-- `TryGetArrayData<T>(TrackedEntity, out UnsafeArray<T>)`
-- `TryGetArrayDataUnsafe(TrackedEntity, out UnsafeArray<byte>)`
-- `TrySetUpdateData<T>(TrackedEntity, T)`
-- `TrySetUpdateDataUnsafe(TrackedEntity, byte*)`
-- `TryKill(TrackedEntity)`
+| Method                                                        | Use                                                                             |
+|---------------------------------------------------------------|---------------------------------------------------------------------------------|
+| `IsAlive(TrackedEntity)`                                      | Returns whether a persistent handle currently resolves to alive transform data. |
+| `TryGetUpdateDataAsRef<T>(TrackedEntity, out Ref<T>)`         | Returns a mutable reference to the single payload data.                         |
+| `TryGetArrayData<T>(TrackedEntity, out UnsafeArray<T>)`       | Returns the typed array payload.                                                |
+| `TryGetArrayDataUnsafe(TrackedEntity, out UnsafeArray<byte>)` | Returns raw array payload bytes.                                                |
+| `TrySetUpdateData<T>(TrackedEntity, T)`                       | Writes new single payload data.                                                 |
+| `TrySetUpdateDataUnsafe(TrackedEntity, byte*)`                | Writes new single payload data from raw bytes.                                  |
+| `TryKill(TrackedEntity)`                                      | Requests the persistent effect to be killed.                                    |
 
-Mention that handles spawned this frame are deferred until `SyncVFXSystem` resolves them, but update/kill methods account for deferred handles where possible.
+Handles spawned this frame are deferred until `SyncVFXSystem` resolves them, but all paths account for deferred handles.
 
-## Decal Projector VFX
+## Editor Preview
 
-Draft a dedicated section for the decal convenience workflow:
-
-- `VFXDecalProjector` is a hybrid authoring component for sprite-backed decals.
-- `VFXDecalDefinition` produces persistent `VFXDefinition` instances for sprite/definition pairs.
-- Runtime ECS components include `DecalProjectorData`, `RuntimeDecalLookup`, and `DecalProjectorVFX`.
-- `InitializeVFXDecalsSystem` creates/cleans backing `HybridVisualEffect` instances per decal lookup.
-- `UpdateVFXDecalsSystem` updates draw distance, enabled state, and per-decal data.
-
-Document the Preferences path for selecting the default decal definition: `Preferences/FireAlt/VFX Forge`.
-
-## Editor Preview and Preferences
-
-Describe editor-only features:
-
-- `HybridVisualEffect` supports edit-mode initialization and preview spawning.
-- The custom inspector reads definition data and can spawn/update preview payloads through type bakers.
-- `VFXSettings.DefaultDecalVFX` is stored in EditorPrefs using the VFX Forge Preferences provider.
-- Definition changes trigger editor refresh through `VFXDefinition.OnVFXDefinitionChanged`.
-
-Mention that editor preview uses the same runtime singleton path where possible, so stale preview behavior usually means the definition, baker data, or graph property list is out of sync.
+`HybridVisualEffect` supports edit-mode initialization and preview spawning through its custom inspector. The inspector reads definition data and uses data bakers to spawn or update preview payloads.
 
 ## System Order
 
-Document the runtime groups:
+Runtime groups:
 
-- `InitializeVFXSystemGroup`: registers new `HybridVisualEffect` instances.
-- `UpdateVFXSystemGroup`: updates persistent transform state and kill requests.
-- `BeforeVFXTransformSystemGroup`: hook point before transform upload data is finalized.
-- `AfterVFXTransformSystemGroup`: hook point after transform data is prepared.
-- `SyncVFXSystem`: runs at the end of `PresentationSystemGroup` and uploads data to VFX Graph buffers.
+| Group/System                    | Order                                   | Role                                                                             |
+|---------------------------------|-----------------------------------------|----------------------------------------------------------------------------------|
+| `InitializeVFXSystemGroup`      | `LateInitializationSystemGroup`         | Registers new `HybridVisualEffect` instances.                                    |
+| `UpdateVFXSystemGroup`          | `LateSimulationSystemGroup`, order last | Owns persistent transform and kill work.                                         |
+| `BeforeVFXTransformSystemGroup` | Before `VFXTransformSystem`             | Hook point for systems that must run before transform upload data is finalized.  |
+| `VFXTransformSystem`            | Inside `UpdateVFXSystemGroup`           | Updates persistent transform/lifetime state.                                     |
+| `AfterVFXTransformSystemGroup`  | After `VFXTransformSystem`              | Hook point for systems that update persistent payloads after transform tracking. |
+| `SyncVFXSystem`                 | End of `PresentationSystemGroup`        | Resolves requests and uploads data to VFX Graph buffers.                         |
 
-Important timing rule to document: do not spawn persistent VFX after `VFXTransformSystem` has run for the frame and before `SyncVFXSystem`.
-The code explicitly throws if a persistent spawn reaches sync without transform data, with the current concrete warning: do not spawn persistent VFX in `LateUpdate`.
-
-## API Reference
-
-Keep this section as a concise table in the final README.
-
-| Type | Role |
-| --- | --- |
-| `VFXSingleton` | World singleton and main lookup API. |
-| `VFXSingleton.ParallelWriter` | Job-safe lookup wrapper for registered entries. |
-| `InstantVFXEntry` | Per-graph instant spawn request API. |
-| `PersistentVFXEntry` | Per-graph persistent spawn, update, query, and kill API. |
-| `TrackedEntity` | Persistent VFX handle. |
-| `HybridVisualEffect` | MonoBehaviour bridge between `VisualEffect` and ECS. |
-| `VFXDefinition` | ScriptableObject graph definition. |
-| `VFXDecalProjector` | Hybrid sprite decal authoring component. |
-| `VFXDataTypeBaker<T>` | Single payload editor/default baker. |
-| `VFXArrayDataTypeBaker<T>` | Array payload editor/default baker. |
+Do not spawn persistent VFX after `VFXTransformSystem` has run for the frame and before `SyncVFXSystem`. 
+If a persistent spawn reaches sync without transform data, the code throws with the concrete warning that persistent VFX should not be spawned in `LateUpdate`.
 
 ## Parallel Safety
 
-Document what is safe:
+Use `VFXSingleton.ParallelWriter` inside jobs. The writer exposes registered entry lookup through read-only hash maps while the entries themselves own thread-local request structures.
 
-- Use `SystemAPI.GetSingleton<VFXSingleton>().AsParallelWriter()` inside jobs.
-- `ParallelWriter.GetInstant` and `GetPersistent` use read-only hash-map lookup to retrieve registered entries.
-- Instant spawn requests are thread-local through `UnsafeThreadData` and `UnsafeThreadToListMapper`.
-- Persistent spawn requests use atomic index reservation and per-thread request lists.
-- Persistent kill requests are queued and resolved later.
+Safe patterns:
 
-Document what needs care:
+- Use `ParallelWriter.GetInstant(...).Spawn(...)` from parallel jobs.
+- Use `ParallelWriter.GetPersistent(...).Spawn(...)` from parallel jobs.
+- Use persistent `TrySet...`, `TryGet...`, `IsAlive`, and `TryKill` methods through the returned entry reference.
+- Store `TrackedEntity` handles in ECS components, buffers or any other places when the effect needs later updates.
 
-- The entry reference returned from `GetInstant`/`GetPersistent` is mutable. Keep usage to the package-supported spawn/update/kill methods.
-- Do not store `ref` entries beyond the intended buffer ownership pattern.
-- Respect system ordering for persistent spawns so transform data is available before sync.
+Be careful with:
+
+- Ensure to never try to modify a Persistent data for the same `TrackedEntity` on a single `PersistentVFXEntry` in parallel. 
+There is no easy way to check this from VFX Forge perspective, and so regular parallelism rules must be followed.
+- The returned entry is a mutable `ref`. Do not store entry refs beyond the immediate operation.
+- Respect the persistent spawn timing rule relative to `VFXTransformSystem` and `SyncVFXSystem`.
 
 ## Memory Management
 
-Document ownership clearly:
+Instant request buffers are reused and cleared after upload.
 
-- `VFXSingleton` owns persistent native containers and disposes them in `SyncVFXSystem.OnDestroy`.
-- `VFXGraphicsBuffersSingleton` owns managed `GraphicsBuffer` wrappers for active graphs and disposes them before VFX data cleanup.
-- Instant request buffers are reused and cleared after upload.
-- Persistent buffers live for the definition lifetime and use capacity-based allocation.
-- Persistent array payloads are copied into pooled/deferred native arrays first, then moved into `UnsafeHeapMemory` when the request resolves.
-- The deferred pooled-array slot is the authoritative owner until sync takes and clears it.
+Persistent buffers live for the registered definition lifetime and are capacity-based. 
+Persistent array payloads are copied into pooled deferred unsafe arrays first, then moved into `UnsafeHeapMemory` when the request resolves, similar to how `memory.alloc` works.
 
-Add an explicit warning for future maintainers: do not dispose a copied `PooledUnsafeArray<byte>` while leaving the original deferred slot populated. Move ownership by ref, clear the slot immediately, then dispose the taken owner after consumption.
+VFX Forge deallocates all GPU memory for VFXs, which were unused for a specified duration. 
+This essentially allows to store all VFXs in a single scene without any need for asset management of the VFXs. Only active VFXs occupy GPU memory and are involved in GPU computations.
+With Unity 6.6, `VisualEffect` component will be able to completely deallocate its own GPU resources, making the GPU memory management for VFXs with VFX Forge trivial. 
 
 ## Performance Notes
 
-Explain where performance comes from:
+VFX Forge is designed around batched uploads and stable backing storage, using ECS, Bursted Jobs, and optimized data structures wherever possible:
 
-- Effects are batched into VFX Graph `GraphicsBuffer` uploads.
+- Effects are uploaded through VFX Graph `GraphicsBuffer` properties.
 - Instant requests avoid shared contention by gathering per thread and merging once.
 - Persistent entries upload only relevant transform/data ranges when possible.
-- Persistent graph capacity is preallocated, which avoids per-spawn persistent container allocation.
 - Inactive graphs are disabled after timeout to release graphics buffers and stop unnecessary graph updates.
 
-Document tradeoffs:
+Tradeoffs:
 
 - Persistent definitions allocate buffers based on capacity, including double-capacity backing storage for transform/data holes and delayed reuse.
-- Large array payloads are copied on spawn.
-- `SyncVFXSystem` bridges Burst-side data to managed `VisualEffect`/`GraphicsBuffer` upload code and currently completes resolve jobs before managed upload.
-- High spawn counts should prefer few definitions with batched payloads rather than many unique graph definitions.
-
-## Validation and Debugging
-
-Document available checks:
-
-- Mismatched generic payload types are checked against the definition stable type hash.
-- Zero-sized data expectations are checked for `Spawn()` overloads.
-- `HybridVisualEffect` validates that the graph has the expected `Bounds` property.
-- Graphics buffer wrappers check required exposed buffers before upload.
+- Array payloads are copied on spawn.
+- Prefer fewer batched definitions over many unique graph definitions when spawn counts are high.
 
 ## Limitations and What to Avoid
 
-Draft the final caution list:
-
-- Do not register two `HybridVisualEffect` instances with the same `VFXDefinition` key in the same world.
+- Do not register two `HybridVisualEffect` instances with the same `VFXDefinition` key.
 - Do not spawn persistent VFX in `LateUpdate` or any path that runs after `VFXTransformSystem` but before `SyncVFXSystem`.
-- Do not pass negative tracking durations.
-- Do not assume a persistent spawn always succeeds; check `TrackedEntity.IsValid` when capacity pressure is possible.
-- Do not use custom payload structs without `VFXTypeAttribute`.
-- Do not mismatch definition payload type and generic `Spawn<T>`/`TrySetUpdateData<T>` calls.
-- Do not rely on per-effect GameObject transforms for runtime instances; persistent transform data is driven from tracked entities and `VFXTransformSystem`.
+- Do not assume a persistent spawn always succeeds; check `TrackedEntity.IsValid` if relevant.
+- Do not mismatch definition payload type and generic `Spawn<T>` or `TrySetUpdateData<T>` calls.
 
 ## Samples
 
-Describe the sample package:
+The package includes a Unity Package Manager sample:
 
 - `Samples~/Demo/DEMO.unity`: basic demo scene.
 - `Samples~/Demo/DamageNumbers`: damage-number graph, data types, glyph baker, and definition.
 - `Samples~/Demo/TemplatesDefinitions`: definition assets for the built-in instant/persistent templates.
 
-The final README should include a short "Import Sample" note for Unity Package Manager and link the sample data type file as a reference implementation.
-
-## Future Documentation TODO
-
-- Add screenshots or GIFs of the demo scene and editor inspector.
-- Add a complete instant VFX setup walkthrough.
-- Add a complete persistent VFX setup walkthrough.
-- Add a VFX Graph node/property checklist per template.
-- Add a decal projector setup walkthrough.
-- Add a troubleshooting matrix for common graph-property and type-hash errors.
-- Add measured benchmark or profiler data before making stronger performance claims.
+Import the sample from Package Manager to inspect a complete graph/data/definition setup.
