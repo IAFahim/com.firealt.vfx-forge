@@ -46,6 +46,18 @@ namespace FireAlt.VFXForge
         {
             return PersistentVFXGraphEntries.ContainsKey(key);
         }
+
+        public void ForceTimeout(in VFXKey key)
+        {
+            if (IsPersistent[key])
+            {
+                PersistentAliveVFX.GetValueAsRef(key).InactivityTimeRemaining = 0;
+            }
+            else
+            {
+                InstantAliveVFX.GetValueAsRef(key).InactivityTimeRemaining = 0;
+            }
+        }
         
         public struct ParallelWriter
         {
