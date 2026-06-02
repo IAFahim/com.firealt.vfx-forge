@@ -1,5 +1,7 @@
 # VFX Decal Projector
 
+![VFXDecalProjector.png](Images/VFXDecalProjector.png)
+
 `VFXDecalProjector` is a hybrid authoring component for sprite-backed decals. It bakes sprite, projection, opacity, fade, normal blend, and draw-distance data into ECS components, then renders the decals through VFX Forge Persistent VFX path.
 
 Unlike texture-only decal workflows, VFX Forge decals render `Sprite` assets. This allows decal art to be packed into `SpriteAtlas` assets, which should be preferred for large decal sets because VFX Forge batches decals per texture. Decals that share an atlas texture can share batching better than decals spread across many unique textures.

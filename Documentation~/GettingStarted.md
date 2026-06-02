@@ -91,6 +91,8 @@ Custom bakers are only needed when the default field editor is not enough, and d
 
 ## Creating VFX Definitions
 
+![VFXDefinition.png](Images/VFXDefinition.png)
+
 `VFXDefinition` fields:
 
 | Field               | Purpose                                                                                                                 |
@@ -102,11 +104,11 @@ Custom bakers are only needed when the default field editor is not enough, and d
 | `vfxDataType`       | Optional per-spawn or per-instance payload type.                                                                        |
 | `vfxArrayDataType`  | Optional variable-length array payload type.                                                                            |
 
-In the editor, `capacity` is clamped to at least `1` and `timeoutDuration` is clamped to at least `0`.
-
 ## VFX Graph Requirements
 
-The graph must expose `Bounds` as a `Vector3`. `HybridVisualEffect` uses it to fully remove the need to adjust the bounds in the VFX Asset itself.
+The graph must expose `Bounds` as a `Vector3`. `HybridVisualEffect` uses it to fully remove the need to adjust the bounds in the VFX Asset itself:
+
+![Bounds.png](Images/Bounds.png)
 
 VFX Forge provides several VFX Asset properties which can be used in the graph to fetch the VFX Forge data:
 
@@ -120,6 +122,10 @@ VFX Forge provides several VFX Asset properties which can be used in the graph t
 | `ArraySpawnIndexBuffer`   | `GraphicsBuffer` | Index mapping for array element particles.                    |
 | `SpawnIndexBuffer`        | `GraphicsBuffer` | Persistent spawn index list for newly activated entries.      |
 | `TransformBuffer`         | `GraphicsBuffer` | Persistent transform/lifetime data.                           |
+
+Every VFX Asset should start with a Spawn system which will be driven either by `SpawnRequestsCount` or `SpawnArrayRequestsCount` depending by data layout:
+
+![SpawnSystem.png](Images/SpawnSystem.png)
 
 Required buffers depend on the definition:
 
@@ -142,12 +148,22 @@ The included VFX Graph templates and blocks will greatly simplify the boilerplat
 - `[VFX Forge] Initialize Persistent Particle`
 - `[VFX Forge] Initialize Persistent Particle (With Array)`
 
+To initialize a particle use one of the provided blocks and fetch the data as needed (provided VFX Templates cover each scenario):
+
+![InitializeExample.png](Images/InitializeExample.png)
+
+When working with Persistent VFXs, you must use "Sample Transform Buffer" operator to at least sync the lifetime of the data to the lifetime of the particle. By definition, data lifetime controls the lifetime of the particle, not the other way around:
+
+![SampleTransformBuffer.png](Images/SampleTransformBuffer.png)
+
 My personal preferred way is to use one of the templates provided and build the graph from there.
 The templates come with all VFX Forge fields needed for a given effect and are orginized in a "Internal" property folder to reduce clutter.
 
 ## Registering a Visual Effect
 
 `HybridVisualEffect` is the bridge between Unity's `VisualEffect` component and VFX Forge.
+
+![HybridVisualEffect.png](Images/HybridVisualEffect.png)
 
 It:
 
