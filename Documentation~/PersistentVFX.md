@@ -1,0 +1,57 @@
+# Persistent VFX
+
+Persistent VFX return a `TrackedEntity` handle:
+
+```csharp
+var tracked = vfx.GetPersistent(VFXKeys.ElectroArc).Spawn(targetEntity, duration);
+```
+
+`PersistentVFXEntry` overloads:
+
+| Method                                                                                                               | Use                                                           |
+|----------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
+| `Spawn(Entity entityToTrack, float trackingDuration = 0f)`                                                           | Spawn with no additional data.                                |
+| `Spawn<T>(Entity entityToTrack, T data, float trackingDuration = 0f)`                                                | Spawn with single payload data.                               |
+| `Spawn<U>(Entity entityToTrack, NativeArray<U> arrayData, float trackingDuration = 0f)`                              | Spawn with array payload data.                                |
+| `Spawn<T, U>(Entity entityToTrack, T data, NativeArray<U> arrayData, float trackingDuration = 0f)`                   | Spawn with both payload types.                                |
+| `SpawnUnsafe(Entity entityToTrack, byte* data, NativeArray<byte> arrayData = default, float trackingDuration = 0f) ` | Unsafe raw byte path for single data and optional array data. |
+| `SpawnUnsafe(Entity entityToTrack, NativeArray<byte> arrayData, float trackingDuration = 0f)`                        | Unsafe raw byte path for array-only spawns.                   |
+
+Persistent behavior:
+
+- If capacity is exceeded, the returned `TrackedEntity` is invalid, but the `Entity` inside of it is always valid.
+- `Entity.Null` is valid for non-entity-tracked persistent effects.
+- `trackingDuration == 0` keeps tracking until the VFX is killed or the tracked entity dies.
+- Positive `trackingDuration` keeps the effect alive until `StartTrackingTime + trackingDuration`, then the transform system marks it dead.
+- Negative tracking durations assert.
+
+### Updating and Killing Persistent VFX
+
+Persistent entries expose query, update, and kill methods for the returned handle:
+
+```csharp
+ref var entry = ref vfx.GetPersistent(VFXKeys.ElectroArc);
+
+entry.TrySetUpdateData(trackedEntity, playerPosition);
+
+if (!entry.IsAlive(trackedEntity))
+{
+    buffer.RemoveAtSwapBack(i); // Some gameplay buffer which keeps track of VFX instances
+}
+
+entry.TryKill(trackedEntity);
+```
+
+`Try` methods can be called without a separate `IsAlive` check. They return `false` when the handle cannot be resolved.
+
+| Method                                                        | Use                                                                             |
+|---------------------------------------------------------------|---------------------------------------------------------------------------------|
+| `IsAlive(TrackedEntity)`                                      | Returns whether a persistent handle currently resolves to alive transform data. |
+| `TryGetUpdateDataAsRef<T>(TrackedEntity, out Ref<T>)`         | Returns a mutable reference to the single payload data.                         |
+| `TryGetArrayData<T>(TrackedEntity, out UnsafeArray<T>)`       | Returns the typed array payload.                                                |
+| `TryGetArrayDataUnsafe(TrackedEntity, out UnsafeArray<byte>)` | Returns raw array payload bytes.                                                |
+| `TrySetUpdateData<T>(TrackedEntity, T)`                       | Writes new single payload data.                                                 |
+| `TrySetUpdateDataUnsafe(TrackedEntity, byte*)`                | Writes new single payload data from raw bytes.                                  |
+| `TryKill(TrackedEntity)`                                      | Requests the persistent effect to be killed.                                    |
+
+Handles spawned this frame are deferred until `SyncVFXSystem` resolves them, but all paths account for deferred handles.
