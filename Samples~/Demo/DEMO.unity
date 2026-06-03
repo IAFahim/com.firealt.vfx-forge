@@ -260,7 +260,7 @@ VisualEffect:
       m_Array: []
     m_Vector3f:
       m_Array:
-      - m_Value: {x: 4, y: 4, z: 4}
+      - m_Value: {x: 1000000, y: 1000000, z: 1000000}
         m_Name: Bounds
         m_Overridden: 1
     m_Vector4f:
@@ -435,7 +435,7 @@ VisualEffect:
       m_Array: []
     m_Vector3f:
       m_Array:
-      - m_Value: {x: 18, y: 18, z: 18}
+      - m_Value: {x: 1000000, y: 1000000, z: 1000000}
         m_Name: Bounds
         m_Overridden: 1
     m_Vector4f:
@@ -612,7 +612,7 @@ VisualEffect:
       m_Array: []
     m_Vector3f:
       m_Array:
-      - m_Value: {x: 4, y: 4, z: 4}
+      - m_Value: {x: 1000000, y: 1000000, z: 1000000}
         m_Name: Bounds
         m_Overridden: 1
     m_Vector4f:
@@ -774,7 +774,7 @@ VisualEffect:
       m_Array: []
     m_Vector3f:
       m_Array:
-      - m_Value: {x: 4, y: 4, z: 4}
+      - m_Value: {x: 1000000, y: 1000000, z: 1000000}
         m_Name: Bounds
         m_Overridden: 1
     m_Vector4f:
@@ -976,7 +976,7 @@ VisualEffect:
       m_Array: []
     m_Vector3f:
       m_Array:
-      - m_Value: {x: 4, y: 4, z: 4}
+      - m_Value: {x: 1000000, y: 1000000, z: 1000000}
         m_Name: Bounds
         m_Overridden: 1
     m_Vector4f:
@@ -1265,7 +1265,7 @@ VisualEffect:
       m_Array: []
     m_Vector3f:
       m_Array:
-      - m_Value: {x: 4, y: 4, z: 4}
+      - m_Value: {x: 1000000, y: 1000000, z: 1000000}
         m_Name: Bounds
         m_Overridden: 1
     m_Vector4f:
@@ -1473,32 +1473,32 @@ MonoBehaviour:
   _uploadData:
     _vfxDataTypeName: FireAlt.VFXForge.Demo.VFXDamageNumberDataDEMO
     _baker:
-      rid: 1772247117544030447
+      rid: 4267010098708873557
     _selectedBakerTypeName: 'FireAlt.VFXForge.Data.DefaultVFXDataTypeBaker`1[[FireAlt.VFXForge.Demo.VFXDamageNumberDataDEMO,
       FireAlt.VFXForge.Demo, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]'
   _uploadArrayData:
     _vfxDataTypeName: FireAlt.VFXForge.Demo.VFXDamageNumberArrayDataDEMO
     _baker:
-      rid: 1772247117544030449
+      rid: 4267010098708873559
     _selectedBakerTypeName: FireAlt.VFXForge.Demo.DamageNumberGlyphBaker
   _trackingDuration: 0
   focusedBoundsSize: 4
   _visualEffect: {fileID: 1504718791}
-  _vfxDefinition: {fileID: 11400000, guid: 786611feaa0a4b6b87e20d4f2fe025fe, type: 2}
+  _vfxDefinition: {fileID: 11400000, guid: 3f1688a27ccf4e499ad9334e261054c7, type: 2}
   references:
     version: 2
     RefIds:
-    - rid: 1772247117544030447
+    - rid: 4267010098708873557
       type: {class: 'DefaultVFXDataTypeBaker`1[[FireAlt.VFXForge.Demo.VFXDamageNumberDataDEMO, FireAlt.VFXForge.Demo]]',
         ns: FireAlt.VFXForge.Data, asm: FireAlt.VFXForge.Data}
       data:
         Data:
-          Position: {x: 0, y: 1, z: 0}
+          Position: {x: 0, y: 0, z: 0}
           Type: 0
-    - rid: 1772247117544030449
+    - rid: 4267010098708873559
       type: {class: DamageNumberGlyphBaker, ns: FireAlt.VFXForge.Demo, asm: FireAlt.VFXForge.Demo}
       data:
-        number: 1024
+        number: 163
 --- !u!73398921 &1504718790
 VFXRenderer:
   serializedVersion: 1
@@ -1554,7 +1554,7 @@ VisualEffect:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1504718788}
   m_Enabled: 1
-  m_Asset: {fileID: 8926484042661614526, guid: ea197b8ae0964d60899ab74b7cf9f705, type: 3}
+  m_Asset: {fileID: 8926484042661614526, guid: 6c282d75aeec4eedb48ca07f7c01d32c, type: 3}
   m_InitialEventName: OnPlay
   m_InitialEventNameOverriden: 0
   m_StartSeed: 0
@@ -1568,7 +1568,7 @@ VisualEffect:
       m_Array: []
     m_Vector3f:
       m_Array:
-      - m_Value: {x: 4, y: 4, z: 4}
+      - m_Value: {x: 1000000, y: 1000000, z: 1000000}
         m_Name: Bounds
         m_Overridden: 1
     m_Vector4f:
@@ -1637,6 +1637,63 @@ Transform:
   - {fileID: 1504718792}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1705728155
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1705728157}
+  - component: {fileID: 1705728156}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1705728156
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705728155}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d6c0746d0364ec69c245d24edda589d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FireAlt.VFXForge::FireAlt.VFXForge.VFXDecalProjector
+  VFXDecalDefinition: {fileID: 11400000, guid: 2d448c76ad2f43948b2b516eb65f2668, type: 2}
+  _registeredDefinition: {fileID: 11400000, guid: 2d448c76ad2f43948b2b516eb65f2668,
+    type: 2}
+  _sprite: {fileID: 21300000, guid: a2fbe5b1d6e6e764eb1b9a54118d36a6, type: 3}
+  projectionDepth: 1
+  projectionDepthPivot: 0.5
+  opacity: 1
+  drawDistance: 1000
+  startFade: 0.9
+  angleFade:
+    x: 0
+    y: 0
+  normalBlend: 0
+--- !u!4 &1705728157
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705728155}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1645,3 +1702,4 @@ SceneRoots:
   - {fileID: 516565691}
   - {fileID: 454230329}
   - {fileID: 1521868355}
+  - {fileID: 1705728157}

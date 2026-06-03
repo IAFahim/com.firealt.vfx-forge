@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DamageNumbersDEMODefinition
   m_EditorClassIdentifier: FireAlt.HybridECS.Data::FireAlt.HybridECS.Data.VFXDefinition
   key: 16
-  visualEffectAsset: {fileID: 8926484042661614526, guid: ea197b8ae0964d60899ab74b7cf9f705,
+  visualEffectAsset: {fileID: 8926484042661614526, guid: 6c282d75aeec4eedb48ca07f7c01d32c,
     type: 3}
   capacity: 100
   timeoutDuration: 30
