@@ -10,6 +10,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs.LowLevel.Unsafe;
+using UnityEngine;
 
 namespace FireAlt.VFXForge
 {
@@ -74,13 +75,22 @@ namespace FireAlt.VFXForge
             ArrayDataSizeInBytes = definition.ArrayDataGpuSize;
             VFXKey = definition;
         }
-        
+
         public TrackedEntity Spawn(Entity entityToTrack, float trackingDuration = 0f)
+        {
+            return Spawn(TrackedEntity.FromEntity(entityToTrack), trackingDuration);
+        }
+
+        public TrackedEntity Spawn(EntityId gameObjectToTrack, float trackingDuration = 0f)
+        {
+            return Spawn(TrackedEntity.FromEntityId(gameObjectToTrack), trackingDuration);
+        }
+
+        private TrackedEntity Spawn(TrackedEntity trackedEntity, float trackingDuration)
         {
             Assert.IsTrue(trackingDuration >= 0f);
             var nextIndex = Interlocked.Increment(ref NextIndex);
             
-            var trackedEntity = TrackedEntity.FromEntity(entityToTrack);
             if (nextIndex > Capacity) 
                 return trackedEntity;
             
@@ -98,8 +108,20 @@ namespace FireAlt.VFXForge
             
             return trackedEntity;
         }
-        
-        public TrackedEntity Spawn<U>(Entity entityToTrack, NativeArray<U> arrayData, float trackingDuration = 0f) 
+
+        public TrackedEntity Spawn<U>(Entity entityToTrack, NativeArray<U> arrayData, float trackingDuration = 0f)
+            where U : unmanaged
+        {
+            return Spawn(TrackedEntity.FromEntity(entityToTrack), arrayData, trackingDuration);
+        }
+
+        public TrackedEntity Spawn<U>(EntityId gameObjectToTrack, NativeArray<U> arrayData, float trackingDuration = 0f)
+            where U : unmanaged
+        {
+            return Spawn(TrackedEntity.FromEntityId(gameObjectToTrack), arrayData, trackingDuration);
+        }
+
+        private TrackedEntity Spawn<U>(TrackedEntity entityToTrack, NativeArray<U> arrayData, float trackingDuration) 
             where U : unmanaged
         {
             Common.CheckStableTypeHash<U>(ArrayDataStableTypeHash);
@@ -111,7 +133,19 @@ namespace FireAlt.VFXForge
             return trackedEntity;
         }
 
-        public TrackedEntity Spawn<T>(Entity entityToTrack, T data, float trackingDuration = 0f) 
+        public TrackedEntity Spawn<T>(Entity entityToTrack, T data, float trackingDuration = 0f)
+            where T : unmanaged
+        {
+            return Spawn(TrackedEntity.FromEntity(entityToTrack), data, trackingDuration);
+        }
+
+        public TrackedEntity Spawn<T>(EntityId gameObjectToTrack, T data, float trackingDuration = 0f)
+            where T : unmanaged
+        {
+            return Spawn(TrackedEntity.FromEntityId(gameObjectToTrack), data, trackingDuration);
+        }
+
+        private TrackedEntity Spawn<T>(TrackedEntity entityToTrack, T data, float trackingDuration) 
             where T : unmanaged
         {
             Common.CheckStableTypeHash<T>(DataStableTypeHash);
@@ -122,8 +156,24 @@ namespace FireAlt.VFXForge
             DeferredDataBuffer.SetData(trackedEntity.IndexInData, data);
             return trackedEntity;
         }
-        
-        public TrackedEntity Spawn<T, U>(Entity entityToTrack, T data, NativeArray<U> arrayData, float trackingDuration = 0f) 
+
+        public TrackedEntity Spawn<T, U>(Entity entityToTrack, T data, NativeArray<U> arrayData,
+            float trackingDuration = 0f)
+            where T : unmanaged
+            where U : unmanaged
+        {
+            return Spawn(TrackedEntity.FromEntity(entityToTrack), data, arrayData, trackingDuration);
+        }
+
+        public TrackedEntity Spawn<T, U>(EntityId gameObjectToTrack, T data, NativeArray<U> arrayData,
+            float trackingDuration = 0f)
+            where T : unmanaged
+            where U : unmanaged
+        {
+            return Spawn(TrackedEntity.FromEntityId(gameObjectToTrack), data, arrayData, trackingDuration);
+        }
+
+        private TrackedEntity Spawn<T, U>(TrackedEntity entityToTrack, T data, NativeArray<U> arrayData, float trackingDuration) 
             where T : unmanaged
             where U : unmanaged
         {
@@ -137,8 +187,20 @@ namespace FireAlt.VFXForge
             DeferredDataBuffer.SetData(trackedEntity.IndexInData, data);
             return trackedEntity;
         }
-        
-        public unsafe TrackedEntity SpawnUnsafe(Entity entityToTrack, byte* data, NativeArray<byte> arrayData = default, float trackingDuration = 0f)
+
+        public unsafe TrackedEntity SpawnUnsafe(Entity entityToTrack, byte* data, NativeArray<byte> arrayData = default,
+            float trackingDuration = 0f)
+        {
+            return SpawnUnsafe(TrackedEntity.FromEntity(entityToTrack), data, arrayData, trackingDuration);
+        }
+
+        public unsafe TrackedEntity SpawnUnsafe(EntityId gameObjectToTrack, byte* data, NativeArray<byte> arrayData = default,
+            float trackingDuration = 0f)
+        {
+            return SpawnUnsafe(TrackedEntity.FromEntityId(gameObjectToTrack), data, arrayData, trackingDuration);
+        }
+
+        private unsafe TrackedEntity SpawnUnsafe(TrackedEntity entityToTrack, byte* data, NativeArray<byte> arrayData = default, float trackingDuration = 0f)
         {
             var trackedEntity = Spawn(entityToTrack, trackingDuration);
             if (!trackedEntity.IsValid) return trackedEntity;
@@ -150,8 +212,18 @@ namespace FireAlt.VFXForge
             DeferredDataBuffer.SetDataUnsafe(trackedEntity.IndexInData, data, DataSizeInBytes);
             return trackedEntity;
         }
-        
+
         public TrackedEntity SpawnUnsafe(Entity entityToTrack, NativeArray<byte> arrayData, float trackingDuration = 0f)
+        {
+            return SpawnUnsafe(TrackedEntity.FromEntity(entityToTrack), arrayData, trackingDuration);
+        }
+
+        public TrackedEntity SpawnUnsafe(EntityId gameObjectToTrack, NativeArray<byte> arrayData, float trackingDuration = 0f)
+        {
+            return SpawnUnsafe(TrackedEntity.FromEntityId(gameObjectToTrack), arrayData, trackingDuration);
+        }
+
+        private TrackedEntity SpawnUnsafe(TrackedEntity entityToTrack, NativeArray<byte> arrayData, float trackingDuration = 0f)
         {
             var trackedEntity = Spawn(entityToTrack, trackingDuration);
             if (!trackedEntity.IsValid) return trackedEntity;
