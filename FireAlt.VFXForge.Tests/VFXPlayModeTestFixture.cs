@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using FireAlt.Core.ObjectManagement;
 using FireAlt.VFXForge.Data;
 using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -16,6 +18,9 @@ namespace FireAlt.VFXForge.Tests
     {
         private const string INSTANT_VFX_ASSET_PATH = "Packages/com.firealt.vfx-forge/Shaders/Templates/Instant(Single).vfx";
         private const string PERSISTENT_VFX_ASSET_PATH = "Packages/com.firealt.vfx-forge/Shaders/Templates/Persistent(Single).vfx";
+        private const string PERSISTENT_ARRAY_VFX_ASSET_PATH = "Packages/com.firealt.vfx-forge/Shaders/Templates/Persistent(Array).vfx";
+        private const string PERSISTENT_SINGLE_ARRAY_VFX_ASSET_PATH =
+            "Packages/com.firealt.vfx-forge/Shaders/Templates/Persistent(Single+Array).vfx";
 
         private readonly List<GameObject> _gameObjects = new();
         private readonly List<VFXDefinition> _definitions = new();
@@ -46,19 +51,27 @@ namespace FireAlt.VFXForge.Tests
             yield return null;
         }
 
-        internal VFXDefinition CreateDefinition(int id, VFXType vfxType, int capacity = 100, float timeoutDuration = 5f)
+        internal VFXDefinition CreateDefinition(
+            int id,
+            VFXType vfxType,
+            int capacity = 100,
+            float timeoutDuration = 5f,
+            bool hasData = false,
+            bool hasArrayData = false)
         {
             var definition = ScriptableObject.CreateInstance<VFXDefinition>();
             ((IUID)definition).ID = id;
 #if UNITY_EDITOR
             definition.visualEffectAsset = AssetDatabase.LoadAssetAtPath<VisualEffectAsset>(
-                vfxType == VFXType.Persistent ? PERSISTENT_VFX_ASSET_PATH : INSTANT_VFX_ASSET_PATH);
+                GetVFXAssetPath(vfxType, hasData, hasArrayData));
 #else
             throw new InvalidOperationException("VFX Forge playmode tests require the Unity Editor to load package VFX assets.");
 #endif
             definition.capacity = capacity;
             definition.timeoutDuration = timeoutDuration;
             definition.vfxType = vfxType;
+            definition.vfxDataType = hasData ? VFXTypeRegistry.GetStableTypeHash<VFXDecal>() : 0;
+            definition.vfxArrayDataType = hasArrayData ? VFXTypeRegistry.GetStableTypeHash<VFXDecal>() : 0;
             _definitions.Add(definition);
             return definition;
         }
@@ -73,6 +86,20 @@ namespace FireAlt.VFXForge.Tests
             hybridVisualEffect.VFXDefinition = definition;
             hybridVisualEffect.Init();
             return hybridVisualEffect;
+        }
+
+        internal GameObject CreateTrackedGameObject(string name = "VFX Forge Tracked GameObject")
+        {
+            var gameObject = new GameObject(name);
+            _gameObjects.Add(gameObject);
+            return gameObject;
+        }
+
+        internal Entity CreateTrackedEntity()
+        {
+            var entity = World.EntityManager.CreateEntity(typeof(LocalToWorld));
+            World.EntityManager.SetComponentData(entity, new LocalToWorld { Value = float4x4.TRS(float3.zero, quaternion.identity, 1f) });
+            return entity;
         }
 
         internal VFXSingleton GetSingleton()
@@ -100,6 +127,13 @@ namespace FireAlt.VFXForge.Tests
             var singleton = GetSingleton();
             ref var entry = ref singleton.GetPersistent(definition);
             return entry.Spawn(entityToTrack, trackingDuration);
+        }
+
+        internal TrackedEntity SpawnPersistent(VFXDefinition definition, EntityId entityIdToTrack, float trackingDuration = 0f)
+        {
+            var singleton = GetSingleton();
+            ref var entry = ref singleton.GetPersistent(definition);
+            return entry.Spawn(entityIdToTrack, trackingDuration);
         }
 
         internal bool IsPersistentAlive(VFXDefinition definition, TrackedEntity trackedEntity)
@@ -142,6 +176,21 @@ namespace FireAlt.VFXForge.Tests
             }
 
             World.DefaultGameObjectInjectionWorld = _previousWorld;
+        }
+
+        private static string GetVFXAssetPath(VFXType vfxType, bool hasData, bool hasArrayData)
+        {
+            if (vfxType != VFXType.Persistent)
+            {
+                return INSTANT_VFX_ASSET_PATH;
+            }
+
+            if (hasData && hasArrayData)
+            {
+                return PERSISTENT_SINGLE_ARRAY_VFX_ASSET_PATH;
+            }
+
+            return hasArrayData ? PERSISTENT_ARRAY_VFX_ASSET_PATH : PERSISTENT_VFX_ASSET_PATH;
         }
     }
 }

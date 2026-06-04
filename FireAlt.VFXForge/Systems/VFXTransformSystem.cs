@@ -5,6 +5,7 @@ using Unity.Assertions;
 using Unity.Burst;
 using Unity.Burst.CompilerServices;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -61,8 +62,11 @@ namespace FireAlt.VFXForge
         {
             _entityIdData.Dispose();
             _transformHandles.Dispose();
+            if (_prevTransformAccessArray.isCreated) _prevTransformAccessArray.Dispose();
         }
 
+        private TransformAccessArray _prevTransformAccessArray;
+        
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
@@ -78,7 +82,15 @@ namespace FireAlt.VFXForge
                 {
                     Burst.IsEnabled.Data.InvokeOut(trackedEntity.EntityId, out EntityIdState entityIdState);
 
-                    if (Hint.Likely(entityIdState.TransformHandle != default))
+                    if (Hint.Unlikely(entityIdState.TransformHandle == default))
+                    {
+                        // Very unlikely that anyone will be destroying GameObjects
+                        ref var transformData = ref entry.DeferredTransformBuffer.ElementAt(trackedEntity.IndexInData);
+                        transformData.SetAlive(false);
+                        transformData.SetEntityAlive(false);
+                        transformData.SetDidTransformSystemRun();
+                    }
+                    else
                     {
                         _entityIdData.Add(new EntityIdData
                         {
@@ -115,18 +127,15 @@ namespace FireAlt.VFXForge
 
             if (!_transformHandles.IsEmpty)
             {
-                var transformAccessArray = new TransformAccessArray(_transformHandles.AsArray());
+                if (_prevTransformAccessArray.isCreated) _prevTransformAccessArray.Dispose();
+                
+                _prevTransformAccessArray = new TransformAccessArray(_transformHandles.AsArray());
                 state.Dependency = new FetchGameObjectTransformJob
                 {
                     EntityIdDatas = _entityIdData,
                     VFXSingleton = singleton.AsParallelWriter(),
                     ElapsedTime = SystemAPI.Time.ElapsedTime
-                }.ScheduleReadOnly(transformAccessArray, 64, state.Dependency);
-
-                state.Dependency = new DisposeTransformAccessArray
-                {
-                    TransformAccessArray = transformAccessArray
-                }.Schedule(state.Dependency);
+                }.ScheduleReadOnly(_prevTransformAccessArray, 64, state.Dependency);
             }
             
             state.Dependency = new FetchEntityTransformJob
@@ -137,17 +146,6 @@ namespace FireAlt.VFXForge
                 VFXSingleton = singleton.AsParallelWriter(),
                 ElapsedTime = SystemAPI.Time.ElapsedTime
             }.ScheduleParallel(persistentKeys.Length, 1, state.Dependency);
-        }
-
-        [BurstCompile]
-        private struct DisposeTransformAccessArray : IJob
-        {
-            public TransformAccessArray TransformAccessArray;
-            
-            public void Execute()
-            {
-                TransformAccessArray.Dispose();
-            }
         }
         
         [BurstCompile]
