@@ -1,23 +1,51 @@
 using FireAlt.VFXForge.Data;
 using FireAlt.Core.Extensions;
+using FireAlt.Core.Utility;
+using Unity.Assertions;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
+using UnityEngine;
 
 namespace FireAlt.VFXForge
 {
+    [BurstCompile]
     [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
     [UpdateInGroup(typeof(UpdateVFXSystemGroup))]
     public partial struct VFXTransformSystem : ISystem
     {
+        private static class Burst
+        {
+            public static readonly SharedStatic<BurstInterop> IsEnabled =
+                SharedStatic<BurstInterop>.GetOrCreate<VFXTransformSystem>();
+        }
+
+        private static unsafe void IsEnabledPacked(void* arguments, int argumentsSize)
+        {
+            ref var args = ref BurstInterop.ArgumentsFromPtr<BurstManagedPair<EntityId, bool>>(arguments, argumentsSize);
+            ref var entityId = ref args.First;
+            ref var isEnabled = ref args.Second;
+            
+            var go = Resources.EntityIdToObject(entityId) as GameObject;
+            Assert.IsNotNull(go, "EntityId supplied is not a GameObject");
+            isEnabled = go!.activeInHierarchy;
+        }
+        
+        static unsafe VFXTransformSystem()
+        {
+            Burst.IsEnabled.Data = new BurstInterop(&IsEnabledPacked);
+        }
+        
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             var singleton = SystemAPI.GetSingletonRW<VFXSingleton>().ValueRW;
             var persistentKeys = singleton.PersistentVFXGraphEntries.GetKeyArray(state.WorldUpdateAllocator);
+            
+            //Burst.IsEnabled.Data.InvokeOut(EntityId.None, out bool isEnabled);
             
             state.Dependency = new UpdateJob
             {

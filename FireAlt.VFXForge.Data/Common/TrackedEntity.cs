@@ -1,6 +1,7 @@
 using System;
 using Unity.Entities;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace FireAlt.VFXForge.Data
 {
@@ -10,6 +11,8 @@ namespace FireAlt.VFXForge.Data
         public int IndexInData;
         public int SystemVersion;
 
+        public EntityId EntityId => EntityIdConverter.FromEntity(Entity);
+        
         public TrackedEntity(Entity entity, int indexInData, int systemVersion)
         {
             Entity = entity;
