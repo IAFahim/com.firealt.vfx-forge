@@ -35,11 +35,11 @@ namespace FireAlt.VFXForge
         
         internal readonly struct InternalAPI
         {
-            internal TrackedEntity SpawnPersistent(ref PersistentVFXEntry entry, Entity entityToTrack,
+            internal TrackedEntity SpawnPersistent(ref PersistentVFXEntry entry, TrackedEntity deferredKey,
                 UnsafeArray<byte> arrayData, float trackingDuration)
             {
                 Assert.IsTrue(trackingDuration >= 0f);
-                var trackedEntity = TrackedEntity.FromEntity(entityToTrack);
+                var trackedEntity = TrackedEntity.FromTrackedEntity(deferredKey);
             
                 if (entry.RequestsCount >= entry.Capacity
                     || entry.TrackedEntities.Count >= entry.Capacity
@@ -56,7 +56,15 @@ namespace FireAlt.VFXForge
                 transform.SetAlive(true);
                 transform.TrackingDuration = trackingDuration;
                 entry.TransformBuffer[index] = transform;
-                entry.TrackedEntities.Add(trackedEntity);
+                if (trackedEntity.IsEntityId)
+                {
+                    entry.TrackedEntityIds.Add(trackedEntity);
+                }
+                else
+                {
+                    entry.TrackedEntities.Add(trackedEntity);
+                }
+                
                 entry.AliveMask.Set(index);
 
                 if (entry.SpawnIndexBuffer.IsCreated)
@@ -79,12 +87,12 @@ namespace FireAlt.VFXForge
                 return trackedEntity;
             }
             
-            internal unsafe TrackedEntity SpawnPersistentUnsafe(ref PersistentVFXEntry entry, Entity entityToTrack,
+            internal unsafe TrackedEntity SpawnPersistentUnsafe(ref PersistentVFXEntry entry, TrackedEntity deferredKey,
                 byte* data, UnsafeArray<byte> arrayData, float trackingDuration)
             {
                 Assert.IsTrue(data != null);
 
-                var trackedEntity = SpawnPersistent(ref entry, entityToTrack, arrayData, trackingDuration);
+                var trackedEntity = SpawnPersistent(ref entry, deferredKey, arrayData, trackingDuration);
                 if (!trackedEntity.IsValid) return trackedEntity;
 
                 if (entry.DataSizeInBytes != 0)
@@ -100,7 +108,12 @@ namespace FireAlt.VFXForge
                 var index = resolvedKey.IndexInData;
                 Assert.IsTrue(index >= 0 && index < entry.Capacity * 2);
                 
-                if (!entry.TrackedEntities.Remove(resolvedKey)) return;
+                if (resolvedKey.IsEntityId 
+                        ? !entry.TrackedEntityIds.Remove(resolvedKey) 
+                        : !entry.TrackedEntities.Remove(resolvedKey))
+                {
+                    return;
+                }
                 
                 ref var transform = ref entry.TransformBuffer.ElementAt(index);
                 transform.Kill();

@@ -16,7 +16,7 @@ namespace FireAlt.VFXForge
         public void OnUpdate(ref SystemState state)
         {
             var singleton = SystemAPI.GetSingletonRW<VFXSingleton>().ValueRW;
-            var persistentKeys = singleton.PersistentVFXGraphEntries.GetKeyArray(state.WorldUpdateAllocator);
+            var persistentKeys = singleton.PersistentVFXGraphEntries.GetKeyArray(state.WorldUpdateAllocator); // First runs before Alive status is determined
             
             state.Dependency = new KillJob
             {
@@ -34,10 +34,20 @@ namespace FireAlt.VFXForge
             public void Execute(int index)
             {
                 ref var entry = ref VFXSingleton.GetPersistent(KeysArray[index]);
-                if (entry.TrackedEntities.IsEmpty) return;
+                if (entry.TrackedEntities.IsEmpty && entry.TrackedEntityIds.IsEmpty) return;
                 using var toRemove = NativeListPool<TrackedEntity>.Rent();
                 
                 foreach (var entityWithIndex in entry.TrackedEntities)
+                {
+                    ref var data = ref entry.TransformBuffer.ElementAt(entityWithIndex.IndexInData);
+                    
+                    if (!data.IsAlive())
+                    {
+                        toRemove.List.Add(entityWithIndex);
+                    }
+                }
+                
+                foreach (var entityWithIndex in entry.TrackedEntityIds)
                 {
                     ref var data = ref entry.TransformBuffer.ElementAt(entityWithIndex.IndexInData);
                     

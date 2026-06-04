@@ -30,6 +30,8 @@ namespace FireAlt.VFXForge.Data
             }
         }
 
+        internal Entity RawEntityData => _entity;
+        
         private TrackedEntity(Entity entity, int indexInData, uint systemVersion, bool isDeferred, bool isEntityId)
         {
             _entity = entity;
@@ -38,11 +40,13 @@ namespace FireAlt.VFXForge.Data
         }
 
         public bool IsValid => PackedData.SystemVersion != 0;
+        public bool IsEntityId => PackedData.IsEntityId;
         public bool IsDeferred(uint currentSystemVersion) => PackedData.IsDeferred && PackedData.SystemVersion == currentSystemVersion;
         
         public static TrackedEntity Null => new(Entity.Null, 0, 0, false, false);
         public static TrackedEntity FromEntity(Entity entity) => new(entity, 0, 0, false, false);
         public static TrackedEntity FromEntityId(EntityId entityId) => new(EntityIdConverter.FromEntityId(entityId), 0, 0, false, true);
+        public static TrackedEntity FromTrackedEntity(TrackedEntity trackedEntity) => new(trackedEntity.RawEntityData, 0, 0, false, trackedEntity.IsEntityId);
         
         public bool Equals(TrackedEntity other)
         {

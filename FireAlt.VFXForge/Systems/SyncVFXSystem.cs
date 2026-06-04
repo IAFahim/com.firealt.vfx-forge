@@ -268,11 +268,11 @@ namespace FireAlt.VFXForge
                     if (entry.DeferredDataBuffer.IsCreated)
                     {
                         var ptr = (byte*)entry.DeferredDataBuffer.GetUnsafePtr() + deferredKey.IndexInData * entry.DataSizeInBytes;
-                        resolvedKey = internalApi.SpawnPersistentUnsafe(ref entry, deferredKey.Entity, ptr, pooledArrayData.Array, deferredTransform.TrackingDuration);
+                        resolvedKey = internalApi.SpawnPersistentUnsafe(ref entry, deferredKey, ptr, pooledArrayData.Array, deferredTransform.TrackingDuration);
                     }
                     else
                     {
-                        resolvedKey = internalApi.SpawnPersistent(ref entry, deferredKey.Entity, pooledArrayData.Array, deferredTransform.TrackingDuration);
+                        resolvedKey = internalApi.SpawnPersistent(ref entry, deferredKey, pooledArrayData.Array, deferredTransform.TrackingDuration);
                     }
 
                     if (!resolvedKey.IsValid) continue;

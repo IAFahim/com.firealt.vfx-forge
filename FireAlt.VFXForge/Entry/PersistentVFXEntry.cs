@@ -37,6 +37,7 @@ namespace FireAlt.VFXForge
         internal UnsafeArray<VFXArrayPtr> ArrayPtrBuffer;
         internal UnsafePriorityHeap<int> FreeIndices;
         internal UnsafeHashSet<TrackedEntity> TrackedEntities;
+        internal UnsafeHashSet<TrackedEntity> TrackedEntityIds; // TODO: Remove with Unity 6.7
         
         internal int NextIndex;
         internal UnsafeArray<VFXTransform> DeferredTransformBuffer;
@@ -44,6 +45,7 @@ namespace FireAlt.VFXForge
         internal UnsafeArray<PooledUnsafeArray<byte>> DeferredArrayDataBuffer;
         
         internal UnsafeThreadList<TrackedEntity> SpawnRequests;
+        internal UnsafeThreadList<TrackedEntity> SpawnEntityIdRequests; // TODO: Remove with Unity 6.7
         internal UnsafeThreadList<TrackedEntity> KillRequests;
 
         internal UnsafeHashMap<TrackedEntity, TrackedEntity> DeferredToResolvedMap;
@@ -369,6 +371,7 @@ namespace FireAlt.VFXForge
             AliveMask.Dispose();
             FreeIndices.Dispose();
             TrackedEntities.Dispose();
+            TrackedEntityIds.Dispose();
             
             if (DataBuffer.IsCreated) DataBuffer.Dispose();
             if (ArrayDataMemoryBuffer.IsCreated) ArrayDataMemoryBuffer.Dispose();
@@ -378,6 +381,7 @@ namespace FireAlt.VFXForge
             // Deferred
             DeferredTransformBuffer.Dispose();
             SpawnRequests.Dispose();
+            SpawnEntityIdRequests.Dispose();
             KillRequests.Dispose();
             DeferredToResolvedMap.Dispose();
             ResolvedToRequestMap.Dispose();
