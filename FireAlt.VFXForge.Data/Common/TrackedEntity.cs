@@ -1,4 +1,5 @@
 using System;
+using Unity.Assertions;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
@@ -7,39 +8,57 @@ namespace FireAlt.VFXForge.Data
 {
     public struct TrackedEntity : IEquatable<TrackedEntity>
     {
-        public Entity Entity;
+        private readonly Entity _entity;
         public int IndexInData;
-        public int SystemVersion;
+        public PackedData PackedData;
 
-        public EntityId EntityId => EntityIdConverter.FromEntity(Entity);
-        
-        public TrackedEntity(Entity entity, int indexInData, int systemVersion)
+        public Entity Entity
         {
-            Entity = entity;
-            IndexInData = indexInData;
-            SystemVersion = systemVersion;
+            get
+            {
+                Assert.IsFalse(PackedData.IsEntityId, "TrackedEntity was not created with Entity, but Entity was accessed.");
+                return _entity;
+            }
+        }
+        
+        public EntityId EntityId
+        {
+            get
+            {
+                Assert.IsTrue(PackedData.IsEntityId, "TrackedEntity was not created with EntityId, but EntityId was accessed.");
+                return EntityIdConverter.FromEntity(_entity);
+            }
         }
 
-        public bool IsValid => SystemVersion != 0;
-        public bool IsDeferred(int currentSystemVersion) => SystemVersion == -currentSystemVersion;
-        
-        public static TrackedEntity Null => new(Entity.Null, 0, 0);
+        private TrackedEntity(Entity entity, int indexInData, uint systemVersion, bool isDeferred, bool isEntityId)
+        {
+            _entity = entity;
+            IndexInData = indexInData;
+            PackedData = new PackedData(systemVersion, isDeferred, isEntityId);
+        }
 
+        public bool IsValid => PackedData.SystemVersion != 0;
+        public bool IsDeferred(uint currentSystemVersion) => PackedData.IsDeferred && PackedData.SystemVersion == currentSystemVersion;
+        
+        public static TrackedEntity Null => new(Entity.Null, 0, 0, false, false);
+        public static TrackedEntity FromEntity(Entity entity) => new(entity, 0, 0, false, false);
+        public static TrackedEntity FromEntityId(EntityId entityId) => new(EntityIdConverter.FromEntityId(entityId), 0, 0, false, true);
+        
         public bool Equals(TrackedEntity other)
         {
-            return Entity.Equals(other.Entity)
+            return _entity.Equals(other._entity)
                    && IndexInData.Equals(other.IndexInData)
-                   && SystemVersion.Equals(other.SystemVersion);
+                   && PackedData.Equals(other.PackedData);
         }
 
         public override int GetHashCode()
         {
-            return (int)math.hash(new int4(Entity.Index, Entity.Version, IndexInData, SystemVersion));
+            return (int)math.hash(new int4(_entity.Index, _entity.Version, IndexInData, (int)PackedData.Raw));
         }
 
         public override string ToString()
         {
-            return $"{Entity}:I={IndexInData}:SysVer={SystemVersion}";
+            return $"{_entity}:I={IndexInData}:SysVer={PackedData}";
         }
     }
 }

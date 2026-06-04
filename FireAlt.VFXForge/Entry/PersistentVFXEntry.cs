@@ -5,6 +5,7 @@ using FireAlt.Core;
 using FireAlt.Core.Collections;
 using FireAlt.Core.Extensions;
 using Unity.Assertions;
+using Unity.Burst.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -77,12 +78,13 @@ namespace FireAlt.VFXForge
             Assert.IsTrue(trackingDuration >= 0f);
             var nextIndex = Interlocked.Increment(ref NextIndex);
             
-            var trackedEntity = new TrackedEntity(entityToTrack, -1, 0);
+            var trackedEntity = TrackedEntity.FromEntity(entityToTrack);
             if (nextIndex > Capacity) 
                 return trackedEntity;
             
             trackedEntity.IndexInData = nextIndex - 1;
-            trackedEntity.SystemVersion = -SyncVFXSystem.SystemVersion;
+            trackedEntity.PackedData.SetIsDeferred(true);
+            trackedEntity.PackedData.SetSystemVersion(SyncVFXSystem.SystemVersion);
 
             VFXTransform transformData = default;
             transformData.SetAlive(true);
@@ -346,17 +348,18 @@ namespace FireAlt.VFXForge
 
         private bool TryResolve(TrackedEntity trackedEntity, out TrackedEntity resolvedKey)
         {
-            switch (trackedEntity.SystemVersion)
+            if (Hint.Unlikely(trackedEntity.PackedData.SystemVersion == 0))
             {
-                case < 0:
-                    return DeferredToResolvedMap.TryGetValue(trackedEntity, out resolvedKey);
-                case > 0:
-                    resolvedKey = trackedEntity;
-                    return true;
-                default:
-                    resolvedKey = TrackedEntity.Null;
-                    return false;
+                resolvedKey = TrackedEntity.Null;
+                return false;
             }
+
+            if (trackedEntity.PackedData.IsDeferred)
+            {
+                return DeferredToResolvedMap.TryGetValue(trackedEntity, out resolvedKey);
+            }
+            resolvedKey = trackedEntity;
+            return true;
         }
         
         public void Dispose()

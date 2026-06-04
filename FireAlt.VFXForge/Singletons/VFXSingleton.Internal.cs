@@ -39,7 +39,7 @@ namespace FireAlt.VFXForge
                 UnsafeArray<byte> arrayData, float trackingDuration)
             {
                 Assert.IsTrue(trackingDuration >= 0f);
-                var trackedEntity = new TrackedEntity(entityToTrack, -1, 0);
+                var trackedEntity = TrackedEntity.FromEntity(entityToTrack);
             
                 if (entry.RequestsCount >= entry.Capacity
                     || entry.TrackedEntities.Count >= entry.Capacity
@@ -49,7 +49,8 @@ namespace FireAlt.VFXForge
                 }
             
                 trackedEntity.IndexInData = index;
-                trackedEntity.SystemVersion = SyncVFXSystem.SystemVersion;
+                trackedEntity.PackedData.SetSystemVersion(SyncVFXSystem.SystemVersion);
+                trackedEntity.PackedData.SetIsDeferred(false);
                 
                 var transform = default(VFXTransform);
                 transform.SetAlive(true);

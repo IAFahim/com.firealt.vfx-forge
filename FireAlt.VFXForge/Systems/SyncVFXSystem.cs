@@ -30,15 +30,15 @@ namespace FireAlt.VFXForge
                 SharedStatic<BurstInterop>.GetOrCreate<SyncVFXSystem, GetVFXActivityStatusContext>();
             public static readonly SharedStatic<BurstInterop> UploadData = 
                 SharedStatic<BurstInterop>.GetOrCreate<SyncVFXSystem, UploadDataContext>();
-            public static readonly SharedStatic<int> VFXSystemVersion = 
-                SharedStatic<int>.GetOrCreate<SyncVFXSystem, SystemVersionContext>();
+            public static readonly SharedStatic<uint> VFXSystemVersion = 
+                SharedStatic<uint>.GetOrCreate<SyncVFXSystem, SystemVersionContext>();
         }
         
         private struct GetVFXActivityStatusContext {}
         private struct UploadDataContext {}
         private struct SystemVersionContext {}
         
-        public static int SystemVersion => Burst.VFXSystemVersion.Data;
+        public static uint SystemVersion => Burst.VFXSystemVersion.Data;
         
         static unsafe SyncVFXSystem()
         {
