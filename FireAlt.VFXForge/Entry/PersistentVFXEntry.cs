@@ -24,6 +24,7 @@ namespace FireAlt.VFXForge
         public int ArrayDataSizeInBytes { get; }
         
         internal int Capacity;
+        internal int UsedCapacity;
         internal UploadRange DataUploadRange;
         internal UploadRange ArrayDataUploadRange;
         
@@ -91,7 +92,7 @@ namespace FireAlt.VFXForge
             Assert.IsTrue(trackingDuration >= 0f);
             var nextIndex = Interlocked.Increment(ref NextIndex);
             
-            if (nextIndex > Capacity) 
+            if (nextIndex > Capacity - UsedCapacity) 
                 return trackedEntity;
             
             trackedEntity.IndexInData = nextIndex - 1;
@@ -102,9 +103,15 @@ namespace FireAlt.VFXForge
             transformData.SetAlive(true);
             transformData.TrackingDuration = trackingDuration;
             DeferredTransformBuffer[trackedEntity.IndexInData] = transformData;
-            
-            ref var spawnRequests = ref SpawnRequests.GetUnsafeList(JobsUtility.ThreadIndex);
-            spawnRequests.Add(trackedEntity);
+
+            if (trackedEntity.IsEntityId)
+            {
+                SpawnEntityIdRequests.GetUnsafeList(JobsUtility.ThreadIndex).Add(trackedEntity);
+            }
+            else
+            {
+                SpawnRequests.GetUnsafeList(JobsUtility.ThreadIndex).Add(trackedEntity);
+            }
             
             return trackedEntity;
         }

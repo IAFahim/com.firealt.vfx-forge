@@ -24,7 +24,6 @@ namespace FireAlt.VFXForge
             public static readonly SharedStatic<BurstInterop> IsEnabled =
                 SharedStatic<BurstInterop>.GetOrCreate<VFXTransformSystem>();
         }
-
         
         private static unsafe void IsEnabledPacked(void* arguments, int argumentsSize)
         {
@@ -42,18 +41,25 @@ namespace FireAlt.VFXForge
             Burst.IsEnabled.Data = new BurstInterop(&IsEnabledPacked);
         }
         
-        private NativeList<bool> _enabledStates;
+        private struct EntityIdData
+        {
+            public VFXKey AssociatedKey;
+            public TrackedEntity TrackedEntity;
+            public bool IsEnabled;
+        }
+        
+        private NativeList<EntityIdData> _entityIdData;
         private NativeList<TransformHandle> _transformHandles;
 
         public void OnCreate(ref SystemState state)
         {
-            _enabledStates = new NativeList<bool>(8, Allocator.Persistent);
+            _entityIdData = new NativeList<EntityIdData>(8, Allocator.Persistent);
             _transformHandles = new NativeList<TransformHandle>(8, Allocator.Persistent);
         }
 
         public void OnDestroy(ref SystemState state)
         {
-            _enabledStates.Dispose();
+            _entityIdData.Dispose();
             _transformHandles.Dispose();
         }
 
@@ -63,7 +69,7 @@ namespace FireAlt.VFXForge
             var singleton = SystemAPI.GetSingletonRW<VFXSingleton>().ValueRW;
             var persistentKeys = singleton.PersistentVFXGraphEntries.GetKeyArray(state.WorldUpdateAllocator); // First runs before Alive status is determined
 
-            _enabledStates.Clear();
+            _entityIdData.Clear();
             _transformHandles.Clear();
             foreach (var key in persistentKeys)
             {
@@ -74,7 +80,12 @@ namespace FireAlt.VFXForge
 
                     if (Hint.Likely(entityIdState.TransformHandle != default))
                     {
-                        _enabledStates.Add(entityIdState.IsEnabled);
+                        _entityIdData.Add(new EntityIdData
+                        {
+                            AssociatedKey = key,
+                            TrackedEntity = trackedEntity,
+                            IsEnabled = entityIdState.IsEnabled
+                        });
                         _transformHandles.Add(entityIdState.TransformHandle);
                     }
                 }
@@ -91,7 +102,12 @@ namespace FireAlt.VFXForge
                     }
                     else
                     {
-                        _enabledStates.Add(entityIdState.IsEnabled);
+                        _entityIdData.Add(new EntityIdData
+                        {
+                            AssociatedKey = key,
+                            TrackedEntity = trackedEntity,
+                            IsEnabled = entityIdState.IsEnabled
+                        });
                         _transformHandles.Add(entityIdState.TransformHandle);
                     }
                 }
@@ -102,8 +118,7 @@ namespace FireAlt.VFXForge
                 var transformAccessArray = new TransformAccessArray(_transformHandles.AsArray());
                 state.Dependency = new FetchGameObjectTransformJob
                 {
-                    EnabledStates = _enabledStates,
-                    KeysArray = persistentKeys,
+                    EntityIdDatas = _entityIdData,
                     VFXSingleton = singleton.AsParallelWriter(),
                     ElapsedTime = SystemAPI.Time.ElapsedTime
                 }.ScheduleReadOnly(transformAccessArray, 64, state.Dependency);
@@ -139,52 +154,45 @@ namespace FireAlt.VFXForge
         private struct FetchGameObjectTransformJob : IJobParallelForTransform
         {
             [ReadOnly]
-            public NativeList<bool> EnabledStates;
+            public NativeList<EntityIdData> EntityIdDatas;
             
-            public NativeArray<VFXKey> KeysArray;
             public VFXSingleton.ParallelWriter VFXSingleton;
 
             public double ElapsedTime;
             
             public void Execute(int index, [ReadOnly] TransformAccess transform)
             {
-                ref var entry = ref VFXSingleton.GetPersistent(KeysArray[index]);
+                var entityIdData = EntityIdDatas[index];
+                ref var entry = ref VFXSingleton.GetPersistent(entityIdData.AssociatedKey);
 
-                if (entry.NextIndex > 0) // There are deferred requests
+                if (entityIdData.TrackedEntity.IsDeferred(SyncVFXSystem.SystemVersion))
                 {
-                    foreach (var trackedEntity in entry.SpawnEntityIdRequests)
-                    {
-                        ref var data = ref entry.DeferredTransformBuffer.ElementAt(trackedEntity.IndexInData);
-                        SetTransformData(ref data, trackedEntity, index, transform);
-                        data.SetDidTransformSystemRun();
-                    }
+                    ref var data = ref entry.DeferredTransformBuffer.ElementAt(entityIdData.TrackedEntity.IndexInData);
+                    SetTransformData(ref data, transform, entityIdData.IsEnabled);
+                    data.SetDidTransformSystemRun();
                 }
-                
-                foreach (var trackedEntity in entry.TrackedEntityIds)
+                else 
                 {
-                    ref var data = ref entry.TransformBuffer.ElementAt(trackedEntity.IndexInData);
-                    SetTransformData(ref data, trackedEntity, index, transform);
+                    ref var data = ref entry.TransformBuffer.ElementAt(entityIdData.TrackedEntity.IndexInData);
+                    SetTransformData(ref data, transform, entityIdData.IsEnabled);
                 }
             }
 
-            private void SetTransformData(ref VFXTransform data, TrackedEntity trackedEntity, int index, TransformAccess transform)
+            private void SetTransformData(ref VFXTransform data, TransformAccess transform, bool isEnabled)
             {
-                var entity = trackedEntity.EntityId;
                 if (data.StartTrackingTime == 0f) data.StartTrackingTime = (float)ElapsedTime;
 
-                var isTrackedEntityNull = entity.Equals(EntityId.None);
-                var isEntityEnabled = EnabledStates[index];
+                var isEntityEnabled = isEnabled;
                 
                 var isActive = data.IsAlive();
-                var isEntityAlive = isTrackedEntityNull; //  || entityExists  <- already filtered out
                 var isStillTracking = data.TrackingDuration == 0f
                                       || data.StartTrackingTime + data.TrackingDuration > ElapsedTime;
 
-                data.SetEntityAlive(isEntityAlive);
+                data.SetEntityAlive(true);
                 data.SetInTrackingDuration(isStillTracking);
                 data.SetEntityEnabled(isEntityEnabled);
                     
-                var isAlive = isActive && isEntityAlive && isStillTracking;
+                var isAlive = isActive && isStillTracking;
                 if (isAlive)
                 {
                     // if (!entityExists) return;  <- already filtered out

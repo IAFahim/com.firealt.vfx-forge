@@ -1,3 +1,4 @@
+using System;
 using FireAlt.Core.Collections;
 using FireAlt.Core.Extensions;
 using FireAlt.VFXForge.Data;
@@ -41,11 +42,9 @@ namespace FireAlt.VFXForge
                 Assert.IsTrue(trackingDuration >= 0f);
                 var trackedEntity = TrackedEntity.FromTrackedEntity(deferredKey);
             
-                if (entry.RequestsCount >= entry.Capacity
-                    || entry.TrackedEntities.Count >= entry.Capacity
-                    || !entry.FreeIndices.TryDequeue(out var index))
+                if (!entry.FreeIndices.TryDequeue(out var index))
                 {
-                    return trackedEntity;
+                    throw new Exception("Impossible. Submit a bug report.");
                 }
             
                 trackedEntity.IndexInData = index;

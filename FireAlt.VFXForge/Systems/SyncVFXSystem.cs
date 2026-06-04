@@ -225,13 +225,16 @@ namespace FireAlt.VFXForge
                 var internalApi = VFXSingleton.AsInternal();
                 ref var entry = ref VFXSingleton.GetPersistent(KeysArray[index]);
                 
-                SpawnPersistentRequests(ref entry, internalApi);
+                SpawnPersistentRequests(ref entry, ref entry.SpawnRequests, internalApi);
+                SpawnPersistentRequests(ref entry, ref entry.SpawnEntityIdRequests, internalApi);
                 // Kill is after spawn, so that the indices will be reused with 1 frame delay for the VFX to react
                 KillPersistentRequests(ref entry, internalApi, out var deadRange);
                 
                 entry.SpawnRequests.Clear();
+                entry.SpawnEntityIdRequests.Clear();
                 entry.KillRequests.Clear();
                 entry.NextIndex = 0;
+                entry.UsedCapacity = entry.TrackedEntityIds.Count + entry.TrackedEntities.Count;
 
                 entry.DataUploadRange = deadRange;
                 if (entry.AliveMask.TryGetRange(out var aliveRange))
@@ -246,10 +249,10 @@ namespace FireAlt.VFXForge
                 }
             }
             
-            private static unsafe void SpawnPersistentRequests(ref PersistentVFXEntry entry,
+            private static unsafe void SpawnPersistentRequests(ref PersistentVFXEntry entry, ref UnsafeThreadList<TrackedEntity> spawnRequests,
                 VFXSingleton.InternalAPI internalApi)
             {
-                foreach (var deferredKey in entry.SpawnRequests)
+                foreach (var deferredKey in spawnRequests)
                 {
                     using var pooledArrayData = TakeDeferredArrayData(ref entry, deferredKey);
                     
