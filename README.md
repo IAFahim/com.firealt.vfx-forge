@@ -55,9 +55,13 @@ For a step-by-step setup walkthrough, see [Getting Started](Documentation~/Getti
 
 ## Instant VFX
 
+One-frame spawn requests. Useful for instant VFXs like explosions, damage numbers, hit effects and other.
+
 For full API breakdown and examples, see [Instant VFX](Documentation~/InstantVFX.md).
 
 ## Persistent VFX
+
+Long-lived VFX with explicit Spawn/Update/Kill API, optional tracked Entity/GameObject transform data support, but fixed capacity. Useful for controlled persistent VFXs, like fire, gameplay abilities, status effects and other.
 
 For full API breakdown and examples, see [Persistent VFX](Documentation~/PersistentVFX.md).
 
@@ -141,3 +145,4 @@ The package includes a Unity Package Manager sample:
 - `Samples~/Demo/TemplatesDefinitions`: definition assets for the built-in instant/persistent templates.
 
 Import the sample from Package Manager to inspect a complete graph/data/definition setup.
+*Note*: "DamageNumbersDEMO.vfx" file uses custom VFX types and requires an additional manual Reimport after importing the sample.
