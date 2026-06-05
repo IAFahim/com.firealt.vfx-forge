@@ -1,17 +1,14 @@
 using FireAlt.VFXForge.Data;
 using FireAlt.Core.Extensions;
 using FireAlt.Core.Utility;
-using Unity.Assertions;
 using Unity.Burst;
 using Unity.Burst.CompilerServices;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
-using UnityEngine.Jobs;
 
 namespace FireAlt.VFXForge
 {
@@ -42,100 +39,79 @@ namespace FireAlt.VFXForge
             Burst.IsEnabled.Data = new BurstInterop(&IsEnabledPacked);
         }
         
-        private struct EntityIdData
-        {
-            public VFXKey AssociatedKey;
-            public TrackedEntity TrackedEntity;
-            public bool IsEnabled;
-        }
-        
-        private NativeList<EntityIdData> _entityIdData;
-        private NativeList<TransformHandle> _transformHandles;
-
-        public void OnCreate(ref SystemState state)
-        {
-            _entityIdData = new NativeList<EntityIdData>(8, Allocator.Persistent);
-            _transformHandles = new NativeList<TransformHandle>(8, Allocator.Persistent);
-        }
-
-        public void OnDestroy(ref SystemState state)
-        {
-            _entityIdData.Dispose();
-            _transformHandles.Dispose();
-            if (_prevTransformAccessArray.isCreated) _prevTransformAccessArray.Dispose();
-        }
-
-        private TransformAccessArray _prevTransformAccessArray;
-        
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             var singleton = SystemAPI.GetSingletonRW<VFXSingleton>().ValueRW;
             var persistentKeys = singleton.PersistentVFXGraphEntries.GetKeyArray(state.WorldUpdateAllocator); // First runs before Alive status is determined
 
-            _entityIdData.Clear();
-            _transformHandles.Clear();
+            var entityIdPresent = false;
             foreach (var key in persistentKeys)
             {
                 ref var entry = ref singleton.GetPersistent(key);
-                foreach (var trackedEntity in entry.SpawnEntityIdRequests)
+
+                entry.EntityIdFrameData.Clear();
+                if (entry.SpawnEntityIdRequests.Length != 0 || !entry.TrackedEntityIds.IsEmpty)
                 {
-                    Burst.IsEnabled.Data.InvokeOut(trackedEntity.EntityId, out EntityIdState entityIdState);
+                    entityIdPresent = true;
+                }
+                
+                foreach (var deferredKey in entry.SpawnEntityIdRequests)
+                {
+                    Burst.IsEnabled.Data.InvokeOut(deferredKey.EntityId, out EntityIdState entityIdState);
 
                     if (Hint.Unlikely(entityIdState.TransformHandle == default))
                     {
                         // Very unlikely that anyone will be destroying GameObjects
-                        ref var transformData = ref entry.DeferredTransformBuffer.ElementAt(trackedEntity.IndexInData);
+                        ref var transformData = ref entry.DeferredTransformBuffer.ElementAt(deferredKey.IndexInData);
                         transformData.SetAlive(false);
                         transformData.SetEntityAlive(false);
                         transformData.SetDidTransformSystemRun();
+                        
+                        entry.EntityIdFrameData.Add(default);
                     }
                     else
                     {
-                        _entityIdData.Add(new EntityIdData
+                        entry.EntityIdFrameData.Add(new EntityIdData
                         {
-                            AssociatedKey = key,
-                            TrackedEntity = trackedEntity,
+                            LocalToWorld = new LocalToWorld { Value = entityIdState.TransformHandle.localToWorldMatrix },
                             IsEnabled = entityIdState.IsEnabled
                         });
-                        _transformHandles.Add(entityIdState.TransformHandle);
                     }
                 }
-                foreach (var trackedEntity in entry.TrackedEntityIds)
+                
+                foreach (var resolvedKey in entry.TrackedEntityIds)
                 {
-                    Burst.IsEnabled.Data.InvokeOut(trackedEntity.EntityId, out EntityIdState entityIdState);
-
+                    Burst.IsEnabled.Data.InvokeOut(resolvedKey.EntityId, out EntityIdState entityIdState);
+ 
                     if (Hint.Unlikely(entityIdState.TransformHandle == default))
                     {
                         // Very unlikely that anyone will be destroying GameObjects
-                        ref var transformData = ref entry.TransformBuffer.ElementAt(trackedEntity.IndexInData);
+                        ref var transformData = ref entry.TransformBuffer.ElementAt(resolvedKey.IndexInData);
                         transformData.SetAlive(false);
                         transformData.SetEntityAlive(false);
+                        
+                        entry.EntityIdFrameData.Add(default);
                     }
                     else
                     {
-                        _entityIdData.Add(new EntityIdData
+                        entry.EntityIdFrameData.Add(new EntityIdData
                         {
-                            AssociatedKey = key,
-                            TrackedEntity = trackedEntity,
+                            LocalToWorld = new LocalToWorld { Value = entityIdState.TransformHandle.localToWorldMatrix },
                             IsEnabled = entityIdState.IsEnabled
                         });
-                        _transformHandles.Add(entityIdState.TransformHandle);
                     }
                 }
             }
 
-            if (!_transformHandles.IsEmpty)
+            if (entityIdPresent)
             {
-                if (_prevTransformAccessArray.isCreated) _prevTransformAccessArray.Dispose();
-                
-                _prevTransformAccessArray = new TransformAccessArray(_transformHandles.AsArray());
                 state.Dependency = new FetchGameObjectTransformJob
                 {
-                    EntityIdDatas = _entityIdData,
+                    KeysArray = persistentKeys,
                     VFXSingleton = singleton.AsParallelWriter(),
                     ElapsedTime = SystemAPI.Time.ElapsedTime
-                }.ScheduleReadOnly(_prevTransformAccessArray, 64, state.Dependency);
+                }.ScheduleParallel(persistentKeys.Length, 1, state.Dependency);
             }
             
             state.Dependency = new FetchEntityTransformJob
@@ -149,38 +125,46 @@ namespace FireAlt.VFXForge
         }
         
         [BurstCompile]
-        private struct FetchGameObjectTransformJob : IJobParallelForTransform
+        private struct FetchGameObjectTransformJob : IJobFor
         {
             [ReadOnly]
-            public NativeList<EntityIdData> EntityIdDatas;
+            public NativeArray<VFXKey> KeysArray;
             
             public VFXSingleton.ParallelWriter VFXSingleton;
 
             public double ElapsedTime;
             
-            public void Execute(int index, [ReadOnly] TransformAccess transform)
+            public void Execute(int index)
             {
-                var entityIdData = EntityIdDatas[index];
-                ref var entry = ref VFXSingleton.GetPersistent(entityIdData.AssociatedKey);
+                ref var entry = ref VFXSingleton.GetPersistent(KeysArray[index]);
 
-                if (entityIdData.TrackedEntity.IsDeferred(SyncVFXSystem.SystemVersion))
+                var i = 0;
+                if (entry.NextIndex > 0) // There are deferred requests
                 {
-                    ref var data = ref entry.DeferredTransformBuffer.ElementAt(entityIdData.TrackedEntity.IndexInData);
-                    SetTransformData(ref data, transform, entityIdData.IsEnabled);
-                    data.SetDidTransformSystemRun();
+                    foreach (var trackedEntity in entry.SpawnEntityIdRequests)
+                    {
+                        ref var data = ref entry.DeferredTransformBuffer.ElementAt(trackedEntity.IndexInData);
+                        ref var entityIdData = ref entry.EntityIdFrameData.ElementAt(i);
+                        SetTransformData(ref data, ref entityIdData);
+                        data.SetDidTransformSystemRun();
+                        i++;
+                    }
                 }
-                else 
+                
+                foreach (var trackedEntity in entry.TrackedEntityIds)
                 {
-                    ref var data = ref entry.TransformBuffer.ElementAt(entityIdData.TrackedEntity.IndexInData);
-                    SetTransformData(ref data, transform, entityIdData.IsEnabled);
+                    ref var data = ref entry.TransformBuffer.ElementAt(trackedEntity.IndexInData);
+                    ref var entityIdData = ref entry.EntityIdFrameData.ElementAt(i);
+                    SetTransformData(ref data, ref entityIdData);
+                    i++;
                 }
             }
 
-            private void SetTransformData(ref VFXTransform data, TransformAccess transform, bool isEnabled)
+            private void SetTransformData(ref VFXTransform data, ref EntityIdData entityIdData)
             {
                 if (data.StartTrackingTime == 0f) data.StartTrackingTime = (float)ElapsedTime;
 
-                var isEntityEnabled = isEnabled;
+                var isEntityEnabled = entityIdData.IsEnabled;
                 
                 var isActive = data.IsAlive();
                 var isStillTracking = data.TrackingDuration == 0f
@@ -194,10 +178,9 @@ namespace FireAlt.VFXForge
                 if (isAlive)
                 {
                     // if (!entityExists) return;  <- already filtered out
-                    transform.GetPositionAndRotation(out var position, out var rotation);
-                    data.Position = position;
-                    data.Rotation = rotation.eulerAngles;
-                    data.Scale = transform.localScale;
+                    data.Position = entityIdData.LocalToWorld.Position;
+                    data.Rotation = math.degrees(math.EulerZXY(entityIdData.LocalToWorld.Rotation));
+                    data.Scale = entityIdData.LocalToWorld.Value.DecomposeScale();
                 }
                 else
                 {
@@ -205,7 +188,6 @@ namespace FireAlt.VFXForge
                 }
             }
         }
-        
         
         [BurstCompile]
         private struct FetchEntityTransformJob : IJobFor

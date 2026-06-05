@@ -40,6 +40,8 @@ namespace FireAlt.VFXForge
         internal UnsafePriorityHeap<int> FreeIndices;
         internal UnsafeHashSet<TrackedEntity> TrackedEntities;
         internal UnsafeHashSet<TrackedEntity> TrackedEntityIds; // TODO: Remove with Unity 6.7
+
+        internal UnsafeList<EntityIdData> EntityIdFrameData; // TODO: Remove with Unity 6.7
         
         internal int NextIndex;
         internal UnsafeArray<VFXTransform> DeferredTransformBuffer;
@@ -451,6 +453,7 @@ namespace FireAlt.VFXForge
             FreeIndices.Dispose();
             TrackedEntities.Dispose();
             TrackedEntityIds.Dispose();
+            EntityIdFrameData.Dispose();
             
             if (DataBuffer.IsCreated) DataBuffer.Dispose();
             if (ArrayDataMemoryBuffer.IsCreated) ArrayDataMemoryBuffer.Dispose();

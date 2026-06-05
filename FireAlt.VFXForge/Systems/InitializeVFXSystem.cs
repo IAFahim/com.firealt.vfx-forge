@@ -73,6 +73,7 @@ namespace FireAlt.VFXForge
                     AliveMask = new UnsafeBitMaskRange(doubleCapacity, Allocator.Persistent),
                     TrackedEntities = new UnsafeHashSet<TrackedEntity>(doubleCapacity, Allocator.Persistent),
                     TrackedEntityIds = new UnsafeHashSet<TrackedEntity>(doubleCapacity, Allocator.Persistent),
+                    EntityIdFrameData = new UnsafeList<EntityIdData>(32, Allocator.Persistent),
                     SpawnRequests = new UnsafeThreadList<TrackedEntity>(32, Allocator.Persistent),
                     SpawnEntityIdRequests = new UnsafeThreadList<TrackedEntity>(8, Allocator.Persistent),
                     KillRequests = new UnsafeThreadList<TrackedEntity>(32, Allocator.Persistent),
