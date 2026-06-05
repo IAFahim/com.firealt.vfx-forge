@@ -1,6 +1,7 @@
 using System.Collections;
 using FireAlt.VFXForge.Data;
 using NUnit.Framework;
+using Unity.Entities;
 using UnityEngine.TestTools;
 
 namespace FireAlt.VFXForge.Tests
@@ -33,6 +34,22 @@ namespace FireAlt.VFXForge.Tests
 
                 Assert.IsFalse(hybridVisualEffect.gameObject.activeSelf);
             }, "ForceTimeout Test World");
+        }
+
+        [UnityTest]
+        public IEnumerator SyncPersistent_WhenTransformSystemRunsBeforeSync_ResolvesSpawn()
+        {
+            yield return VFXPlayModeTestFixture.Run(fixture =>
+            {
+                var definition = fixture.CreateDefinition(85, VFXType.Persistent, capacity: 2);
+                fixture.CreateAndRegisterVisualEffect(definition);
+                var trackedEntity = fixture.SpawnPersistent(definition, Entity.Null);
+
+                fixture.VFXTransformSystem.Update(fixture.World.Unmanaged);
+                fixture.SyncVFXSystem.Update(fixture.World.Unmanaged);
+
+                Assert.IsTrue(fixture.IsPersistentAlive(definition, trackedEntity));
+            });
         }
     }
 }
