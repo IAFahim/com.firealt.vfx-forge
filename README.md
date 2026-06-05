@@ -69,7 +69,13 @@ For full API breakdown and examples, see [Persistent VFX](Documentation~/Persist
 
 `HybridVisualEffect` supports edit-mode initialization and preview spawning through its custom inspector. The inspector reads definition data and uses data bakers to spawn or update preview payloads.
 
-[![Watch the video](https://raw.githubusercontent.com/yourusername/yourrepository/main/assets/thumbnail.jpg)](Documentation%7E/Videos/SceneOverlayPreview.mp4)
+`HybridVisualEffect` `SceneOverlay` Control panel which overrides and hides the `VisualEffect` `SceneOverlay` Control panel. The custom control panel internally hooks into `HybridVisualEffect` directly, to make all previews possible:
+
+https://github.com/user-attachments/assets/7ce634a1-2f30-451c-99b9-7f350e2f3bfd
+
+`VFXAsset` has a way to "Attach to a GameObject" to preview the VFX directly with controls in the VFX Graph panel. VFX Forge overrides this panel when attaching to a `HybridVisualEffect`, allowing to interact with `HybridVisualEffect` seamlessly:
+
+https://github.com/user-attachments/assets/be23ba94-3b01-4a2f-af61-567947be2af5
 
 ## System Order
 
@@ -96,7 +102,7 @@ Safe patterns:
 - Use `ParallelWriter.GetInstant(...).Spawn(...)` from parallel jobs.
 - Use `ParallelWriter.GetPersistent(...).Spawn(...)` from parallel jobs.
 - Use persistent `TrySet...`, `TryGet...`, `IsAlive`, and `TryKill` methods through the returned entry reference.
-- Store `TrackedEntity` handles in ECS components, buffers or any other places when the effect needs later updates.
+- Store `TrackedEntity` anywhere when the effect needs later updates/kill.
 
 Be careful with:
 
