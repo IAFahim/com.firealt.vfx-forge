@@ -1,6 +1,9 @@
 # Persistent VFX
 
-Persistent VFX return a `TrackedEntity` handle:
+Long-lived VFX with explicit Spawn/Update/Kill API, optional tracked Entity/GameObject transform data support, but fixed capacity. Useful for controlled persistent VFXs, like fire, gameplay abilities, status effects and other.
+
+`VFXTransformSystem` maintains transform information, alive state, and tracking duration of the attached `Entity`/`GameObject` (if it was passed to the Spawn method).
+Persistent VFX Spawn methods return a `TrackedEntity` handle, which is needed to do any operations on the effect instance:
 
 ```csharp
 // For Entities
@@ -11,7 +14,7 @@ var tracked = vfx.GetPersistent(VFXKeys.ElectroArc).Spawn(targetEntity, duration
 var tracked = vfx.GetPersistent(VFXKeys.ElectroArc).Spawn(targetGO.GetEntityId(), duration);
 ```
 
-*Note: both `Entity` and `EntityId` paths are thread-safe. However, `EntityId` has to be aquired on the main thread.*
+*Note: both `Entity` and `EntityId` paths are thread-safe. However, `EntityId` has to be aquired on the main thread, as `GameObject` cannot be passed to a Job or accessed in any thread outside of Main Thread.*
 
 `PersistentVFXEntry` overloads contain both `Entity` path and `GameObject` path (via `EntityId`):
 
@@ -70,3 +73,8 @@ entry.TryKill(trackedEntity);
 Handles spawned this frame are deferred until `SyncVFXSystem` resolves them, but all paths account for deferred handles.
 
 ## Performance
+
+Even though both `Entity` and `EntityId` paths exist, `EntityId` path is significantly slower due to an unavoidable main thread transform + enabled state fetch. VFX Forge was primarily designed for ECS and to not worsen the ECS performance, GameObject support was not designed for thousands of tracked Persistent VFXs.
+If you need thousands or tens of thousands of Persistent VFXs with tracked transform data, use `Entity` path with a single `LocalToWorld` component on each entity instead.
+
+`Entity` path is fully parallelised and is near to negligible even on the scale of tens of thousands of tracked transforms.

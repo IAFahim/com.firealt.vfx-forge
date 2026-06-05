@@ -69,6 +69,8 @@ For full API breakdown and examples, see [Persistent VFX](Documentation~/Persist
 
 `HybridVisualEffect` supports edit-mode initialization and preview spawning through its custom inspector. The inspector reads definition data and uses data bakers to spawn or update preview payloads.
 
+[![Watch the video](https://raw.githubusercontent.com/yourusername/yourrepository/main/assets/thumbnail.jpg)](Documentation%7E/Videos/SceneOverlayPreview.mp4)
+
 ## System Order
 
 Runtime groups:
