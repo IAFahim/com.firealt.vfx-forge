@@ -14,7 +14,5 @@ namespace FireAlt.VFXForge
         int RequestsCount { get; }
         int ArrayRequestsCount { get; }
         bool HasPendingRequests { get; }
-        
-        void ResetRequestsCount();
     }
 }

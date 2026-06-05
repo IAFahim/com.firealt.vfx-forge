@@ -3,19 +3,32 @@
 Persistent VFX return a `TrackedEntity` handle:
 
 ```csharp
+// For Entities
 var tracked = vfx.GetPersistent(VFXKeys.ElectroArc).Spawn(targetEntity, duration);
 ```
+```csharp
+// For GameObjects
+var tracked = vfx.GetPersistent(VFXKeys.ElectroArc).Spawn(targetGO.GetEntityId(), duration);
+```
 
-`PersistentVFXEntry` overloads:
+*Note: both `Entity` and `EntityId` paths are thread-safe. However, `EntityId` has to be aquired on the main thread.*
 
-| Method                                                                                                               | Use                                                           |
-|----------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
-| `Spawn(Entity entityToTrack, float trackingDuration = 0f)`                                                           | Spawn with no additional data.                                |
-| `Spawn<T>(Entity entityToTrack, T data, float trackingDuration = 0f)`                                                | Spawn with single payload data.                               |
-| `Spawn<U>(Entity entityToTrack, NativeArray<U> arrayData, float trackingDuration = 0f)`                              | Spawn with array payload data.                                |
-| `Spawn<T, U>(Entity entityToTrack, T data, NativeArray<U> arrayData, float trackingDuration = 0f)`                   | Spawn with both payload types.                                |
-| `SpawnUnsafe(Entity entityToTrack, byte* data, NativeArray<byte> arrayData = default, float trackingDuration = 0f) ` | Unsafe raw byte path for single data and optional array data. |
-| `SpawnUnsafe(Entity entityToTrack, NativeArray<byte> arrayData, float trackingDuration = 0f)`                        | Unsafe raw byte path for array-only spawns.                   |
+`PersistentVFXEntry` overloads contain both `Entity` path and `GameObject` path (via `EntityId`):
+
+| Method                                                                                                                     | Use                                                           |
+|----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
+| `Spawn(Entity entityToTrack, float trackingDuration = 0f)`                                                                 | Spawn with no additional data.                                |
+| `Spawn<T>(Entity entityToTrack, T data, float trackingDuration = 0f)`                                                      | Spawn with single payload data.                               |
+| `Spawn<U>(Entity entityToTrack, NativeArray<U> arrayData, float trackingDuration = 0f)`                                    | Spawn with array payload data.                                |
+| `Spawn<T, U>(Entity entityToTrack, T data, NativeArray<U> arrayData, float trackingDuration = 0f)`                         | Spawn with both payload types.                                |
+| `SpawnUnsafe(Entity entityToTrack, byte* data, NativeArray<byte> arrayData = default, float trackingDuration = 0f) `       | Unsafe raw byte path for single data and optional array data. |
+| `SpawnUnsafe(Entity entityToTrack, NativeArray<byte> arrayData, float trackingDuration = 0f)`                              | Unsafe raw byte path for array-only spawns.                   |
+| `Spawn(EntityId gameObjectToTrack, float trackingDuration = 0f)`                                                           | Spawn with no additional data.                                |
+| `Spawn<T>(EntityId gameObjectToTrack, T data, float trackingDuration = 0f)`                                                | Spawn with single payload data.                               |
+| `Spawn<U>(EntityId gameObjectToTrack, NativeArray<U> arrayData, float trackingDuration = 0f)`                              | Spawn with array payload data.                                |
+| `Spawn<T, U>(EntityId gameObjectToTrack, T data, NativeArray<U> arrayData, float trackingDuration = 0f)`                   | Spawn with both payload types.                                |
+| `SpawnUnsafe(EntityId gameObjectToTrack, byte* data, NativeArray<byte> arrayData = default, float trackingDuration = 0f) ` | Unsafe raw byte path for single data and optional array data. |
+| `SpawnUnsafe(EntityId gameObjectToTrack, NativeArray<byte> arrayData, float trackingDuration = 0f)`                        | Unsafe raw byte path for array-only spawns.                   |
 
 Persistent behavior:
 
@@ -25,7 +38,7 @@ Persistent behavior:
 - Positive `trackingDuration` keeps the effect alive until `StartTrackingTime + trackingDuration`, then the transform system marks it dead.
 - Negative tracking durations assert.
 
-### Updating and Killing Persistent VFX
+## Updating and Killing Persistent VFX
 
 Persistent entries expose query, update, and kill methods for the returned handle:
 
@@ -55,3 +68,5 @@ entry.TryKill(trackedEntity);
 | `TryKill(TrackedEntity)`                                      | Requests the persistent effect to be killed.                                    |
 
 Handles spawned this frame are deferred until `SyncVFXSystem` resolves them, but all paths account for deferred handles.
+
+## Performance

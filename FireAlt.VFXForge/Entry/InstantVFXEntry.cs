@@ -10,19 +10,45 @@ using Unity.Jobs.LowLevel.Unsafe;
 
 namespace FireAlt.VFXForge
 {
+    /// <summary>
+    /// Entry point for enqueueing instant VFX spawn requests for one registered VFX definition.
+    /// </summary>
     public struct InstantVFXEntry : IVFXGraphEntry, IDisposable
     {
-        public struct Requests
+        internal struct Requests
         {
             public int RequestsCount;
             public int ArrayRequestsCount;
         }
-        
+
+        /// <summary>
+        /// Gets the registered hybrid visual effect backing this entry.
+        /// </summary>
         public UnityObjectRef<HybridVisualEffect> HybridVisualEffect { get; }
+
+        /// <summary>
+        /// Gets the key of the registered VFX definition.
+        /// </summary>
         public VFXKey VFXKey { get; }
-        public ulong DataStableTypeHash { get; } 
-        public ulong ArrayDataStableTypeHash { get; } 
+
+        /// <summary>
+        /// Gets the stable type hash required for per-spawn data.
+        /// </summary>
+        public ulong DataStableTypeHash { get; }
+
+        /// <summary>
+        /// Gets the stable type hash required for per-spawn array data.
+        /// </summary>
+        public ulong ArrayDataStableTypeHash { get; }
+
+        /// <summary>
+        /// Gets the GPU byte size of one per-spawn data element.
+        /// </summary>
         public int DataSizeInBytes { get; }
+
+        /// <summary>
+        /// Gets the GPU byte size of one per-spawn array element.
+        /// </summary>
         public int ArrayDataSizeInBytes { get; }
 
         internal UnsafeThreadData<Requests> PendingRequestsCount;
@@ -32,6 +58,9 @@ namespace FireAlt.VFXForge
         internal UnsafeThreadToListMapper<VFXArraySpawnIndex> ArraySpawnIndexBuffer;
         internal UnsafeThreadToListMapper<VFXArrayPtr> ArrayPtrBuffer;
         
+        /// <summary>
+        /// Gets the number of pending instant spawn requests.
+        /// </summary>
         public int RequestsCount
         {
             get
@@ -45,6 +74,9 @@ namespace FireAlt.VFXForge
             }
         }
 
+        /// <summary>
+        /// Gets the number of pending array elements submitted by instant spawn requests.
+        /// </summary>
         public int ArrayRequestsCount
         {
             get
@@ -58,9 +90,12 @@ namespace FireAlt.VFXForge
             }
         }
         
+        /// <summary>
+        /// Gets a value indicating whether this entry has requests waiting for the sync system.
+        /// </summary>
         public bool HasPendingRequests => RequestsCount > 0 || ArrayRequestsCount > 0;
         
-        public void ResetRequestsCount()
+        internal void ResetRequestsCount()
         {
             PendingRequestsCount.Clear();
         }
@@ -77,12 +112,22 @@ namespace FireAlt.VFXForge
             VFXKey = definition;
         }
         
+        /// <summary>
+        /// Enqueues one instant spawn request with no per-spawn data.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Thrown in check builds when this VFX expects non-zero data.</exception>
         public void Spawn()
         {
             Common.CheckZeroSized(DataStableTypeHash);
             SpawnBase();
         }
-        
+
+        /// <summary>
+        /// Enqueues one instant spawn request with typed per-spawn data.
+        /// </summary>
+        /// <typeparam name="T">The type of the data element expected by the VFX definition.</typeparam>
+        /// <param name="spawnData">The data to upload for this spawn request.</param>
+        /// <exception cref="InvalidOperationException">Thrown in check builds when <typeparamref name="T"/> does not match the VFX definition.</exception>
         public void Spawn<T>(T spawnData)
             where T : unmanaged
         {
@@ -90,7 +135,13 @@ namespace FireAlt.VFXForge
             SpawnBase();
             SetData(spawnData);
         }
-        
+
+        /// <summary>
+        /// Enqueues one instant spawn request with typed array data.
+        /// </summary>
+        /// <typeparam name="U">The type of each array element expected by the VFX definition.</typeparam>
+        /// <param name="arrayData">The array data to upload for this spawn request.</param>
+        /// <exception cref="InvalidOperationException">Thrown in check builds when the data or array type does not match the VFX definition.</exception>
         public void Spawn<U>(NativeArray<U> arrayData) 
             where U : unmanaged
         {
@@ -99,7 +150,15 @@ namespace FireAlt.VFXForge
             SpawnBase();
             SpawnArray(arrayData.AsBytes());
         }
-        
+
+        /// <summary>
+        /// Enqueues one instant spawn request with typed per-spawn data and typed array data.
+        /// </summary>
+        /// <typeparam name="T">The type of the data element expected by the VFX definition.</typeparam>
+        /// <typeparam name="U">The type of each array element expected by the VFX definition.</typeparam>
+        /// <param name="spawnData">The data to upload for this spawn request.</param>
+        /// <param name="arrayData">The array data to upload for this spawn request.</param>
+        /// <exception cref="InvalidOperationException">Thrown in check builds when either type does not match the VFX definition.</exception>
         public void Spawn<T, U>(T spawnData, NativeArray<U> arrayData)
             where T : unmanaged
             where U : unmanaged
@@ -110,7 +169,13 @@ namespace FireAlt.VFXForge
             SetData(spawnData);
             SpawnArray(arrayData.AsBytes());
         }
-        
+
+        /// <summary>
+        /// Enqueues one instant spawn request from raw per-spawn bytes and optional raw array bytes.
+        /// </summary>
+        /// <param name="spawnData">Pointer to one data element matching this entry's configured data size.</param>
+        /// <param name="arrayData">Optional raw bytes for array data matching this entry's configured array element size.</param>
+        /// <exception cref="UnityEngine.Assertions.AssertionException">Thrown in check builds when <paramref name="spawnData"/> is null.</exception>
         public unsafe void SpawnUnsafe(byte* spawnData, NativeArray<byte> arrayData = default)
         {
             Assert.IsTrue(spawnData != null);
@@ -121,7 +186,12 @@ namespace FireAlt.VFXForge
             }
             GetThreadList(DataBuffer).AddDataUnsafe(spawnData, DataSizeInBytes);
         }
-        
+
+        /// <summary>
+        /// Enqueues one instant spawn request with raw array bytes and no per-spawn data.
+        /// </summary>
+        /// <param name="arrayData">Raw bytes for array data matching this entry's configured array element size.</param>
+        /// <exception cref="InvalidOperationException">Thrown in check builds when this VFX expects non-zero per-spawn data.</exception>
         public void SpawnUnsafe(NativeArray<byte> arrayData)
         {
             Common.CheckZeroSized(DataStableTypeHash);

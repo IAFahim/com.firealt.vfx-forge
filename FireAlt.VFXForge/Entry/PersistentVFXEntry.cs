@@ -14,13 +14,39 @@ using UnityEngine;
 
 namespace FireAlt.VFXForge
 {
+    /// <summary>
+    /// Entry point for spawning, updating, and killing persistent VFX instances for one registered VFX definition.
+    /// </summary>
     public struct PersistentVFXEntry : IVFXGraphEntry, IDisposable
     {
+        /// <summary>
+        /// Gets the registered hybrid visual effect backing this entry.
+        /// </summary>
         public UnityObjectRef<HybridVisualEffect> HybridVisualEffect { get; }
+
+        /// <summary>
+        /// Gets the key of the registered VFX definition.
+        /// </summary>
         public VFXKey VFXKey { get; }
+
+        /// <summary>
+        /// Gets the stable type hash required for per-instance update data.
+        /// </summary>
         public ulong DataStableTypeHash { get; }
-        public ulong ArrayDataStableTypeHash { get; } 
+
+        /// <summary>
+        /// Gets the stable type hash required for per-instance array data.
+        /// </summary>
+        public ulong ArrayDataStableTypeHash { get; }
+
+        /// <summary>
+        /// Gets the GPU byte size of one update data element.
+        /// </summary>
         public int DataSizeInBytes { get; }
+
+        /// <summary>
+        /// Gets the GPU byte size of one array data element.
+        /// </summary>
         public int ArrayDataSizeInBytes { get; }
         
         internal int Capacity;
@@ -54,12 +80,23 @@ namespace FireAlt.VFXForge
 
         internal UnsafeHashMap<TrackedEntity, TrackedEntity> DeferredToResolvedMap;
         internal UnsafeHashMap<TrackedEntity, TrackedEntity> ResolvedToRequestMap;
-        
-        public int RequestsCount { get; set; }
-        public int ArrayRequestsCount { get; set; }
-        public bool HasPendingRequests => NextIndex > 0;
 
-        public void ResetRequestsCount()
+        /// <summary>
+        /// Gets the number of spawn requests consumed by the current sync pass.
+        /// </summary>
+        public int RequestsCount { get; internal set; }
+
+        /// <summary>
+        /// Gets the number of array elements consumed by the current sync pass.
+        /// </summary>
+        public int ArrayRequestsCount { get; internal set; }
+
+        /// <summary>
+        /// Gets a value indicating whether this entry has spawn requests waiting for the sync system.
+        /// </summary>
+        public bool HasPendingRequests => NextIndex > 0;
+        
+        internal void ResetRequestsCount()
         {
             SpawnIndexBuffer.Clear();
             ArraySpawnIndexBuffer.Clear();
@@ -79,11 +116,25 @@ namespace FireAlt.VFXForge
             VFXKey = definition;
         }
 
+        /// <summary>
+        /// Enqueues a persistent VFX spawn that tracks an entity.
+        /// </summary>
+        /// <param name="entityToTrack">The entity whose transform drives the persistent VFX.</param>
+        /// <param name="trackingDuration">Optional duration in seconds to keep tracking; zero tracks until killed or the entity disappears.</param>
+        /// <returns>A tracked handle for later update or kill operations, or an invalid handle when capacity is exhausted.</returns>
+        /// <exception cref="UnityEngine.Assertions.AssertionException">Thrown in check builds when <paramref name="trackingDuration"/> is negative.</exception>
         public TrackedEntity Spawn(Entity entityToTrack, float trackingDuration = 0f)
         {
             return Spawn(TrackedEntity.FromEntity(entityToTrack), trackingDuration);
         }
 
+        /// <summary>
+        /// Enqueues a persistent VFX spawn that tracks a GameObject entity id.
+        /// </summary>
+        /// <param name="gameObjectToTrack">The GameObject entity id whose transform drives the persistent VFX.</param>
+        /// <param name="trackingDuration">Optional duration in seconds to keep tracking; zero tracks until killed or the object disappears.</param>
+        /// <returns>A tracked handle for later update or kill operations, or an invalid handle when capacity is exhausted.</returns>
+        /// <exception cref="UnityEngine.Assertions.AssertionException">Thrown in check builds when <paramref name="trackingDuration"/> is negative.</exception>
         public TrackedEntity Spawn(EntityId gameObjectToTrack, float trackingDuration = 0f)
         {
             return Spawn(TrackedEntity.FromEntityId(gameObjectToTrack), trackingDuration);
@@ -118,12 +169,30 @@ namespace FireAlt.VFXForge
             return trackedEntity;
         }
 
+        /// <summary>
+        /// Enqueues a persistent VFX spawn that tracks an entity and uploads typed array data.
+        /// </summary>
+        /// <typeparam name="U">The type of each array element expected by the VFX definition.</typeparam>
+        /// <param name="entityToTrack">The entity whose transform drives the persistent VFX.</param>
+        /// <param name="arrayData">The array data to upload for this instance.</param>
+        /// <param name="trackingDuration">Optional duration in seconds to keep tracking; zero tracks until killed or the entity disappears.</param>
+        /// <returns>A tracked handle for later update or kill operations, or an invalid handle when capacity is exhausted.</returns>
+        /// <exception cref="InvalidOperationException">Thrown in check builds when <typeparamref name="U"/> does not match the VFX definition.</exception>
         public TrackedEntity Spawn<U>(Entity entityToTrack, NativeArray<U> arrayData, float trackingDuration = 0f)
             where U : unmanaged
         {
             return Spawn(TrackedEntity.FromEntity(entityToTrack), arrayData, trackingDuration);
         }
 
+        /// <summary>
+        /// Enqueues a persistent VFX spawn that tracks a GameObject entity id and uploads typed array data.
+        /// </summary>
+        /// <typeparam name="U">The type of each array element expected by the VFX definition.</typeparam>
+        /// <param name="gameObjectToTrack">The GameObject entity id whose transform drives the persistent VFX.</param>
+        /// <param name="arrayData">The array data to upload for this instance.</param>
+        /// <param name="trackingDuration">Optional duration in seconds to keep tracking; zero tracks until killed or the object disappears.</param>
+        /// <returns>A tracked handle for later update or kill operations, or an invalid handle when capacity is exhausted.</returns>
+        /// <exception cref="InvalidOperationException">Thrown in check builds when <typeparamref name="U"/> does not match the VFX definition.</exception>
         public TrackedEntity Spawn<U>(EntityId gameObjectToTrack, NativeArray<U> arrayData, float trackingDuration = 0f)
             where U : unmanaged
         {
@@ -142,12 +211,30 @@ namespace FireAlt.VFXForge
             return trackedEntity;
         }
 
+        /// <summary>
+        /// Enqueues a persistent VFX spawn that tracks an entity and uploads typed update data.
+        /// </summary>
+        /// <typeparam name="T">The update data type expected by the VFX definition.</typeparam>
+        /// <param name="entityToTrack">The entity whose transform drives the persistent VFX.</param>
+        /// <param name="data">The update data to upload for this instance.</param>
+        /// <param name="trackingDuration">Optional duration in seconds to keep tracking; zero tracks until killed or the entity disappears.</param>
+        /// <returns>A tracked handle for later update or kill operations, or an invalid handle when capacity is exhausted.</returns>
+        /// <exception cref="InvalidOperationException">Thrown in check builds when <typeparamref name="T"/> does not match the VFX definition.</exception>
         public TrackedEntity Spawn<T>(Entity entityToTrack, T data, float trackingDuration = 0f)
             where T : unmanaged
         {
             return Spawn(TrackedEntity.FromEntity(entityToTrack), data, trackingDuration);
         }
 
+        /// <summary>
+        /// Enqueues a persistent VFX spawn that tracks a GameObject entity id and uploads typed update data.
+        /// </summary>
+        /// <typeparam name="T">The update data type expected by the VFX definition.</typeparam>
+        /// <param name="gameObjectToTrack">The GameObject entity id whose transform drives the persistent VFX.</param>
+        /// <param name="data">The update data to upload for this instance.</param>
+        /// <param name="trackingDuration">Optional duration in seconds to keep tracking; zero tracks until killed or the object disappears.</param>
+        /// <returns>A tracked handle for later update or kill operations, or an invalid handle when capacity is exhausted.</returns>
+        /// <exception cref="InvalidOperationException">Thrown in check builds when <typeparamref name="T"/> does not match the VFX definition.</exception>
         public TrackedEntity Spawn<T>(EntityId gameObjectToTrack, T data, float trackingDuration = 0f)
             where T : unmanaged
         {
@@ -166,6 +253,17 @@ namespace FireAlt.VFXForge
             return trackedEntity;
         }
 
+        /// <summary>
+        /// Enqueues a persistent VFX spawn that tracks an entity and uploads typed update and array data.
+        /// </summary>
+        /// <typeparam name="T">The update data type expected by the VFX definition.</typeparam>
+        /// <typeparam name="U">The type of each array element expected by the VFX definition.</typeparam>
+        /// <param name="entityToTrack">The entity whose transform drives the persistent VFX.</param>
+        /// <param name="data">The update data to upload for this instance.</param>
+        /// <param name="arrayData">The array data to upload for this instance.</param>
+        /// <param name="trackingDuration">Optional duration in seconds to keep tracking; zero tracks until killed or the entity disappears.</param>
+        /// <returns>A tracked handle for later update or kill operations, or an invalid handle when capacity is exhausted.</returns>
+        /// <exception cref="InvalidOperationException">Thrown in check builds when either type does not match the VFX definition.</exception>
         public TrackedEntity Spawn<T, U>(Entity entityToTrack, T data, NativeArray<U> arrayData,
             float trackingDuration = 0f)
             where T : unmanaged
@@ -174,6 +272,17 @@ namespace FireAlt.VFXForge
             return Spawn(TrackedEntity.FromEntity(entityToTrack), data, arrayData, trackingDuration);
         }
 
+        /// <summary>
+        /// Enqueues a persistent VFX spawn that tracks a GameObject entity id and uploads typed update and array data.
+        /// </summary>
+        /// <typeparam name="T">The update data type expected by the VFX definition.</typeparam>
+        /// <typeparam name="U">The type of each array element expected by the VFX definition.</typeparam>
+        /// <param name="gameObjectToTrack">The GameObject entity id whose transform drives the persistent VFX.</param>
+        /// <param name="data">The update data to upload for this instance.</param>
+        /// <param name="arrayData">The array data to upload for this instance.</param>
+        /// <param name="trackingDuration">Optional duration in seconds to keep tracking; zero tracks until killed or the object disappears.</param>
+        /// <returns>A tracked handle for later update or kill operations, or an invalid handle when capacity is exhausted.</returns>
+        /// <exception cref="InvalidOperationException">Thrown in check builds when either type does not match the VFX definition.</exception>
         public TrackedEntity Spawn<T, U>(EntityId gameObjectToTrack, T data, NativeArray<U> arrayData,
             float trackingDuration = 0f)
             where T : unmanaged
@@ -197,12 +306,28 @@ namespace FireAlt.VFXForge
             return trackedEntity;
         }
 
+        /// <summary>
+        /// Enqueues a persistent VFX spawn that tracks an entity and uploads raw update and optional array bytes.
+        /// </summary>
+        /// <param name="entityToTrack">The entity whose transform drives the persistent VFX.</param>
+        /// <param name="data">Pointer to one update data element matching this entry's configured data size.</param>
+        /// <param name="arrayData">Optional raw bytes for array data matching this entry's configured array element size.</param>
+        /// <param name="trackingDuration">Optional duration in seconds to keep tracking; zero tracks until killed or the entity disappears.</param>
+        /// <returns>A tracked handle for later update or kill operations, or an invalid handle when capacity is exhausted.</returns>
         public unsafe TrackedEntity SpawnUnsafe(Entity entityToTrack, byte* data, NativeArray<byte> arrayData = default,
             float trackingDuration = 0f)
         {
             return SpawnUnsafe(TrackedEntity.FromEntity(entityToTrack), data, arrayData, trackingDuration);
         }
 
+        /// <summary>
+        /// Enqueues a persistent VFX spawn that tracks a GameObject entity id and uploads raw update and optional array bytes.
+        /// </summary>
+        /// <param name="gameObjectToTrack">The GameObject entity id whose transform drives the persistent VFX.</param>
+        /// <param name="data">Pointer to one update data element matching this entry's configured data size.</param>
+        /// <param name="arrayData">Optional raw bytes for array data matching this entry's configured array element size.</param>
+        /// <param name="trackingDuration">Optional duration in seconds to keep tracking; zero tracks until killed or the object disappears.</param>
+        /// <returns>A tracked handle for later update or kill operations, or an invalid handle when capacity is exhausted.</returns>
         public unsafe TrackedEntity SpawnUnsafe(EntityId gameObjectToTrack, byte* data, NativeArray<byte> arrayData = default,
             float trackingDuration = 0f)
         {
@@ -222,11 +347,25 @@ namespace FireAlt.VFXForge
             return trackedEntity;
         }
 
+        /// <summary>
+        /// Enqueues a persistent VFX spawn that tracks an entity and uploads raw array bytes.
+        /// </summary>
+        /// <param name="entityToTrack">The entity whose transform drives the persistent VFX.</param>
+        /// <param name="arrayData">Raw bytes for array data matching this entry's configured array element size.</param>
+        /// <param name="trackingDuration">Optional duration in seconds to keep tracking; zero tracks until killed or the entity disappears.</param>
+        /// <returns>A tracked handle for later update or kill operations, or an invalid handle when capacity is exhausted.</returns>
         public TrackedEntity SpawnUnsafe(Entity entityToTrack, NativeArray<byte> arrayData, float trackingDuration = 0f)
         {
             return SpawnUnsafe(TrackedEntity.FromEntity(entityToTrack), arrayData, trackingDuration);
         }
 
+        /// <summary>
+        /// Enqueues a persistent VFX spawn that tracks a GameObject entity id and uploads raw array bytes.
+        /// </summary>
+        /// <param name="gameObjectToTrack">The GameObject entity id whose transform drives the persistent VFX.</param>
+        /// <param name="arrayData">Raw bytes for array data matching this entry's configured array element size.</param>
+        /// <param name="trackingDuration">Optional duration in seconds to keep tracking; zero tracks until killed or the object disappears.</param>
+        /// <returns>A tracked handle for later update or kill operations, or an invalid handle when capacity is exhausted.</returns>
         public TrackedEntity SpawnUnsafe(EntityId gameObjectToTrack, NativeArray<byte> arrayData, float trackingDuration = 0f)
         {
             return SpawnUnsafe(TrackedEntity.FromEntityId(gameObjectToTrack), arrayData, trackingDuration);
@@ -243,13 +382,25 @@ namespace FireAlt.VFXForge
             }
             return trackedEntity;
         }
-        
+
+        /// <summary>
+        /// Returns whether the tracked persistent VFX instance is currently alive.
+        /// </summary>
+        /// <param name="trackedEntity">The handle returned by a spawn call.</param>
+        /// <returns><see langword="true"/> when the handle resolves to a live instance; otherwise, <see langword="false"/>.</returns>
         public bool IsAlive(TrackedEntity trackedEntity)
         {
             return TryResolveTransform(trackedEntity, out var transform)
                    && transform.IsAlive();
         }
-        
+
+        /// <summary>
+        /// Tries to get a mutable reference to the typed update data for a tracked instance.
+        /// </summary>
+        /// <typeparam name="T">The update data type expected by the VFX definition.</typeparam>
+        /// <param name="trackedEntity">The handle returned by a spawn call.</param>
+        /// <param name="dataRef">A mutable reference to the update data when the handle resolves.</param>
+        /// <returns><see langword="true"/> when update data was found; otherwise, <see langword="false"/>.</returns>
         public bool TryGetUpdateDataAsRef<T>(TrackedEntity trackedEntity, out Ref<T> dataRef)
             where T : unmanaged
         {
@@ -264,7 +415,15 @@ namespace FireAlt.VFXForge
             dataRef = new Ref<T>();
             return false;
         }
-        
+
+        /// <summary>
+        /// Tries to get the typed array data for a tracked instance.
+        /// </summary>
+        /// <typeparam name="U">The type of each array element expected by the VFX definition.</typeparam>
+        /// <param name="trackedEntity">The handle returned by a spawn call.</param>
+        /// <param name="array">The array data when the handle resolves.</param>
+        /// <returns><see langword="true"/> when array data was found; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="InvalidOperationException">Thrown in check builds when <typeparamref name="U"/> does not match the VFX definition.</exception>
         public bool TryGetArrayData<U>(TrackedEntity trackedEntity, out UnsafeArray<U> array)
             where U : unmanaged
         {
@@ -280,7 +439,13 @@ namespace FireAlt.VFXForge
             array = default;
             return false;
         }
-        
+
+        /// <summary>
+        /// Tries to get the raw array bytes for a tracked instance.
+        /// </summary>
+        /// <param name="trackedEntity">The handle returned by a spawn call.</param>
+        /// <param name="array">The raw array bytes when the handle resolves.</param>
+        /// <returns><see langword="true"/> when array data was found; otherwise, <see langword="false"/>.</returns>
         public bool TryGetArrayDataUnsafe(TrackedEntity trackedEntity, out UnsafeArray<byte> array)
         {
             if (TryResolveDataIndex(trackedEntity, out var index, out var isDeferred))
@@ -302,6 +467,14 @@ namespace FireAlt.VFXForge
             return false;
         }
 
+        /// <summary>
+        /// Tries to replace the typed update data for a tracked instance.
+        /// </summary>
+        /// <typeparam name="T">The update data type expected by the VFX definition.</typeparam>
+        /// <param name="trackedEntity">The handle returned by a spawn call.</param>
+        /// <param name="updateData">The new update data for the tracked instance.</param>
+        /// <returns><see langword="true"/> when the handle resolved and data was updated; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="InvalidOperationException">Thrown in check builds when <typeparamref name="T"/> does not match the VFX definition.</exception>
         public bool TrySetUpdateData<T>(TrackedEntity trackedEntity, T updateData)
             where T : unmanaged
         {
@@ -323,7 +496,13 @@ namespace FireAlt.VFXForge
 
             return false;
         }
-        
+
+        /// <summary>
+        /// Tries to replace the update data for a tracked instance from raw bytes.
+        /// </summary>
+        /// <param name="trackedEntity">The handle returned by a spawn call.</param>
+        /// <param name="updateData">Pointer to one update data element matching this entry's configured data size.</param>
+        /// <returns><see langword="true"/> when the handle resolved and data was updated; otherwise, <see langword="false"/>.</returns>
         public unsafe bool TrySetUpdateDataUnsafe(TrackedEntity trackedEntity, byte* updateData)
         {
             if (TryResolveDataIndex(trackedEntity, out var index, out var isDeferred))
@@ -342,7 +521,12 @@ namespace FireAlt.VFXForge
 
             return false;
         }
-        
+
+        /// <summary>
+        /// Tries to kill a tracked persistent VFX instance.
+        /// </summary>
+        /// <param name="trackedEntity">The handle returned by a spawn call.</param>
+        /// <returns><see langword="true"/> when the handle resolved and a kill was queued or applied; otherwise, <see langword="false"/>.</returns>
         public bool TryKill(TrackedEntity trackedEntity)
         {
             if (TryResolveCheckIndex(trackedEntity, out var resolved, out var isDeferred))

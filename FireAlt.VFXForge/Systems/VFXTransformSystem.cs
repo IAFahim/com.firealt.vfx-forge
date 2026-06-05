@@ -139,7 +139,7 @@ namespace FireAlt.VFXForge
                 ref var entry = ref VFXSingleton.GetPersistent(KeysArray[index]);
 
                 var i = 0;
-                if (entry.NextIndex > 0) // There are deferred requests
+                if (entry.HasPendingRequests)
                 {
                     foreach (var trackedEntity in entry.SpawnEntityIdRequests)
                     {
@@ -206,7 +206,7 @@ namespace FireAlt.VFXForge
             {
                 ref var entry = ref VFXSingleton.GetPersistent(KeysArray[index]);
 
-                if (entry.NextIndex > 0) // There are deferred requests
+                if (entry.HasPendingRequests)
                 {
                     foreach (var trackedEntity in entry.SpawnRequests)
                     {
