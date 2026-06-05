@@ -2,7 +2,6 @@ using System.Collections;
 using FireAlt.VFXForge.Data;
 using NUnit.Framework;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -165,6 +164,26 @@ namespace FireAlt.VFXForge.Tests
         }
 
         [UnityTest]
+        public IEnumerator SpawnGameObject_WhenResolvedTrackedObjectDestroyed_IsNotAliveAfterSystemsUpdate()
+        {
+            yield return VFXPlayModeTestFixture.Run(fixture =>
+            {
+                var definition = fixture.CreateDefinition(165, VFXType.Persistent, capacity: 4);
+                fixture.CreateAndRegisterVisualEffect(definition);
+                var gameObject = fixture.CreateTrackedGameObject();
+                var trackedEntity = fixture.SpawnPersistent(definition, gameObject.GetEntityId());
+                fixture.UpdateSystems();
+
+                Assert.IsTrue(fixture.IsPersistentAlive(definition, trackedEntity));
+
+                Object.DestroyImmediate(gameObject);
+                fixture.UpdateSystems();
+
+                Assert.IsFalse(fixture.IsPersistentAlive(definition, trackedEntity));
+            });
+        }
+
+        [UnityTest]
         public IEnumerator SpawnGameObject_WithData_MatchesEntityPath()
         {
             yield return VFXPlayModeTestFixture.Run(fixture =>
@@ -173,8 +192,8 @@ namespace FireAlt.VFXForge.Tests
                 fixture.CreateAndRegisterVisualEffect(definition);
                 var gameObject = fixture.CreateTrackedGameObject();
                 var entity = fixture.CreateTrackedEntity();
-                var gameObjectData = CreateDecal(1f);
-                var entityData = CreateDecal(2f);
+                var gameObjectData = VFXTestData.CreateDecal(1f);
+                var entityData = VFXTestData.CreateDecal(2f);
 
                 var singleton = fixture.GetSingleton();
                 ref var entry = ref singleton.GetPersistent(definition);
@@ -182,8 +201,8 @@ namespace FireAlt.VFXForge.Tests
                 var entityTrackedEntity = entry.Spawn(entity, entityData);
                 fixture.UpdateSystems();
 
-                AssertDataMatches(ref entry, gameObjectTrackedEntity, gameObjectData);
-                AssertDataMatches(ref entry, entityTrackedEntity, entityData);
+                VFXTestData.AssertDataMatches(ref entry, gameObjectTrackedEntity, gameObjectData);
+                VFXTestData.AssertDataMatches(ref entry, entityTrackedEntity, entityData);
                 Assert.IsTrue(fixture.IsPersistentAlive(definition, gameObjectTrackedEntity));
                 Assert.IsTrue(fixture.IsPersistentAlive(definition, entityTrackedEntity));
             });
@@ -198,8 +217,8 @@ namespace FireAlt.VFXForge.Tests
                 fixture.CreateAndRegisterVisualEffect(definition);
                 var gameObject = fixture.CreateTrackedGameObject();
                 var entity = fixture.CreateTrackedEntity();
-                var gameObjectArrayData = CreateDecalArray(3f);
-                var entityArrayData = CreateDecalArray(4f);
+                var gameObjectArrayData = VFXTestData.CreateDecalArray(3f);
+                var entityArrayData = VFXTestData.CreateDecalArray(4f);
 
                 var singleton = fixture.GetSingleton();
                 ref var entry = ref singleton.GetPersistent(definition);
@@ -207,8 +226,8 @@ namespace FireAlt.VFXForge.Tests
                 var entityTrackedEntity = entry.Spawn(entity, entityArrayData);
                 fixture.UpdateSystems();
 
-                AssertArrayDataMatches(ref entry, gameObjectTrackedEntity, gameObjectArrayData);
-                AssertArrayDataMatches(ref entry, entityTrackedEntity, entityArrayData);
+                VFXTestData.AssertArrayDataMatches(ref entry, gameObjectTrackedEntity, gameObjectArrayData);
+                VFXTestData.AssertArrayDataMatches(ref entry, entityTrackedEntity, entityArrayData);
                 Assert.IsTrue(fixture.IsPersistentAlive(definition, gameObjectTrackedEntity));
                 Assert.IsTrue(fixture.IsPersistentAlive(definition, entityTrackedEntity));
             });
@@ -223,10 +242,10 @@ namespace FireAlt.VFXForge.Tests
                 fixture.CreateAndRegisterVisualEffect(definition);
                 var gameObject = fixture.CreateTrackedGameObject();
                 var entity = fixture.CreateTrackedEntity();
-                var gameObjectData = CreateDecal(5f);
-                var entityData = CreateDecal(6f);
-                var gameObjectArrayData = CreateDecalArray(7f);
-                var entityArrayData = CreateDecalArray(8f);
+                var gameObjectData = VFXTestData.CreateDecal(5f);
+                var entityData = VFXTestData.CreateDecal(6f);
+                var gameObjectArrayData = VFXTestData.CreateDecalArray(7f);
+                var entityArrayData = VFXTestData.CreateDecalArray(8f);
 
                 var singleton = fixture.GetSingleton();
                 ref var entry = ref singleton.GetPersistent(definition);
@@ -234,10 +253,10 @@ namespace FireAlt.VFXForge.Tests
                 var entityTrackedEntity = entry.Spawn(entity, entityData, entityArrayData);
                 fixture.UpdateSystems();
 
-                AssertDataMatches(ref entry, gameObjectTrackedEntity, gameObjectData);
-                AssertDataMatches(ref entry, entityTrackedEntity, entityData);
-                AssertArrayDataMatches(ref entry, gameObjectTrackedEntity, gameObjectArrayData);
-                AssertArrayDataMatches(ref entry, entityTrackedEntity, entityArrayData);
+                VFXTestData.AssertDataMatches(ref entry, gameObjectTrackedEntity, gameObjectData);
+                VFXTestData.AssertDataMatches(ref entry, entityTrackedEntity, entityData);
+                VFXTestData.AssertArrayDataMatches(ref entry, gameObjectTrackedEntity, gameObjectArrayData);
+                VFXTestData.AssertArrayDataMatches(ref entry, entityTrackedEntity, entityArrayData);
                 Assert.IsTrue(fixture.IsPersistentAlive(definition, gameObjectTrackedEntity));
                 Assert.IsTrue(fixture.IsPersistentAlive(definition, entityTrackedEntity));
             });
@@ -252,10 +271,10 @@ namespace FireAlt.VFXForge.Tests
                 fixture.CreateAndRegisterVisualEffect(definition);
                 var gameObject = fixture.CreateTrackedGameObject();
                 var entity = fixture.CreateTrackedEntity();
-                var gameObjectData = CreateDecal(9f);
-                var entityData = CreateDecal(10f);
-                var gameObjectArrayData = CreateDecalBytes(11f);
-                var entityArrayData = CreateDecalBytes(12f);
+                var gameObjectData = VFXTestData.CreateDecal(9f);
+                var entityData = VFXTestData.CreateDecal(10f);
+                var gameObjectArrayData = VFXTestData.CreateDecalBytes(11f);
+                var entityArrayData = VFXTestData.CreateDecalBytes(12f);
 
                 var singleton = fixture.GetSingleton();
                 ref var entry = ref singleton.GetPersistent(definition);
@@ -263,10 +282,10 @@ namespace FireAlt.VFXForge.Tests
                 var entityTrackedEntity = SpawnUnsafe(ref entry, entity, entityData, entityArrayData);
                 fixture.UpdateSystems();
 
-                AssertDataMatches(ref entry, gameObjectTrackedEntity, gameObjectData);
-                AssertDataMatches(ref entry, entityTrackedEntity, entityData);
-                AssertUnsafeArrayDataMatches(ref entry, gameObjectTrackedEntity, gameObjectArrayData);
-                AssertUnsafeArrayDataMatches(ref entry, entityTrackedEntity, entityArrayData);
+                VFXTestData.AssertDataMatches(ref entry, gameObjectTrackedEntity, gameObjectData);
+                VFXTestData.AssertDataMatches(ref entry, entityTrackedEntity, entityData);
+                VFXTestData.AssertUnsafeArrayDataMatches(ref entry, gameObjectTrackedEntity, gameObjectArrayData);
+                VFXTestData.AssertUnsafeArrayDataMatches(ref entry, entityTrackedEntity, entityArrayData);
                 Assert.IsTrue(fixture.IsPersistentAlive(definition, gameObjectTrackedEntity));
                 Assert.IsTrue(fixture.IsPersistentAlive(definition, entityTrackedEntity));
             });
@@ -281,8 +300,8 @@ namespace FireAlt.VFXForge.Tests
                 fixture.CreateAndRegisterVisualEffect(definition);
                 var gameObject = fixture.CreateTrackedGameObject();
                 var entity = fixture.CreateTrackedEntity();
-                var gameObjectArrayData = CreateDecalBytes(13f);
-                var entityArrayData = CreateDecalBytes(14f);
+                var gameObjectArrayData = VFXTestData.CreateDecalBytes(13f);
+                var entityArrayData = VFXTestData.CreateDecalBytes(14f);
 
                 var singleton = fixture.GetSingleton();
                 ref var entry = ref singleton.GetPersistent(definition);
@@ -290,43 +309,11 @@ namespace FireAlt.VFXForge.Tests
                 var entityTrackedEntity = entry.SpawnUnsafe(entity, entityArrayData);
                 fixture.UpdateSystems();
 
-                AssertUnsafeArrayDataMatches(ref entry, gameObjectTrackedEntity, gameObjectArrayData);
-                AssertUnsafeArrayDataMatches(ref entry, entityTrackedEntity, entityArrayData);
+                VFXTestData.AssertUnsafeArrayDataMatches(ref entry, gameObjectTrackedEntity, gameObjectArrayData);
+                VFXTestData.AssertUnsafeArrayDataMatches(ref entry, entityTrackedEntity, entityArrayData);
                 Assert.IsTrue(fixture.IsPersistentAlive(definition, gameObjectTrackedEntity));
                 Assert.IsTrue(fixture.IsPersistentAlive(definition, entityTrackedEntity));
             });
-        }
-
-        private static VFXDecal CreateDecal(float value)
-        {
-            return new VFXDecal
-            {
-                Size = new Vector3(value, value + 1f, value + 2f),
-                UvAtlas = new Vector4(value + 3f, value + 4f, value + 5f, value + 6f),
-                Pivot = new Vector3(value + 7f, value + 8f, value + 9f),
-                Opacity = value + 10f,
-                DrawDistance = value + 11f,
-                StartFade = value + 12f,
-                AngleFade = new Vector2(value + 13f, value + 14f),
-                NormalBlend = value + 15f
-            };
-        }
-
-        private static NativeArray<VFXDecal> CreateDecalArray(float value)
-        {
-            var array = new NativeArray<VFXDecal>(2, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
-            array[0] = CreateDecal(value);
-            array[1] = CreateDecal(value + 100f);
-            return array;
-        }
-
-        private static unsafe NativeArray<byte> CreateDecalBytes(float value)
-        {
-            var source = CreateDecalArray(value);
-            var size = source.Length * UnsafeUtility.SizeOf<VFXDecal>();
-            var bytes = new NativeArray<byte>(size, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
-            UnsafeUtility.MemCpy(bytes.GetUnsafePtr(), source.GetUnsafeReadOnlyPtr(), size);
-            return bytes;
         }
 
         private static unsafe TrackedEntity SpawnUnsafe(
@@ -345,50 +332,6 @@ namespace FireAlt.VFXForge.Tests
             NativeArray<byte> arrayData)
         {
             return entry.SpawnUnsafe(entity, (byte*)&data, arrayData);
-        }
-
-        private static void AssertDataMatches(ref PersistentVFXEntry entry, TrackedEntity trackedEntity, VFXDecal expected)
-        {
-            Assert.IsTrue(entry.TryGetUpdateDataAsRef<VFXDecal>(trackedEntity, out var dataRef));
-            AssertDecalMatches(expected, dataRef.Value);
-        }
-
-        private static void AssertArrayDataMatches(
-            ref PersistentVFXEntry entry,
-            TrackedEntity trackedEntity,
-            NativeArray<VFXDecal> expected)
-        {
-            Assert.IsTrue(entry.TryGetArrayData<VFXDecal>(trackedEntity, out var array));
-            Assert.That(array.Length, Is.EqualTo(expected.Length));
-            for (var i = 0; i < expected.Length; i++)
-            {
-                AssertDecalMatches(expected[i], array[i]);
-            }
-        }
-
-        private static void AssertUnsafeArrayDataMatches(
-            ref PersistentVFXEntry entry,
-            TrackedEntity trackedEntity,
-            NativeArray<byte> expected)
-        {
-            Assert.IsTrue(entry.TryGetArrayDataUnsafe(trackedEntity, out var array));
-            Assert.That(array.Length, Is.EqualTo(expected.Length));
-            for (var i = 0; i < expected.Length; i++)
-            {
-                Assert.That(array[i], Is.EqualTo(expected[i]));
-            }
-        }
-
-        private static void AssertDecalMatches(VFXDecal expected, VFXDecal actual)
-        {
-            Assert.That(actual.Size, Is.EqualTo(expected.Size));
-            Assert.That(actual.UvAtlas, Is.EqualTo(expected.UvAtlas));
-            Assert.That(actual.Pivot, Is.EqualTo(expected.Pivot));
-            Assert.That(actual.Opacity, Is.EqualTo(expected.Opacity));
-            Assert.That(actual.DrawDistance, Is.EqualTo(expected.DrawDistance));
-            Assert.That(actual.StartFade, Is.EqualTo(expected.StartFade));
-            Assert.That(actual.AngleFade, Is.EqualTo(expected.AngleFade));
-            Assert.That(actual.NormalBlend, Is.EqualTo(expected.NormalBlend));
         }
     }
 }

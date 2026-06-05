@@ -3,6 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using FireAlt.Core.ObjectManagement;
 using FireAlt.VFXForge.Data;
+using NUnit.Framework;
+using Unity.Core;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -17,6 +21,9 @@ namespace FireAlt.VFXForge.Tests
     internal sealed class VFXPlayModeTestFixture : IDisposable
     {
         private const string INSTANT_VFX_ASSET_PATH = "Packages/com.firealt.vfx-forge/Shaders/Templates/Instant(Single).vfx";
+        private const string INSTANT_ARRAY_VFX_ASSET_PATH = "Packages/com.firealt.vfx-forge/Shaders/Templates/Instant(Array).vfx";
+        private const string INSTANT_SINGLE_ARRAY_VFX_ASSET_PATH =
+            "Packages/com.firealt.vfx-forge/Shaders/Templates/Instant(Single+Array).vfx";
         private const string PERSISTENT_VFX_ASSET_PATH = "Packages/com.firealt.vfx-forge/Shaders/Templates/Persistent(Single).vfx";
         private const string PERSISTENT_ARRAY_VFX_ASSET_PATH = "Packages/com.firealt.vfx-forge/Shaders/Templates/Persistent(Array).vfx";
         private const string PERSISTENT_SINGLE_ARRAY_VFX_ASSET_PATH =
@@ -115,6 +122,11 @@ namespace FireAlt.VFXForge.Tests
             World.EntityManager.CompleteAllTrackedJobs();
         }
 
+        internal void SetTime(double elapsedTime, float deltaTime)
+        {
+            World.SetTime(new TimeData(elapsedTime, deltaTime));
+        }
+
         internal void SpawnInstant(VFXDefinition definition)
         {
             var singleton = GetSingleton();
@@ -182,7 +194,12 @@ namespace FireAlt.VFXForge.Tests
         {
             if (vfxType != VFXType.Persistent)
             {
-                return INSTANT_VFX_ASSET_PATH;
+                if (hasData && hasArrayData)
+                {
+                    return INSTANT_SINGLE_ARRAY_VFX_ASSET_PATH;
+                }
+
+                return hasArrayData ? INSTANT_ARRAY_VFX_ASSET_PATH : INSTANT_VFX_ASSET_PATH;
             }
 
             if (hasData && hasArrayData)
@@ -191,6 +208,85 @@ namespace FireAlt.VFXForge.Tests
             }
 
             return hasArrayData ? PERSISTENT_ARRAY_VFX_ASSET_PATH : PERSISTENT_VFX_ASSET_PATH;
+        }
+    }
+
+    internal static class VFXTestData
+    {
+        internal static VFXDecal CreateDecal(float value)
+        {
+            return new VFXDecal
+            {
+                Size = new Vector3(value, value + 1f, value + 2f),
+                UvAtlas = new Vector4(value + 3f, value + 4f, value + 5f, value + 6f),
+                Pivot = new Vector3(value + 7f, value + 8f, value + 9f),
+                Opacity = value + 10f,
+                DrawDistance = value + 11f,
+                StartFade = value + 12f,
+                AngleFade = new Vector2(value + 13f, value + 14f),
+                NormalBlend = value + 15f
+            };
+        }
+
+        internal static NativeArray<VFXDecal> CreateDecalArray(float value)
+        {
+            var array = new NativeArray<VFXDecal>(2, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+            array[0] = CreateDecal(value);
+            array[1] = CreateDecal(value + 100f);
+            return array;
+        }
+
+        internal static unsafe NativeArray<byte> CreateDecalBytes(float value)
+        {
+            var source = CreateDecalArray(value);
+            var size = source.Length * UnsafeUtility.SizeOf<VFXDecal>();
+            var bytes = new NativeArray<byte>(size, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+            UnsafeUtility.MemCpy(bytes.GetUnsafePtr(), source.GetUnsafeReadOnlyPtr(), size);
+            return bytes;
+        }
+
+        internal static void AssertDataMatches(ref PersistentVFXEntry entry, TrackedEntity trackedEntity, VFXDecal expected)
+        {
+            Assert.IsTrue(entry.TryGetUpdateDataAsRef<VFXDecal>(trackedEntity, out var dataRef));
+            AssertDecalMatches(expected, dataRef.Value);
+        }
+
+        internal static void AssertArrayDataMatches(
+            ref PersistentVFXEntry entry,
+            TrackedEntity trackedEntity,
+            NativeArray<VFXDecal> expected)
+        {
+            Assert.IsTrue(entry.TryGetArrayData<VFXDecal>(trackedEntity, out var array));
+            Assert.That(array.Length, Is.EqualTo(expected.Length));
+            for (var i = 0; i < expected.Length; i++)
+            {
+                AssertDecalMatches(expected[i], array[i]);
+            }
+        }
+
+        internal static void AssertUnsafeArrayDataMatches(
+            ref PersistentVFXEntry entry,
+            TrackedEntity trackedEntity,
+            NativeArray<byte> expected)
+        {
+            Assert.IsTrue(entry.TryGetArrayDataUnsafe(trackedEntity, out var array));
+            Assert.That(array.Length, Is.EqualTo(expected.Length));
+            for (var i = 0; i < expected.Length; i++)
+            {
+                Assert.That(array[i], Is.EqualTo(expected[i]));
+            }
+        }
+
+        private static void AssertDecalMatches(VFXDecal expected, VFXDecal actual)
+        {
+            Assert.That(actual.Size, Is.EqualTo(expected.Size));
+            Assert.That(actual.UvAtlas, Is.EqualTo(expected.UvAtlas));
+            Assert.That(actual.Pivot, Is.EqualTo(expected.Pivot));
+            Assert.That(actual.Opacity, Is.EqualTo(expected.Opacity));
+            Assert.That(actual.DrawDistance, Is.EqualTo(expected.DrawDistance));
+            Assert.That(actual.StartFade, Is.EqualTo(expected.StartFade));
+            Assert.That(actual.AngleFade, Is.EqualTo(expected.AngleFade));
+            Assert.That(actual.NormalBlend, Is.EqualTo(expected.NormalBlend));
         }
     }
 }
