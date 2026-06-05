@@ -1,5 +1,7 @@
 # VFX Forge
 
+![VFXForge.png](Documentation%7E/Images/VFXForge.png)
+
 VFX Forge is a Unity VFX Graph framework for driving instant and persistent visual effects from ECS systems and hybrid MonoBehaviours.
 
 It lets gameplay code submit VFX requests as unmanaged data, batch those requests into GPU buffers, and render many effect instances through a small number of registered VFX Graphs instead of spawning one GameObject per visual effect instance.
