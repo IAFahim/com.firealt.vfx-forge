@@ -7,6 +7,7 @@ namespace FireAlt.VFXForge.Authoring
     {
         private const string PREFERENCES_PATH = "Preferences/FireAlt/VFX Forge";
         private const string DEFAULT_DECAL_VFX_GUID_KEY = "FireAlt.VFXForge.DefaultDecalVFXGuid";
+        private const string PACKAGE_DEFAULT_DECAL_VFX_PATH = "Packages/com.firealt.vfx-forge/Shaders/Decals/DecalDefinition.asset";
 
         private VFXSettings(string path, SettingsScope scopes, string[] keywords = null)
             : base(path, scopes, keywords)
@@ -18,13 +19,25 @@ namespace FireAlt.VFXForge.Authoring
             get
             {
                 var guid = EditorPrefs.GetString(DEFAULT_DECAL_VFX_GUID_KEY, string.Empty);
-                if (string.IsNullOrEmpty(guid))
+                if (!string.IsNullOrEmpty(guid))
                 {
-                    return null;
+                    var configuredPath = AssetDatabase.GUIDToAssetPath(guid);
+                    var configuredDefinition = string.IsNullOrEmpty(configuredPath)
+                        ? null
+                        : AssetDatabase.LoadAssetAtPath<VFXDecalDefinition>(configuredPath);
+                    if (configuredDefinition != null)
+                    {
+                        return configuredDefinition;
+                    }
                 }
 
-                var path = AssetDatabase.GUIDToAssetPath(guid);
-                return string.IsNullOrEmpty(path) ? null : AssetDatabase.LoadAssetAtPath<VFXDecalDefinition>(path);
+                var packageDefault = AssetDatabase.LoadAssetAtPath<VFXDecalDefinition>(PACKAGE_DEFAULT_DECAL_VFX_PATH);
+                if (packageDefault != null)
+                {
+                    DefaultDecalVFX = packageDefault;
+                }
+
+                return packageDefault;
             }
 
             set

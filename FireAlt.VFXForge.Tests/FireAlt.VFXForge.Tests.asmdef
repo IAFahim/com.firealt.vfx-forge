@@ -11,6 +11,7 @@
         "Unity.PerformanceTesting",
         "Unity.Transforms",
         "FireAlt.VFXForge",
+        "FireAlt.VFXForge.Authoring",
         "FireAlt.VFXForge.Data",
         "FireAlt.Core"
     ],
