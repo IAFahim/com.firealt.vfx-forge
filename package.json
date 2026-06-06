@@ -1,9 +1,11 @@
 {
   "name": "com.firealt.vfx-forge",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "displayName": "FireAlt VFX Forge",
   "description": "A Unity VFX Graph framework for zero-cost VFX instances, driving instant and persistent effects from ECS systems or MonoBehaviours while batching per-instance and array data through GPU compute buffers.",
   "unity": "6000.3",
+  "documentationUrl": "https://github.com/Fire-Aalt/com.firealt.vfx-forge/blob/main/README.md",
+  "changelogUrl": "https://github.com/Fire-Aalt/com.firealt.vfx-forge/blob/main/CHANGELOG.md",
   "license": "MIT",
   "dependencies": {
     "com.firealt.core": "1.0.0",

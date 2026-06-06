@@ -9,6 +9,7 @@ It lets gameplay code submit VFX requests as unmanaged data, batch those request
 ## Contents
 
 - [Overview](#overview)
+- [Installation](#installation)
 - [Core Concepts](#core-concepts)
   - [Getting Started](Documentation~/GettingStarted.md)
   - [Instant VFX](Documentation~/InstantVFX.md)
@@ -30,11 +31,21 @@ VFX Forge features:
 - **Instant VFX**: one-frame spawn requests. Useful for one-off VFXs like explosions, damage numbers, hit effects and other.
 - **Persistent VFX**: tracked effect instances. Each spawn returns a `TrackedEntity` handle that can be checked, updated, or killed while the effect is alive. Useful for controlled long-lived VFXs, like fire, gameplay abilities, status effects and other.
 - **Complex Data Upload**: both Instant and Persistent VFX allow to pass optional single-per-effect-instance data and/or optional array-per-effect-instance data. The data can be used in any desirable way to achieve complex effects. VFX Templates are available for each data layout scenario.
-- **Editor preview**: `HybridVisualEffect` has direct integration with editor mode to preview your effects without entering playmode. Custom data bakers, GUI overlay with VFX controls, and even a direct integration with `VFX Control` panel in the VFX Asset graph view.
+- **ECS/GameObject Support**: VFX Forge was primarily designed for ECS, with GameObject support added on top of it. All public API is accessible for both ECS and GameObject workflows.
+- **Editor Preview**: `HybridVisualEffect` has direct integration with editor mode to preview your effects without entering playmode. Custom data bakers, GUI overlay with VFX controls, and even a direct integration with `VFX Control` panel in the VFX Asset graph view.
 This greatly increases iteration time allowing for trial and error method right in the VFX Asset window.
-- **VFX-based DecalProjector**: a custom `DecalProjector` which utilizes VFX Forge under the hood. Comes with ECS and Mono ready authoring and better batching mechanism to drive thousands of `DecalProjectors` with no wasted performance.
+- **VFX-based DecalProjector**: a custom `DecalProjector` which utilizes VFX Forge under the hood. Comes with ECS and GameObject ready authoring and better batching mechanism to drive thousands of `DecalProjectors` with no wasted performance.
 
-The package is split into runtime, data, authoring, editor, optional BovineLabs integration, tests, shaders, and samples.
+## Installation
+
+Add these packages using git urls in the package manager:
+
+1. FireAlt.Core: https://github.com/Fire-Aalt/com.firealt.core.git
+2. FireAlt.VFXForge: https://github.com/Fire-Aalt/com.firealt.vfx-forge.git
+
+The package has optional BovineLabs.Core integration for the Pause feature to work correctly.
+
+*Note: VFX Forge depends on Unity.Entities (ECS) for its core functionality. In Unity 6.7 Unity.Entities will be a core package, but in previous versions VFX Forge will install the dependency if it is not in the project already. VFX Forge can still be used with GameObject workflow without any ECS knowledge.*
 
 ## Core Concepts
 
