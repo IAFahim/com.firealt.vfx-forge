@@ -224,7 +224,19 @@ namespace FireAlt.VFXForge
             {
                 var internalApi = VFXSingleton.AsInternal();
                 ref var entry = ref VFXSingleton.GetPersistent(KeysArray[index]);
-                
+
+                // A spawn can be requested in a frame where VFXTransformSystem has not yet populated the
+                // deferred transform - e.g. when the simulation group (which owns VFXTransformSystem) is
+                // pause-gated during subscene streaming while this presentation system still ticks as an
+                // always-update system. Rather than failing, defer the whole entry: the requests and their
+                // deferred buffers are left intact, VFXTransformSystem fills them in on a later frame
+                // (it re-walks SpawnRequests every update), and we resolve then.
+                if (HasPendingTransform(ref entry, ref entry.SpawnRequests) ||
+                    HasPendingTransform(ref entry, ref entry.SpawnEntityIdRequests))
+                {
+                    return;
+                }
+
                 SpawnPersistentRequests(ref entry, ref entry.SpawnRequests, internalApi);
                 SpawnPersistentRequests(ref entry, ref entry.SpawnEntityIdRequests, internalApi);
                 // Kill is after spawn, so that the indices will be reused with 1 frame delay for the VFX to react
@@ -259,7 +271,10 @@ namespace FireAlt.VFXForge
                     var deferredTransform = entry.DeferredTransformBuffer[deferredKey.IndexInData];
                     if (!deferredTransform.DidTransformSystemRun())
                     {
-                        throw new Exception($"A persistent VFXKey({entry.VFXKey.Value}) spawn was requested between `VFXTransformSystem` and `SyncVFXSystem` which means the upload data does not carry Transform information. Do not spawn persistent VFX in `LateUpdate`.");
+                        // Defensive: the entry-level guard in Execute should already have deferred this
+                        // whole entry. Skip without resolving so the request survives to a later frame
+                        // (do NOT spawn - the upload data would not carry Transform information).
+                        continue;
                     }
                     if (!deferredTransform.IsAlive())
                     {
@@ -286,6 +301,18 @@ namespace FireAlt.VFXForge
                 }
             }
             
+            private static bool HasPendingTransform(ref PersistentVFXEntry entry, ref UnsafeThreadList<TrackedEntity> spawnRequests)
+            {
+                foreach (var deferredKey in spawnRequests)
+                {
+                    if (!entry.DeferredTransformBuffer[deferredKey.IndexInData].DidTransformSystemRun())
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             private static void KillPersistentRequests(ref PersistentVFXEntry entry, VFXSingleton.InternalAPI internalApi, out UploadRange deadRange)
             {
                 deadRange = default;
